@@ -1,0 +1,16 @@
+$ git status
+
+sim/**
+SPH/**
+
+sigame/temp/sim/**
+sigame/temp/GMC/emission/*.gas
+sigame/temp/dif/emission/*.gas
+
+sigame/temp/params.npy
+
+.DS_store
+
+*.pyc
+
+

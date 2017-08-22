@@ -1,0 +1,48 @@
+#### Parameter list for SÍGAME ####
+
+Galaxy names [galnames] (run SÍGAME only on these galaxies, [] if running load_galaxy() for the first time)
+['hh0_s48_G0', 'hh0_s48_G1','hh0_s47_G0', 'hh0_s47_G1','hh0_s46_G0', 'hh0_s46_G1','hh0_s45_G0', 'hh0_s45_G1','hh0_s44_G0', 'hh0_s44_G1','hh5_s48_G0', 'hh5_s48_G1','hh5_s47_G0', 'hh5_s47_G1','hh5_s46_G0', 'hh5_s46_G1','hh5_s45_G0', 'hh5_s45_G1','hh5_s44_G0', 'hh5_s44_G1','hh10_s48_G0', 'hh10_s48_G1','hh10_s47_G0', 'hh10_s47_G1','hh10_s46_G0', 'hh10_s46_G1','hh10_s45_G0', 'hh10_s45_G1','hh10_s44_G0', 'hh10_s44_G1']
+
+Look in these files [halos]:
+[0,5,10,45]
+
+Pre-selected sample of galaxies, snapshot numbers [snaps]:
+[44,45,46,47,48]
+
+Look in halos with this ID [haloIDs]:
+[0]
+
+Redshift to use in cloudy models [z1]:
+6
+
+Path to simulation data [d_sim]:
+sigame/temp/sim/
+
+Luminosity distance at this redshift [D_L] in Mpc:
+62143.2
+
+Simulation type [simtype]
+mufasa
+
+Type of dense gas model grid ('_ism' or '_Z1' or '_Z0p05' or '_Zx10' or '_Zx3' or '_DTM' or '_abun') [ext_DENSE]
+_ism
+
+Type of diffuse gas model grid ('_ism' or '_Z1' or '_Z0p05' or '_Zx10' or '_Zx3' or '_DTM' or '_abun' or '_turb10') [ext_DIFFUSE]
+_ism
+
+Fraction of smoothing length within which GMCs are placed [frac_h]
+0.5
+
+Fraction of the total stellar mass in the vicinity of the galaxy, setting the radius within which global properties are derived [f_R_gal]
+0.9
+
+Should SIGAME write A LOT (+1) or just a little (-1)? [verbose]
+-1
+
+Select which modules to run by changing a '-1' to a +1':
+-1 load_galaxy
+-1 subgrid
+-1 create_GMCs
++1 line_calc_GMC
++1 create_dif_gas
++1 line_calc_dif
