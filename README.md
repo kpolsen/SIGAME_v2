@@ -71,6 +71,21 @@ This might take a little while and will create a save file in sigame/temp/sim_FU
 ``` 
 This should create files in sigame/temp/GMC/emission/ and sigame/temp/dif/emission/
 
+4. Now you're ready to analyze the results and do some plotting! First try to see the outcome of the run with this command:
+```
+si.print_results()
+```
+
+5. To plot the results, the following functions are included, that can recreate plots in the [paper](https://arxiv.org/abs/1708.04936):
+- Fig 1: SFR-Mstar relation: si.plot.SFR_Mstar()
+- Fig 3: Histogram of GMC radii: si.plot.histos(), choose: gmc, Rgmc, default options otherwise…
+- Figs 4,5: Histograms of cloudy grid parameters: si.plot.grid_parameters(), keywords ISM_phase = ‘GMC’ and ‘dif’
+- Fig 6: CII-SFR relation at z~6: si.plot.CII_SFR_z6()
+- Fig 7 top: Mass fractions of different ISM phases: si.analysis.ISM_mass_contribution()
+- Fig 7 middle: Line luminosity fractions of different ISM phases: si.analysis.ISM_line_contribution()
+- Fig 7 bottom: Line efficiency of different ISM phases: si.analysis.ISM_line_efficiency()
+- Fig 8: OI-SFR and OIII-SFR relations at z~6: si.plot.OI_OIII_SFR()
+
 ### A note on reloading in python
 You can make changes to a module, and then reload SIGAME to have python register those changes. 
 Instead of loading submodules and reloading, I recommend changing the ipython configuration to reload by default everytime you type a python command. This is done by adding the two following lines to~/.ipython/profile_default/ipython_config.py (create this file if it doesn't exit):
