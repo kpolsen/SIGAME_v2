@@ -25,7 +25,7 @@ import pdb
 #  '   '+'\n'+\
 #  '   ======================================================='+'\n'+\
 #  '    SImulator of GAlaxy Millimeter/submillimeter Emission'+'\n'+\
-#  '-- This is a code to simulate the emission lines of the ISM --'+'\n'+\
+#  '-- A code to simulate the far-IR emission lines of the ISM  --'+'\n'+\
 #  '----------- in galaxies from hydrodynamical codes ------------'+'\n'+\
 #  '--- for the interpretation and prediction of observations. ---'+'\n'+\
 #  '-- Contact: Karen Pardos Olsen, kpolsen (at) asu.edu (2016) --'+'\n'+\
