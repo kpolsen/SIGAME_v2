@@ -46,6 +46,6 @@ Select which modules to run by changing a '-1' to a +1':
 -1 load_galaxy
 -1 subgrid
 -1 create_GMCs
-+1 line_calc_GMC
+-1 line_calc_GMC
 -1 create_dif_gas
-+1 line_calc_dif
+-1 line_calc_dif
