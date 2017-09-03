@@ -4,7 +4,6 @@
 This is a bite of code from SÍGAME; a method to simulate the emission lines of the ISM in galaxies from hydrodynamical codes for the interpretation and prediction of observations.
 By running this code, you can reproduce the line emission from one z=6 galaxy also used in this 2017 paper: https://arxiv.org/abs/1708.04936. See instructions below
 
-
 ### Obtaining the SÍGAME code
 Clone this repository to an empty folder on your computer by giving the following command in the terminal:
 ``` 
@@ -13,8 +12,11 @@ git clone https://github.com/kpolsen/SIGAME.git
 You need python version 2 and a few packages.
 
 ### Requirements
-This distribution has been tested on python v2.7.13 with the following package version:
+This distribution has been tested on python v2.7.13 with the following package versions (among others):
+- numpy v1.13.0
 - matplotlib v2.0.2
+- pandas v0.20.1
+- cPickle v1.71
 
 ### Importing SÍGAME in python/ipython
 All modules of SÍGAME are found in the sigame/ directory and are loaded into python with:
