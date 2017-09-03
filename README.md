@@ -97,7 +97,7 @@ For more detail, see [this discussion](https://support.enthought.com/hc/en-us/ar
 
 
 ### References
-  - Olsen, K. P., Greve, T. R., Narayanan, D., Thompson, R., Davé, R., Niebla-Rios, L., Stawinski, S.: SIGAME simulations of the [CII], [OI] and [OIII] line emission from star forming galaxies at z ~ 6, arXiv: [1708.04936](https://arxiv.org/abs/1708.04936), [ADS link](http://adsabs.harvard.edu/abs/2017arXiv170804936O).
+  - Olsen, K. P., Greve, T. R., Narayanan, D., Thompson, R., Davé, R., Niebla Rios, L., Stawinski, S.: SIGAME simulations of the [CII], [OI] and [OIII] line emission from star forming galaxies at z ~ 6, arXiv: [1708.04936](https://arxiv.org/abs/1708.04936), [ADS link](http://adsabs.harvard.edu/abs/2017arXiv170804936O).
   - Olsen, K. P., Greve, T. R., Narayanan, D., Thompson, R., Toft, S. Brinch, C.: Simulator of Galaxy Millimeter/Submillimeter Emission (SIGAME): The [CII]-SFR Relationship of Massive z=2 Main Sequence Galaxies, 2015, arXiv: [1507.00362](http://arxiv.org/abs/1507.00362), [ADS link](http://adsabs.harvard.edu/abs/2015ApJ...814...76O).
   - Olsen, K. P., Greve, T. R., Brinch, C., Sommer-Larsen, J., Rasmussen, J., Toft, S., Zirm, A.: SImulator of GAlaxy Millimeter/submillimeter Emission (SIGAME): CO emission from massive z=2 main sequence galaxies, 2016, arXiv: [1507.00012](http://arxiv.org/abs/1507.00012), [ADS link](http://adsabs.harvard.edu/abs/2016MNRAS.457.3306O).
 
