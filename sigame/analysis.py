@@ -12,10 +12,6 @@ import classes as cl
 from scipy.interpolate import interp1d
 import scipy.stats as stats
 import os.path
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA as sklearnPCA
-from sklearn import linear_model
-from wpca import PCA
 import pickle
 import plot as plot
 import aux as aux

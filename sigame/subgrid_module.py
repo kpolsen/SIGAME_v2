@@ -47,7 +47,7 @@ def subgrid(galname=galnames[0],zred=zreds[0]):
     FUV                     =   np.zeros(len(simgas))
     t1                      =   time.time()
     print('Multiprocessing starting up!')
-    pool                    =   mp.Pool(processes=5)                    # 8 processors on my Mac Pro, 16 on Betty
+    pool                    =   mp.Pool(processes=3)                    # 8 processors on my Mac Pro, 16 on Betty
     results                 =   [pool.apply_async(FUVfunc, args=(i,)) for i in range(0,len(simgas))]#len(simgas)
     FUV                     =   [p.get() for p in results]
     t2                      =   time.time()
@@ -65,7 +65,7 @@ def subgrid(galname=galnames[0],zred=zreds[0]):
     global m_gas,m_star
     m_gas,m_star            =   simgas1['m'].values,simstar['m'].values
     print('Multiprocessing starting up!')
-    pool                    =   mp.Pool(processes=5)                   # 8 processors on my Mac Pro, 16 on Betty
+    pool                    =   mp.Pool(processes=3)                   # 8 processors on my Mac Pro, 16 on Betty
     results                 =   [pool.apply_async(Pfunc, args=(i,)) for i in range(0,len(simgas))]#len(simgas)
     res                     =   [p.get() for p in results]
     P_ext,surf_gas,surf_star,sigma_gas,sigma_star,vel_disp_gas   =   np.zeros(len(res)),np.zeros(len(res)),np.zeros(len(res)),np.zeros(len(res)),np.zeros(len(res)),np.zeros(len(res))
