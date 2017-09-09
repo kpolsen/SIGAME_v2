@@ -1,9 +1,5 @@
 $ git status
 
-sim/**
-SPH/**
-
-sigame/temp/sim/**
 sigame/temp/GMC/emission/*.gas
 sigame/temp/dif/emission/*.gas
 
