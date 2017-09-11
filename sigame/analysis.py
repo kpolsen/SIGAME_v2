@@ -27,8 +27,19 @@ for key,val in params.items():
 """ Global line luminosities """
 #-------------------------------------------------------------------------------
 
-def ISM_line_contributions(split=True,line='CII'):
-    print('Split L_[CII] into contributions from different ISM phases!')
+def ISM_line_contributions(line='CII'):
+    '''
+    Purpose
+    ---------
+    Splits line luminosity into contributions from different ISM phases
+
+    Arguments
+    ---------
+    line: which line to plot - str
+    default = 'CII'
+    '''
+
+    print('')
     plt.close('all')        # close all windows
 
     # Load model results
@@ -69,32 +80,18 @@ def ISM_line_contributions(split=True,line='CII'):
 
     plt.savefig('plots/line_emission/ISM_contributions/['+line+']_lum_fractions_'+z1+ext_DENSE+ext_DIFFUSE+'.pdf', format='pdf') # .eps for paper!
 
-    print('Now plotting L_CII fractions vs mass fractions')
-
-    # Starting figure
-    fontsize            =   13
-    mpl.rcParams['xtick.labelsize'] = fontsize
-    mpl.rcParams['ytick.labelsize'] = fontsize
-
-    xr                  =   [0.1,100]
-    yr                  =   [0.1,100]
-    # Set up figure
-    fig                 =   plt.figure(1,figsize = (8,7))
-    ax1                 =   fig.add_subplot(1,1,1)
-    # xlog='y',ylog='y',\
-    # colored by ISM phase version
-    plot.simple_plot(add='y',xr=xr, yr=yr,\
-        xlab='Mass fraction [%]',ylab='Fraction of total L$_{[\mathrm{CII}]}$ [%]',\
-        x1=f_M[0],y1=f_L[0],ma1='x',fill1='y',ms1=6,mew1=2,col1='b',\
-        x2=f_M[1],y2=f_L[1],ma2='x',fill2='y',ms2=6,mew2=2,col2='orange',\
-        x3=f_M[2],y3=f_L[2],ma3='x',fill3='y',ms3=6,mew3=2,col3='r')
-
-
-    plt.show(block=False)
-    plt.savefig('plots/line_emission/ISM_contributions/['+line+']_lum_mass_fractions_'+z1+ext_DENSE+ext_DIFFUSE+'.pdf', format='pdf') # .eps for paper!
-
 def ISM_line_efficiency(line='CII'):
-    print('Split L_[CII] into contributions from different ISM phases!')
+    '''
+    Purpose
+    ---------
+    Plots the line efficiency (line luminosity / gas mass) in different ISM phases
+
+    Arguments
+    ---------
+    line: which line to plot - str
+    default = 'CII'
+    '''
+
     plt.close('all')        # close all windows
 
     # Load model results
@@ -164,7 +161,13 @@ def ISM_line_efficiency(line='CII'):
 #-------------------------------------------------------------------------------
 
 def ISM_mass_contributions():
-    print('Investigate mass from different ISM phases!')
+    '''
+    Purpose
+    ---------
+    Plots the mass contribution from different ISM phases
+
+    '''
+
     plt.close('all')        # close all windows
 
     # Load model results
