@@ -36,22 +36,29 @@ def create_dif(galname=galnames[0],zred=zreds[0]):
 
     '''
 
-    print('\n ** Identify diffuse gas containing hot, ionized medium (DIG) and warm, neutral medium (DNG)**')
     plt.close('all')        # close all windows
-    simgas              =   pd.read_pickle('sigame/temp/sim_FUV/z'+'{:.2f}'.format(zred)+'_'+galname+'_sim1.gas')
-    difgas              =   simgas.copy()
-    # difgas['m']         =   difgas['m'].values*(1.-difgas['f_HI'].values*difgas['f_H2'].values)
-    difgas['m']         =   difgas['m'].values*(1.-difgas['f_H2'].values)
-    print('Total gas mass: '+str(sum(simgas['m'])))
-    print('Diffuse gas mass: '+str(sum(difgas['m'])))
+
+    # Load simulation data for gas
+    simgas                          =   pd.read_pickle('sigame/temp/sim_FUV/z'+'{:.2f}'.format(zred)+'_'+galname+'_sim1.gas')
+
+    # Start new dataframe with only the diffuse gas
+    difgas                          =   simgas.copy()
+    difgas['m']                     =   difgas['m'].values*(1.-difgas['f_H2'].values)
+    print('Total gas mass in galaxy: '+str(sum(simgas['m'])))
+    print('Diffuse gas mass in galaxy: '+str(sum(difgas['m'])))
     print('in percent: '+str(sum(difgas['m'])/sum(simgas['m'])*100.)+'%')
-    difgas['R']         =   difgas['h']
-    difgas['nH']        =   0.75*np.array(difgas['m'],dtype=np.float64)/(4/3.*np.pi*np.array(difgas['R'],dtype=np.float64)**3.)*Msun/mH/kpc2cm**3       # Hydrogen atoms per cm^3
-    difgas['R'][difgas['m'] == 0]        =   0
-    difgas['nH'][difgas['m'] == 0]        =   0
-    dir_gas             =   'sigame/temp/dif/'
+
+    # Calculate radius of diffuse gas clouds
+    difgas['R']                     =   difgas['h']
+    difgas['R'][difgas['m'] == 0]   =   0
+
+    # Calculate density of diffuse gas clouds
+    difgas['nH']                    =   0.75*np.array(difgas['m'],dtype=np.float64)/(4/3.*np.pi*np.array(difgas['R'],dtype=np.float64)**3.)*Msun/mH/kpc2cm**3       # Hydrogen atoms per cm^3
+    difgas['nH'][difgas['m'] == 0]  =   0
+
+    # Save results
+    dir_gas                         =   'sigame/temp/dif/'
     difgas.to_pickle(dir_gas+'z'+'{:.2f}'.format(zred)+'_'+galname+'_dif.gas')
-    # pdb.set_trace()
 
 def calc_line_emission(galname=galnames[0],zred=zreds[0],SFRsd=SFRsd_MW):
     '''
@@ -67,18 +74,19 @@ def calc_line_emission(galname=galnames[0],zred=zreds[0],SFRsd=SFRsd_MW):
     zred: redshift of galaxy - float/int
     default = first redshift name in redshift list from parameter file
 
-
     SFRsd: SFR surface density of this galaxy - float
     default = SFR surface density of the MW
 
     '''
 
+    printe('\n ** Calculate total line emission from diffuse gas **')
+
     plt.close('all')        # close all windows
+
     ext_DIFFUSE0        =   ext_DIFFUSE
 
-    # Load galaxy
+    # Load dataframe with diffuse gas
     difgas              =   pd.read_pickle('sigame/temp/dif/z'+'{:.2f}'.format(zred)+'_'+galname+'_dif.gas')
-    # TEST!!!
     if ext_DIFFUSE0 == '_Z0p05':    difgas['Z'],ext_DIFFUSE0     =   difgas['Z'].values*0.+0.05,'_Ztest'
     if ext_DIFFUSE0 == '_Z1':       difgas['Z'],ext_DIFFUSE0     =   difgas['Z'].values*0.+1.,'_Ztest'
     if ext_DIFFUSE0 == '_Zx3':      difgas['Z'],ext_DIFFUSE0     =   difgas['Z'].values*3.,'_highZ'
@@ -89,21 +97,16 @@ def calc_line_emission(galname=galnames[0],zred=zreds[0],SFRsd=SFRsd_MW):
     difgas              =   pd.DataFrame.reset_index(difgas)
     ndif                =   len(difgas)
 
-    # Load the grid that best represents this Sigma_SFR
+    # Load the grid that best represents the SFR surface density of this galaxy
     UV                  =   [5,35]
     if ext_DIFFUSE == '_FUV': UV,ext_DIFFUSE0                  =   [5,15,25,35,45,120],'_ism'
     UV1                 =   str(int(UV[np.argmin(np.abs(np.array(UV)-SFRsd/SFRsd_MW))]))
-    # UV1 = '120'
     cloudy_grid_param   =   pd.read_pickle('cloudy_models/dif/grids/difgrid_'+UV1+'UV'+ext_DIFFUSE0+'_'+z1+'.param')
     cloudy_grid         =   pd.read_pickle('cloudy_models/dif/grids/difgrid_'+UV1+'UV'+ext_DIFFUSE0+'_'+z1+'_CII.models')
 
     print('SFR surface density is '+str(SFRsd/SFRsd_MW)+' x that of MW ')
     print('Using grid at '+UV1+' x ISM FUV field')
     difgas['FUV']       =   difgas['FUV']*0.+UV[np.argmin(np.abs(np.array(UV)-SFRsd/SFRsd_MW))]
-
-    print('Z parameters: ')
-    print(cloudy_grid_param['Zs'])
-    print('Min and max of actual clouds: %s and %s' % (min(difgas['Z']),max(difgas['Z'])))
 
     # make sure we don't go outside of grid:
     difgas1             =   difgas.copy()
@@ -232,13 +235,6 @@ def calc_line_emission(galname=galnames[0],zred=zreds[0],SFRsd=SFRsd_MW):
     print('Z: %s > 0' % (np.mean(np.log10(difgas1['Z'][difgas1['Z']>0]))))
     print('Tk: %s' % (np.mean(np.log10(difgas1['Tk']))))
 
-    # print('Which models are "most popular"? Printing the first 20 (model number: # occurences)')
-    # difs                    =   np.column_stack((difgas1['nH'].values,difgas1['R'].values,difgas1['Z'].values,difgas1['Tk'].values))
-    # model_numbers           =   np.arange(0,len(cloudy_grid))
-    # close_model_numbers     =   griddata((cloudy_grid['nH'],cloudy_grid['R'],cloudy_grid['Z'],cloudy_grid['Tk']),model_numbers,difs,method='nearest')
-    # counter                 =   collections.Counter(close_model_numbers)
-    # print(counter.most_common(20))
-
     print('Total [CII] luminosity from diffuse gas (DIG/DNG): '+str(sum(difgas1['L_CII_DNG']+difgas1['L_CII_DIG'])/1e8)+' x 10^8 L_sun')
 
     difgas1.to_pickle(dif_path+'z'+'{:.2f}'.format(zred)+'_'+galname+'_dif'+ext_DIFFUSE0+'_em.gas')
@@ -261,4 +257,3 @@ def calc_line_emission(galname=galnames[0],zred=zreds[0],SFRsd=SFRsd_MW):
     data.to_pickle('sigame/temp/line_profiles/'+galname+'.diffuse')
 
     return(dif_results)
-

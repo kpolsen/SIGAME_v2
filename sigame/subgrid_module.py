@@ -12,28 +12,49 @@ import multiprocessing as mp
 import subprocess as sub
 import aux as aux
 import matplotlib.pyplot as plt
-# From SIGAME submodules:
-# import sigame.plot as plot
 
 params                      =   np.load('sigame/temp/params.npy').item()
 for key,val in params.items():
     exec(key + '=val')
 
 def subgrid(galname=galnames[0],zred=zreds[0]):
-    print('\n ** Use grid of starburst models to calculate local FUV field and pressure **')
+    '''
+    Purpose
+    -------
+    On subgrid scales calculate:
+    - local FUV field using grid of starburst99 models 
+    - local pressure using velocity dispersion, surface densities of gas and stars 
+    and hydrostatic equilibrium
+
+    Arguments
+    ---------
+    galname: galaxy name - str
+    default = first galaxy name in galnames list from parameter file
+
+    zred: redshift of galaxy - float/int
+    default = first redshift name in redshift list from parameter file
+
+    '''
+
+    print('\n** Derive local FUV field and pressure **')
+
+    # Declare these variables to be global for availability in other
+    # functions called by subprocess:
     global simgas,simgas1,simstar,L_FUV
+
+    # Load simulation data for gas and stars
     simgas                  =   pd.read_pickle(d_sim+'z'+'{:.2f}'.format(zred)+'_'+galname+'_sim0.gas')
-    simstar                 =   pd.read_pickle(d_sim+'z'+'{:.2f}'.format(zred)+'_'+galname+'_sim0.star')
-    # simgas                =   simgas[0:100]
-    # simstar               =   simstar[0:100]
-    print('Number of gas elements: '+str(len(simgas)))
+
+    if verbose: print('Number of gas elements: %s' % str(len(simgas)))
 
     print('\nFind local FUV field from stellar population synthesis! ')
-    grid                    =   pd.read_pickle(d_t+'FUV/FUVgrid_'+z1+'_noneb')          # read grid parameters for FUV grid of 1e4 stellar populations
-    FUV                     =   pd.read_pickle(d_t+'FUV/FUV_'+z1+'_noneb')          # [age,Z,L_FUV] dataframe
+    # Read grid parameters for FUV grid of 1e4 Msun stellar populations
+    grid                    =   pd.read_pickle(d_t+'FUV/FUVgrid_'+z1+'_noneb')
+    # Read corresponding [age,Z,L_FUV] values
+    FUV                     =   pd.read_pickle(d_t+'FUV/FUV_'+z1+'_noneb')          
     l_FUV                   =   FUV['L_FUV'].values
     l_FUV                   =   l_FUV.reshape((len(grid['Ages']),len(grid['Zs'])))
-    print('Calculate FUV luminosity of each stellar particle')
+    print('First, calculate FUV luminosity of each stellar particle')
     part                    =   0.1
     L_FUV                   =   np.zeros(len(simstar))
     for i in range(0,len(simstar)):
@@ -43,31 +64,29 @@ def subgrid(galname=galnames[0],zred=zreds[0]):
             print(int(part*100),' % done!')
             part                    =   part+0.1
     simstar['L_FUV']        =   L_FUV
-    print('Find FUV flux at gas particle positions')
+    print('Then, find FUV flux at gas particle positions')
     FUV                     =   np.zeros(len(simgas))
-    t1                      =   time.time()
-    print('Multiprocessing starting up!')
+    print('(Multiprocessing starting up!)')
     pool                    =   mp.Pool(processes=3)                    # 8 processors on my Mac Pro, 16 on Betty
     results                 =   [pool.apply_async(FUVfunc, args=(i,)) for i in range(0,len(simgas))]#len(simgas)
     FUV                     =   [p.get() for p in results]
-    t2                      =   time.time()
-    dt2                     =   t2-t1
-    # print('Time that it took: dt2')
+    print('(Multiprocessing done!)')
     simgas['FUV']           =   FUV
     simgas['FUV']           =   simgas['FUV']/(kpc2cm**2*FUV_ISM)
-    print('Assume that CR intensity follows FUV field for now')
+    print('Finally, scale local CR intensity to follow fluctuations in local FUV field')
     simgas['CR']            =   simgas['FUV']*CR_ISM
 
-    print('\nFind local hydrostatic mid-plane pressure')
-    print('Do calculations of pressure using only star-forming gas!!')
+    print('\nFind local hydrostatic mid-plane pressure!')
+    # Extract star forming gas only:
     simgas1                 =   simgas.copy()
     simgas1                 =   simgas1[simgas1['SFR'] > 0].reset_index()
     global m_gas,m_star
     m_gas,m_star            =   simgas1['m'].values,simstar['m'].values
-    print('Multiprocessing starting up!')
+    print('(Multiprocessing starting up!)')
     pool                    =   mp.Pool(processes=3)                   # 8 processors on my Mac Pro, 16 on Betty
     results                 =   [pool.apply_async(Pfunc, args=(i,)) for i in range(0,len(simgas))]#len(simgas)
     res                     =   [p.get() for p in results]
+    print('(Multiprocessing done!)')
     P_ext,surf_gas,surf_star,sigma_gas,sigma_star,vel_disp_gas   =   np.zeros(len(res)),np.zeros(len(res)),np.zeros(len(res)),np.zeros(len(res)),np.zeros(len(res)),np.zeros(len(res))
     for i in range(0,len(res)):
         P_ext[i],surf_gas[i],surf_star[i],sigma_gas[i],sigma_star[i],vel_disp_gas[i]   =   res[i][0],res[i][1],res[i][2],res[i][3],res[i][4],res[i][5]
@@ -75,13 +94,11 @@ def subgrid(galname=galnames[0],zred=zreds[0]):
     simgas['sigma_gas']     =   sigma_gas
     simgas['sigma_star']    =   sigma_star
     simgas['vel_disp_gas']  =   vel_disp_gas
-    simgas['P_ext1']        =   simgas['nH']*simgas['vel_disp_gas']**2.*1e6/kB # density [kg/cm^3] * disp [m/s]^2 / kB [J/K] -> K/cm^3
     print('Min and max of log(P_ext): %s and %s' % (min(np.log10(simgas['P_ext'])),max(np.log10(simgas['P_ext']))))
-    print('Min and max of alternative log(P_ext): %s and %s' % (min(np.log10(simgas['P_ext1'])),max(np.log10(simgas['P_ext1']))))
     simgas['surf_gas']      =   surf_gas
     simgas['surf_star']     =   surf_star
 
-    # Save
+    # Save results
     simgas.to_pickle('sigame/temp/sim_FUV/z'+'{:.2f}'.format(zred)+'_'+galname+'_sim1.gas')
     simstar.to_pickle('sigame/temp/sim_FUV/z'+'{:.2f}'.format(zred)+'_'+galname+'_sim1.star')
 

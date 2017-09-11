@@ -26,8 +26,8 @@ for key,val in params.items():
 def create_GMCs(galname=galnames[0],zred=zreds[0],verbose=False):
     '''
     Purpose
-    ---------
-    Splits the molecular part of each SPH particle into GMCs (called by main.run)  
+    -------
+    Splits the molecular part of each SPH particle into GMCs (called by main.run)
 
     Arguments
     ---------
@@ -41,19 +41,20 @@ def create_GMCs(galname=galnames[0],zred=zreds[0],verbose=False):
     default = False
 
     '''
-    print('\n ** Split gas elements into GMCs **')
+
+    print('\n ** Create GMCs **')
+
     plt.close('all')        # close all windows
-    # Read in raw simulation data files (gas and stars) for galname simulation
+
+    # Load simulation data for gas and stars
     simgas          =   pd.read_pickle('sigame/temp/sim_FUV/z'+'{:.2f}'.format(zred)+'_'+galname+'_sim1.gas')
     simstar         =   pd.read_pickle('sigame/temp/sim_FUV/z'+'{:.2f}'.format(zred)+'_'+galname+'_sim1.star')
-    if verbose:
-        print(galname)
-        print('# gas element particles: ',len(simgas))
-        print('# star element particles: ',len(simstar))
-    # Neutral gas mass:
-    # Mneu            =   simgas['m'].values*simgas['f_H2'].values
-    print('Using f_H2 from simulation')
-    Mneu            =   simgas['m'].values*simgas['f_H21'].values
+
+    if verbose: print('Number of gas elements: %s' % str(len(simgas)))
+    if verbose: print('Number of stars: %s' % str(len(simstar)))
+
+    print('Using f_H2 from simulation to estimate neutral gas mass per gas element')
+    Mneu            =   simgas['m'].values*simgas['f_H2'].values
     print('Total dense gas mass: '+str(np.sum(Mneu))+' Msun')
     print('Dense gas mass fraction out of total ISM mass: '+str(np.sum(Mneu)/np.sum(simgas['m'])*100.)+' %')
     print('Min and max particle dense gas mass: '+str(np.min(Mneu))+' '+str(np.max(Mneu))+' Msun')
@@ -61,10 +62,10 @@ def create_GMCs(galname=galnames[0],zred=zreds[0],verbose=False):
     print('In percent: '+str(np.sum(simgas.loc[Mneu < 1e4]['m'])/np.sum(simgas['m']))+' %')
 
     # Create mass spectrum (probability function = dN/dM normalized)
-    b               =   1.8
-    if ext_DENSE == '_b3p0': b = 3.0                       # powerlaw slope [Blitz+07]
-    if ext_DENSE == '_b1p5': b = 1.5                       # powerlaw slope [Blitz+07]
-    print('b used is %s' % b)
+    b               =   1.8                                # MW powerlaw slope [Blitz+07]
+    if ext_DENSE == '_b3p0': b = 3.0                       # outer MW and M33 powerlaw slope [Rosolowsky+05, Blitz+07]
+    if ext_DENSE == '_b1p5': b = 1.5                       # inner MW powerlaw slope [Rosolowsky+05, Blitz+07]
+    print('Powerlaw slope for mass spectrum (beta) used is %s' % b)
     Mmin            =   1.e4                               # min mass of GMC
     Mmax            =   1.e6                               # max mass of GMC
     tol             =   Mmin                               # precision in reaching total mass
@@ -79,11 +80,12 @@ def create_GMCs(galname=galnames[0],zred=zreds[0],verbose=False):
     print('# Gas particles with Mmol > 2*1e4 Msun: %s out of %s' % (np.size(Mneu[Mneu > 2*Mmin]),np.size(Mneu)))
     simgas.index    =   range(0,len(simgas))
     j               =   0
-    print('Starting up multiprocessing')
-    pool            =   mp.Pool(processes=5)        # 8 processors on my Mac Pro, 16 on Betty
+    print('(Multiprocessing starting up!)')
+    pool            =   mp.Pool(processes=3)        # 8 processors on my Mac Pro, 16 on Betty
     np.random.seed(len(GMCgas))                         # so we don't end up with the same random numbers for every galaxy
     results         =   [pool.apply_async(GMC_generator, args=(i,Mneu,h,Mmin,Mmax,b,tol,nn,)) for i in range(0,len(simgas))]#
     GMCs            =   [p.get() for p in results]
+    print('(Multiprocessing done!)')
     GMCgas          =   simgas.iloc[0:GMCs[0][0]]
     Mgmc            =   GMCs[0][1]
     newx            =   simgas.loc[0]['x']+GMCs[0][2]
@@ -91,8 +93,8 @@ def create_GMCs(galname=galnames[0],zred=zreds[0],verbose=False):
     newz            =   simgas.loc[0]['z']+GMCs[0][4]
     i1              =   0
     part            =   0.1
-    print('Make new (GMC) dataframe')
-    for i in range(1,len(simgas)):#
+    print('Append results to new dataframe')
+    for i in range(1,len(simgas)):
         for ii in range (0,GMCs[i][0]):
             GMCgas = pd.DataFrame.append(GMCgas,simgas.loc[i],ignore_index=True)
         Mgmc         =   np.append(Mgmc,GMCs[i][1])
@@ -185,13 +187,18 @@ def calc_line_emission(galname=galnames[0],zred=zreds[0],SFRsd=SFRsd_MW):
     default = SFR surface density of the MW
 
     '''
-    print('\n ** Calculate total line emission etc. from GMCs **')
+
+    print('\n ** Calculate total line emission from GMCs **')
+
     plt.close('all')        # close all windows
+
     ext_DENSE0          =   ext_DENSE
 
+    # Load dataframe with GMCs
     GMCgas = pd.read_pickle('sigame/temp/GMC/z'+'{:.2f}'.format(zred)+'_'+galname+'_GMC.gas')
     if ext_DENSE0 == '_b1p5': GMCgas = pd.read_pickle('sigame/temp/GMC/z'+'{:.2f}'.format(zred)+'_'+galname+'_GMC_b1p5.gas')
     if ext_DENSE0 == '_b3p0': GMCgas = pd.read_pickle('sigame/temp/GMC/z'+'{:.2f}'.format(zred)+'_'+galname+'_GMC_b3p0.gas')
+
     nGMC                =   len(GMCgas)
     print('Number of GMCs: %s' % nGMC)
     print('Mass of GMCs: %s Msun' % np.sum(GMCgas['m']))
@@ -211,12 +218,6 @@ def calc_line_emission(galname=galnames[0],zred=zreds[0],SFRsd=SFRsd_MW):
     cloudy_grid_param   =   pd.read_pickle('cloudy_models/GMC/grids/GMCgrid'+ext_DENSE0+'_'+z1+'.param')
     cloudy_grid         =   pd.read_pickle('cloudy_models/GMC/grids/GMCgrid'+ext_DENSE0+'_'+z1+'_CII.models')
 
-    print('Z parameters: ')
-    print(cloudy_grid_param['Zs'])
-    print('Mass parameters: ')
-    print(cloudy_grid_param['Mgmcs'])
-    print('Min and max of actual clouds: %s and %s' % (min(GMCgas['Z']),max(GMCgas['Z'])))
-
     # make sure we don't go outside of grid:
     GMCgas1             =   np.log10(GMCgas)  # Going to edit a bit in the DataFrame
     GMCgas1.ix[GMCgas1['m']       < min(cloudy_grid_param['Mgmcs']),'m']      =   min(cloudy_grid_param['Mgmcs'])
@@ -229,7 +230,7 @@ def calc_line_emission(galname=galnames[0],zred=zreds[0],SFRsd=SFRsd_MW):
     GMCgas1.ix[GMCgas1['P_ext']   > max(cloudy_grid_param['P_exts']),'P_ext'] =   max(cloudy_grid_param['P_exts'])
     # Values used for interpolation in cloudy models:
     GMCs                        =   np.column_stack((GMCgas1['m'].values,GMCgas1['FUV'].values,GMCgas1['Z'].values,GMCgas1['P_ext'].values))
-    
+
     # List of target items that we are interpolating for:
     target_list                 =   ['Mgmc_fit','FUV_fit','Z_fit','P_ext_fit',\
                                     'f_H2','f_HI','m_dust','m_H','m_H2','m_HI','m_HII',\
@@ -241,10 +242,6 @@ def calc_line_emission(galname=galnames[0],zred=zreds[0],SFRsd=SFRsd_MW):
     cloudy_grid['FUV_fit']      =   cloudy_grid['FUV']
     cloudy_grid['Z_fit']        =   cloudy_grid['Z']
     cloudy_grid['P_ext_fit']    =   cloudy_grid['P_ext']
-
-    print('Check:')
-    print(np.log10(GMCgas['FUV'][0:10].values))
-
 
     for target in target_list:
         # Make grid of corresponding target grid values:
@@ -286,43 +283,6 @@ def calc_line_emission(galname=galnames[0],zred=zreds[0],SFRsd=SFRsd_MW):
         i_P_ext                     =   np.argmin(abs(cloudy_grid_param['P_exts']-lP_ext))
         GMCgas['closest_model_i'][i] = int(model_numbers[i_Mgmc,i_FUV,i_Z,i_P_ext])
 
-    print('Check sum of L_[CII] using closest model number!')
-    L_tot               =   0.
-    for i in range(0,nGMC):
-        L_tot               +=   cloudy_grid['L_CII'][GMCgas['closest_model_i'][i]]
-    print(L_tot)
-    print('To sum of interpolation: %s ' % np.sum(GMCgas['L_CII']))
-
-    # # Histogram of all model L_[CII] values
-    # fig                 =   plt.figure(0)
-    # ax1                 =   fig.add_subplot(1,1,1)
-    # n, bins, patches    =   plt.hist(np.log10(cloudy_grid['L_CII'][cloudy_grid['L_CII']>0]), \
-    #     50, normed=1, facecolor='green', alpha=0.75)
-    # plt.show(block=False)    
-
-    # Quick check!
-    # print('\n')
-    # print('Model numbers with very high FUV:')
-    # very_high               =   cloudy_grid['index'][cloudy_grid['FUV']>4].values
-    # print(very_high)
-    # for model_number in very_high:
-    #     model_number                =   int(model_number)
-    #     print('Model %s has L_CII: %s Lsun ' % (model_number,cloudy_grid['L_CII'][model_number]))
-    #     print('With log Mgmc: %s, FUV: %s, Z: %s, P_ext: %s' % (cloudy_grid['Mgmc'][model_number],cloudy_grid['FUV'][model_number],cloudy_grid['Z'][model_number],cloudy_grid['P_ext'][model_number]))
-    #     dex                     =   0.1
-    #     GMCgas1['L_CII']        =   GMCgas['L_CII']
-    #     # pdb.set_trace()
-    #     GMCs                    =   aux.within_dex(GMCgas1,cloudy_grid['Mgmc'][model_number],'m',dex)
-    #     GMCs                    =   aux.within_dex(GMCs,cloudy_grid['FUV'][model_number],'FUV',dex)
-    #     GMCs                    =   aux.within_dex(GMCs,cloudy_grid['Z'][model_number],'Z',dex)
-    #     GMCs                    =   aux.within_dex(GMCs,cloudy_grid['P_ext'][model_number],'P_ext',0.5)
-    #     print('GMCs with parameters within 1 %s of these: %s' % (dex,len(GMCs)))
-    #     print('Their [CII] luminosities: ' )
-    #     print(GMCs['L_CII'].values)
-    # print('\n')
-
-    # pdb.set_trace()
-
     print('Total GMC mass available: '+str(sum(GMCgas['m'])/1e8)+' x 10^8 Msun')
     print('Mass of selected models: '+str(sum(GMCgas['m_H'])/1e8)+' x 10^8 Msun')
     print('Total mass of CII: '+str(sum(GMCgas['m_CII'])/1e8)+' x 10^8 Msun')
@@ -341,16 +301,9 @@ def calc_line_emission(galname=galnames[0],zred=zreds[0],SFRsd=SFRsd_MW):
     for line in lines:
         print('Total L_'+line+': %s x 10^8 L_sun' % (sum(GMCgas['L_'+line])/1e8))
 
-    print('Which models are "most popular"? Printing the first 20 (model number: # occurences)')
-    GMCs                    =   np.column_stack((GMCgas1['m'].values,GMCgas1['FUV'].values,GMCgas1['Z'].values,GMCgas1['P_ext'].values))
-    model_numbers           =   np.arange(0,len(cloudy_grid))
-    close_model_numbers     =   griddata((cloudy_grid['Mgmc'],cloudy_grid['FUV'],cloudy_grid['Z'],cloudy_grid['P_ext']),model_numbers,GMCs,method='nearest')
-    counter                 =   collections.Counter(close_model_numbers)
-    print(counter.most_common(20))
-
     print('Add mass-weighted density and G0 to GMCgas dataframe for diagnostic line ratio plot')
 
-    sigma_vs                =   1.2*(GMCgas['P_ext'].values/1e4)**(1.0/4.0)*(GMCgas['Rgmc'].values)**(1.0/2.0) 
+    sigma_vs                =   1.2*(GMCgas['P_ext'].values/1e4)**(1.0/4.0)*(GMCgas['Rgmc'].values)**(1.0/2.0)
     GMCgas['vel_disp_gas']  =    sigma_vs
     GMCgas.to_pickle(GMC_path+'z'+'{:.2f}'.format(zred)+'_'+galname+'_GMC'+ext_DENSE+'_em.gas')
 
