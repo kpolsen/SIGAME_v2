@@ -28,12 +28,9 @@ import pdb
 #  '-- A code to simulate the far-IR emission lines of the ISM  --'+'\n'+\
 #  '----------- in galaxies from hydrodynamical codes ------------'+'\n'+\
 #  '--- for the interpretation and prediction of observations. ---'+'\n'+\
-#  '-- Contact: Karen Pardos Olsen, kpolsen (at) asu.edu (2016) --'+'\n'+\
+#  '-- Contact: Karen Pardos Olsen, kpolsen (at) asu.edu (2017) --'+'\n'+\
 #  ''+'\n')
- # style from http://www.kammerl.de/ascii/AsciiSignature.php
- # (alternatives: epic, roman, blocks, varsity, pepples, soft, standard, starwars)
-
-################ Some instructions ######################
+# the font style above is from http://www.kammerl.de/ascii/AsciiSignature.php
 
 # Remember to select and edit a parameter file:
 params_file = 'parameters_z6.txt'
