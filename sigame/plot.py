@@ -859,7 +859,6 @@ def SFR_Mstar():
     Plot of SFR vs stellar mass
     '''
 
-    print('** Plot SFR vs stellar mass for sample **')
     plt.close('all')
 
     models                      =   aux.find_model_results()
@@ -883,25 +882,18 @@ def SFR_Mstar():
 	age = 0.984                           # age of universe, Omega_m = 0.3, Omega_lambda = 0.7, h = 0.65
     	MS              =   10.**((0.84-0.026*age)*np.log10(xr)-(6.51-0.11*age))
     	# z ~ 6 LBGs and LAEs
-    	# columns         =   ['No','M_1500','UV_slope','L_Lyalpha','ew_Lyalpha','SFR_UV','SFR_Lyalpha']
-    	# J16             =   pd.read_table('/Users/Karen/Desktop/temp/Observations/Jiang16_paper',names=columns,skiprows=5,sep=r'\t*',engine='python')
-    	# columns         =   ['ID','age(M)','mass(G)','SFR_Lya','SFR_UV','E(B-V)']
-    	# J16             =   pd.read_table('sigame/temp/Observations/Jiang16.txt',names=columns,skiprows=1,sep=r'\s*',engine='python')
-    	# SFR_J16         =   J16['SFR_UV'].values
-    	# No_J16          =   J16['ID'].values
-    	# ebv             =   J16['E(B-V)'].values
-    	# age_J16         =   J16['age(M)'].values
-    	# M_star_J13      =   np.array([7.2,3.4,21.1,32.8,57.9,3.8,66.5,17.4,2.7,26.8,2.4,250,81.1,46.4,30.8,172.9,391.1,35.6,9.0,51.5,61.6,66.3,115,9.4,41.3,1.4,32])*1e8
-    	# No_J13          =   np.array([3,4,15,20,23,24,25,27,28,30,31,34,35,36,43,44,47,49,50,54,58,61,62,63,64,66,67])
-    	# SFR_J16         =   [float(SFR_J16[No_J16 == No][0]) for No in No_J13]
-    	# # From Linhua Jiang
-    	# klambda         =   8.5  #at 2200A
-    	# SFR_J16         =   SFR_J16 * 10.**(0.4*klambda*ebv)
-
-    if z1 == 'z2':
-        # eq. 28
-        age                 =   3.223 # age of universe [Gyr], Omega_m = 0.3, Omega_lambda = 0.7, h = 0.70
-        SFR_MS              =   10.**((0.84-0.026*age)*np.log10(xr)-(6.51-0.11*age))
+    	columns         =   ['ID','age(M)','mass(G)','SFR_Lya','SFR_UV','E(B-V)']
+    	J16             =   pd.read_table(d_t+'Observations/SFR_Mstar/Jiang16.txt',names=columns,skiprows=1,sep=r'\s*',engine='python')
+    	SFR_J16         =   J16['SFR_UV'].values
+    	No_J16          =   J16['ID'].values
+    	ebv             =   J16['E(B-V)'].values
+    	age_J16         =   J16['age(M)'].values
+    	M_star_J13      =   np.array([7.2,3.4,21.1,32.8,57.9,3.8,66.5,17.4,2.7,26.8,2.4,250,81.1,46.4,30.8,172.9,391.1,35.6,9.0,51.5,61.6,66.3,115,9.4,41.3,1.4,32])*1e8
+    	No_J13          =   np.array([3,4,15,20,23,24,25,27,28,30,31,34,35,36,43,44,47,49,50,54,58,61,62,63,64,66,67])
+    	SFR_J16         =   [float(SFR_J16[No_J16 == No][0]) for No in No_J13]
+    	# From Linhua Jiang
+    	klambda         =   8.5  #at 2200A
+    	SFR_J16         =   SFR_J16 * 10.**(0.4*klambda*ebv)
 
     simple_plot(fignum=0,xlog='y',ylog='y',xr=xr,yr=yr,fontsize=16,\
         xlab='M$_{\mathrm{*}}$ [M$_{\odot}$]',ylab='SFR [M$_{\odot}$ yr$^{-1}$]',legloc=[0.01,0.75],frameon=False,\
@@ -913,14 +905,14 @@ def SFR_Mstar():
         x6=xr,y6=10.**(np.log10(MS)+3.*0.2),col6='k',lw6=1,ls6=':',legend=False)
 
     ax1             =   plt.gca()
-    # if z1 == 'z6':
-	# simple_plot(add='y',x1=M_star_J13[age_J16 > 30],y1=SFR_J16[age_J16 > 30],fill1='y',ma1='x',col1='r',ms1=10,mew1=2,lab1='Old $z\sim6$ LBGs/LAEs [Jiang+16]',\
-	# 		x2=M_star_J13[age_J16 < 30],y2=SFR_J16[age_J16 < 30],fill2='y',ma2='+',col2='b',ms2=11,mew2=2,lab2='Young $z\sim6$ LBGs/LAEs [Jiang+16]')
+    if z1 == 'z6':
+	simple_plot(add='y',x1=M_star_J13[age_J16 > 30],y1=SFR_J16[age_J16 > 30],fill1='y',ma1='x',col1='r',ms1=10,mew1=2,lab1='Old $z\sim6$ LBGs/LAEs [Jiang+16]',\
+			x2=M_star_J13[age_J16 < 30],y2=SFR_J16[age_J16 < 30],fill2='y',ma2='+',col2='b',ms2=11,mew2=2,lab2='Young $z\sim6$ LBGs/LAEs [Jiang+16]',legloc='upper left')
 
     # Plot models
     SC = ax1.scatter(M_star,SFR,marker='o',lw=2,s=64,c=ages,edgecolor='black',cmap='viridis',alpha=1,label='',zorder=10)
     cbar            =   plt.colorbar(SC,pad=0)
-    cbar.set_label(label='Mass-weighted stellar age [Myr]')#,size=12)   # colorbar in it's own axis
+    cbar.set_label(label='Mass-weighted stellar age [Myr]')   # colorbar in it's own axis
 
     plt.tight_layout()
     plt.show(block=False)
@@ -942,35 +934,31 @@ def CII_SFR_z6(plot_models=True,plot_fits=True,plot_obs=True,twopanel=True,obs_g
     models                      =   aux.find_model_results()
     for key in models.keys():
         exec(key + '=models[key].values')
+    L_CII_tot           =   L_CII_GMC+L_CII_DNG+L_CII_DIG
 
     z1                  =   'z6'
 
+    # Plotting parameters
     mpl.rcParams['xtick.minor.size'] = 4
     mpl.rcParams['xtick.major.size'] = 6
     mpl.rcParams['xtick.minor.width'] = 1.5
     mpl.rcParams['xtick.major.width'] = 1.5
     fs_labels = 20
     if twopanel: fs_labels = 17
-
-    # Plot parameters, quickly change y or x range here
+    # Change y or x range here
     xr                  =   10.**np.array([0,3.05])               # SFR range
     yr                  =   10.**np.array([6.5,9.8])              # [CII] range
-    if not twopanel: fig = plt.figure(figsize = (12,9))
-    if twopanel: fig = plt.figure(figsize = (18,8))
-
-    # Load [CII] luminosities
-    sims                =   cl.sim(sim_paths)
-    L_CII_tot           =   L_CII_GMC+L_CII_DNG+L_CII_DIG
-
-    if not twopanel:
-        ax1 = fig.add_subplot(1,1,1)
     if twopanel:
+        fig = plt.figure(figsize = (18,8))
         gs = gridspec.GridSpec(1, 2, width_ratios=[6, 5])
         ax1 = plt.subplot(gs[1])
+    if not twopanel:
+        fig = plt.figure(figsize = (12,9))
+        ax1 = fig.add_subplot(1,1,1)
+    ax1.set_xlabel('SFR [M$_{\odot}$ yr$^{-1}$]',fontsize=fs_labels)
     ax1.set_ylabel('L$_{[\mathrm{CII}]}$ [L$_{\odot}$]',fontsize=fs_labels)
     ax1.set_xlim(xr)
     ax1.set_ylim(yr)
-    ax1.set_xlabel('SFR [M$_{\odot}$ yr$^{-1}$]',fontsize=fs_labels)
     xlab                =   ax1.get_xticks()
     ylab                =   ax1.get_yticks()
     ax1.set_xticklabels(xlab,fontsize=fs_labels)
@@ -984,46 +972,37 @@ def CII_SFR_z6(plot_models=True,plot_fits=True,plot_obs=True,twopanel=True,obs_g
     # Models!
     # ======================================================================
 
-    # Powerlaw fit to high-z observations [de Looze et al. 2014]
-    # logL_CII            =  np.array([4,11])
-    # logSFR              =  -8.52+1.18*logL_CII
-    # fit0                =   ax1.plot(10.**logSFR,10.**logL_CII,c='purple',ls='--',lw=lw)
-    # Powerlaw fit to z=0 metal-poor dwarf galaxies
+    # Powerlaw fit to z=0 metal-poor dwarf galaxies [de Looze et al. 2014]
     logL_CII            =  np.array([4,11])
     logSFR              =  -5.73+0.80*logL_CII
     ax1.fill_between(10.**logSFR, 10.**(logL_CII-0.37), 10.**(logL_CII+0.37), facecolor='lightgrey', linewidth=0, alpha=0.5)
     fit0                =   ax1.plot(10.**logSFR,10.**logL_CII,c='grey',ls='--',lw=lw)
-    # Powerlaw fit to z=0 starburst galaxies
+    # Powerlaw fit to z=0 starburst galaxies [de Looze et al. 2014]
     logL_CII            =  np.array([4,11])
     logSFR              =  -7.06+1.00*logL_CII
     ax1.fill_between(10.**logSFR, 10.**(logL_CII-0.27), 10.**(logL_CII+0.27), facecolor='lightgrey', linewidth=0, alpha=0.5)
     fit1                =   ax1.plot(10.**logSFR,10.**logL_CII,c='grey',ls='--',dashes=(1,4),lw=lw)
-    print('\nAverage factor below de Looze+14 metal-poor dwarfs')
-
-    # Powerlaw fit to z=0 observations [Malhotra et al. 2001]
-    # L_FIR               =   xr*3.4e9
-    # L_CII               =   10.**(-2.51+np.log10(L_FIR))
-    # fit1                =   ax1.plot(xr,L_CII,'--',dashes=(2,5),c='teal',lw=lw)
 
     # Powerlaw fit to model galaxies at z=6
     slope_models,intercept_models,slope_dev,inter_dev = aux.lin_reg_boot(np.log10(SFR),np.log10(L_CII_tot))
 
+    # Making different line styles for the SFR-range covered by the simulations and 
+    # the SFR-range where an extrapolation is necessary
     L_CII_model         =   10.**(slope_models*np.log10(xr)+intercept_models)
     xr2                 =   [min(SFR),max(SFR)]
     L_CII_model2        =   10.**(slope_models*np.log10(xr2)+intercept_models)
     # dex spread around relation:
     dex                 =   np.std(np.abs(np.log10(L_CII_tot)-(slope_models*np.log10(SFR)+intercept_models)))
     print('Dex: %s' % dex)
-
     if not twopanel:
         if plot_models:
                 fit = ax1.plot(xr,L_CII_model,ls='--',color='purple',lw=1.8)
                 fit = ax1.plot(xr2,L_CII_model2,ls='-',color='purple',lw=1.8)
                 fit = ax1.plot(xr,L_CII_model,ls='--',color='purple',lw=1.8)
                 fit = ax1.plot(xr2,L_CII_model2,ls='-',color='purple',lw=1.8)
-
     if plot_fits:
         # Powerlaw fit to Vallini+15, z~7 eq. 8
+        sims                =   cl.sim(sim_paths)
         Zfit                =   np.mean(sims.Zmw())
         L_CII_V15           =   10.**(7.0 + 1.2*np.log10(xr) + 0.021*np.log10(Zfit) + \
                                 0.012*np.log10(xr)*np.log10(Zfit) - 0.74*np.log10(Zfit)**2.)
@@ -1033,7 +1012,7 @@ def CII_SFR_z6(plot_models=True,plot_fits=True,plot_obs=True,twopanel=True,obs_g
 
         # PCA fit to L_[CII](SFR,Z)
         Zfit2               =   np.mean(Zsfr)
-        L_CII_PCA           =   10.**(7.26+0.35*np.log10(xr)+0.38*np.log10(Zfit2))
+        L_CII_PCA           =   10.**(7.17+0.55*np.log10(xr)+0.23*np.log10(Zfit2))
         ax1.plot(xr,L_CII_PCA,c='purple',ls='--',dashes=(6,4,1,4,1,4),lw=lw)
 
         if len(galnames) > 1: 
@@ -1050,19 +1029,20 @@ def CII_SFR_z6(plot_models=True,plot_fits=True,plot_obs=True,twopanel=True,obs_g
         rms_dex             =   np.sqrt(np.sum(dev**2./len(dev)))
         print('rms error of: '+str(rms_dex)+' dex')
 
-        print('On average this far below observed relation:')
-        L_CII_obs           =   10.**((np.log10(SFR)+7.06)/1.00)
-        print(str(np.mean((L_CII_obs-L_CII_tot)/L_CII_obs)*100.)+' %')
-        print(str(np.mean(np.log10(L_CII_obs)-np.log10(L_CII_tot)))+' dex')
-        print('Power law fit this far above Vallini+15:')
-        L_CII_V15           =   10.**(7.0 + 1.2*np.log10(min(SFR)) + 0.021*np.log10(Zfit) + \
-                                0.012*np.log10(min(SFR))*np.log10(Zfit) - 0.74*np.log10(Zfit)**2.)
-        L_CII                =   10.**(slope_models*np.log10(min(SFR))+intercept_models)
-        print('at min SFR : '+str(np.log10(L_CII)-np.log10(L_CII_V15))+' dex')
-        L_CII_V15           =   10.**(7.0 + 1.2*np.log10(max(SFR)) + 0.021*np.log10(Zfit) + \
-                                0.012*np.log10(max(SFR))*np.log10(Zfit) - 0.74*np.log10(Zfit)**2.)
-        L_CII                =   10.**(slope_models*np.log10(max(SFR))+intercept_models)
-        print('at max SFR : '+str(np.log10(L_CII)-np.log10(L_CII_V15))+' dex')
+        if len(galnames) > 1: 
+            print('On average this far below observed relation:')
+            L_CII_obs           =   10.**((np.log10(SFR)+7.06)/1.00)
+            print(str(np.mean((L_CII_obs-L_CII_tot)/L_CII_obs)*100.)+' %')
+            print(str(np.mean(np.log10(L_CII_obs)-np.log10(L_CII_tot)))+' dex')
+            print('Power law fit this far above Vallini+15:')
+            L_CII_V15           =   10.**(7.0 + 1.2*np.log10(min(SFR)) + 0.021*np.log10(Zfit) + \
+                                    0.012*np.log10(min(SFR))*np.log10(Zfit) - 0.74*np.log10(Zfit)**2.)
+            L_CII                =   10.**(slope_models*np.log10(min(SFR))+intercept_models)
+            print('at min SFR : '+str(np.log10(L_CII)-np.log10(L_CII_V15))+' dex')
+            L_CII_V15           =   10.**(7.0 + 1.2*np.log10(max(SFR)) + 0.021*np.log10(Zfit) + \
+                                    0.012*np.log10(max(SFR))*np.log10(Zfit) - 0.74*np.log10(Zfit)**2.)
+            L_CII                =   10.**(slope_models*np.log10(max(SFR))+intercept_models)
+            print('at max SFR : '+str(np.log10(L_CII)-np.log10(L_CII_V15))+' dex')
 
         # Powerlaw fit to model galaxies at z=2 [Olsen+15]
         L_CII_model_z2      =   0.78e7*xr**1.27
@@ -1113,11 +1093,9 @@ def CII_SFR_z6(plot_models=True,plot_fits=True,plot_obs=True,twopanel=True,obs_g
         ax1.fill_between(10.**logSFR, 10.**(logL_CII-0.27), 10.**(logL_CII+0.27), facecolor='lightgrey', linewidth=0, alpha=0.5,zorder=0)
         fit1                =   ax1.plot(10.**logSFR,10.**logL_CII,c='grey',ls='--',dashes=(1,4),lw=lw,zorder=0)
 
-    # pdb.set_trace()
     if plot_obs: add_observations_to_plot(slope_models,intercept_models,mark_reasons,mark_uplim,mark_det,z1=z1)
 
     # Legends for observations!
-    # get handles
     if plot_models: ax1.scatter([1e20,1e30],[1e20,1e30],marker='o',s=64,color='lightseagreen',label=r'S$\mathrm{\'I}$GAME (this work)$_{}$',lw=2,edgecolor='black')
     handles2, labels2 = ax1.get_legend_handles_labels()
     # remove the errorbars
@@ -1130,13 +1108,11 @@ def CII_SFR_z6(plot_models=True,plot_fits=True,plot_obs=True,twopanel=True,obs_g
         ax1.legend(handles2, labels2, loc='upper left',fontsize=11,frameon=False,numpoints=1,borderpad=1)
 
     # Model galaxies
-    # L_CII_tot       =    L_CII_tot*0.+10.**6.6
     ax1.xaxis.set_major_formatter(ScalarFormatter())
     if plot_models:
         plot = ax1.scatter(SFR,L_CII_tot,marker='o',edgecolor='black',c=np.log10(SFRsd),s=64,lw=2,cmap='viridis',zorder=200)
         cbar = fig.colorbar(plot,ax=ax1,pad=0)#,cax = cbar_ax)
         cbar.set_label(label=getlabel('lSFRsd'),size=13)#,weight='bold')
-
 
     for axis in ['top','bottom','left','right']:
         ax1.spines[axis].set_linewidth(1.)
@@ -1599,10 +1575,8 @@ def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
                 if histo_color == 'colsel': ax1.legend(loc='upper left')
 
             panel              +=  1
-        # plt.suptitle('Grid points (dashed lines) on histograms (solid lines) in diffuse gas')
         plt.show(block=False)
         plt.savefig('plots/diffuse_gas/grid_parameters/difgrid_points_on_histos'+ext_DIFFUSE+'_'+z1+'.pdf',format='pdf') # .eps for paper!
-        # fig.savefig('plots/dif/grids/grid_points_on_histos_paper.png', dpi=fig.dpi)
 
 #===============================================================================
 """ Gas distribution plots """
