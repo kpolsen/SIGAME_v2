@@ -1378,10 +1378,9 @@ class subgrid_galaxy(galaxy):
         GMCgas['y']         =   newy
         GMCgas['z']         =   newz
         GMCgas['Rgmc']      =   (GMCgas['m']/290.0)**(1.0/2.0)
-        print('Min P_ext: %s' % np.log10(min(simgas['P_ext'])))
 
-        print('Mass of all GMCs created: %s - should not exceed:' % np.sum(GMCgas['m']))
-        print('Total neutral gas: %s ' % np.sum(Mneu))
+        print('Mass of all GMCs created: %.2e - should not exceed:' % np.sum(GMCgas['m']))
+        print('Total neutral gas: %.2e ' % np.sum(Mneu))
         print(np.min(GMCgas['Rgmc']),np.max(GMCgas['Rgmc']))
 
         print(str(len(GMCgas))+' GMCs created!')
@@ -1468,11 +1467,10 @@ class interpolate_clouds(galaxy):
         GMCgas              =   aux.load_temp_file(gal_ob=self.gal_ob,ISM_phase='GMC', verbose=True)
 
         # Load cloudy model grid:
-        gridDir = d_data + 'cloud_models/GMC/grids/'
-        cloudy_grid_param   =   pd.read_pickle(gridDir+'GMCgrid'+ext_DENSE+'_'+z1+'.param')
+        cloudy_grid_param   =   pd.read_pickle(d_cloudy_models +'GMCgrid'+ext_DENSE+'_'+z1+'.param')
 
         cloudy_grid_param['ms'] = cloudy_grid_param['Mgmcs']
-        cloudy_grid         =   pd.read_pickle(gridDir + 'GMCgrid'+ext_DENSE+'_'+z1+'_em.models')
+        cloudy_grid         =   pd.read_pickle(d_cloudy_models + 'GMCgrid'+ext_DENSE+'_'+z1+'_em.models')
 
         GMCgas_new          =   aux.interpolate_in_GMC_models(GMCgas,cloudy_grid_param,cloudy_grid)
 
@@ -1485,12 +1483,12 @@ class interpolate_clouds(galaxy):
 
         difgas              =   aux.load_temp_file(gal_ob=self.gal_ob,ISM_phase='dif')
 
-        # Get diffuse background FUV to use for this galaxy
-        FUVs                =   pd.read_pickle(d_cloudy_models + 'dif/grids/difgrid_'+ext_DIFFUSE+'_'+z1+'.param')['FUVs']
-        self.UV_str         =   '%.2f' % (FUVs[np.argmin(np.abs(np.array(FUVs)-self.SFRsd/SFRsd_MW))])
+        # Get diffuse background FUV to use for this galaxy (OLD WAY)
+        self.UV_str         =   aux.get_UV_str(z1,self.SFRsd)
 
         # Load cloudy model grid:
-        cloudy_grid         =   pd.read_pickle(d_cloudy_models + 'dif/grids/difgrid_'+self.UV_str+'UV'+ext_DIFFUSE+'_'+z1+'_em.models')
+        cloudy_grid_param   =   pd.read_pickle(d_cloudy_models + 'difgrid_'+self.UV_str+'UV'+ext_DIFFUSE+'_'+z1+'.param')
+        cloudy_grid         =   pd.read_pickle(d_cloudy_models + 'difgrid_'+self.UV_str+'UV'+ext_DIFFUSE+'_'+z1+'_em.models')
         difgas_new          =   aux.interpolate_in_dif_models(difgas,cloudy_grid_param,cloudy_grid)
 
         aux.save_temp_file(difgas_new,gal_ob=self.gal_ob,ISM_phase='dif')

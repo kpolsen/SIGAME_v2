@@ -207,7 +207,7 @@ def load_temp_file(**kwargs):
         exec('globals()["' + key + '"]' + '=val')
 
     filename    =   get_file_location(**kwargs)
-    print(filename)
+    # print(filename)
     try:
         data = pd.read_hdf(filename)
         try:
@@ -229,15 +229,840 @@ def h5store(df, dc_name, filename, **kwargs):
     """Way to store metadata with dataframe
     """
 
-    try:
-        metadata            =   df.metadata
-    except:
-        metadata            =   {}
+    # try:
+    #     metadata            =   df.metadata
+    # except:
+    #     metadata            =   {}
 
-    store = pd.HDFStore(filename)
-    store.put(dc_name, df)
-    store.get_storer(dc_name).attrs.metadata = metadata
-    store.close()
+    # store = pd.HDFStore(filename)
+    # store.put(dc_name, df)
+    # store.get_storer(dc_name).attrs.metadata = metadata
+    # store.close()
+
+    # Let's try this, not metadata
+    df.to_hdf(filename,dc_name)
+
+
+#===========================================================================
+""" For subgrid step"""
+#---------------------------------------------------------------------------
+
+def GMC_generator(index_range,Mneu,h,Mmin,Mmax,b,tol,nn,n_cores):
+    '''
+    Purpose
+    ---------
+    Draws mass randomly from GMC mass spectrum (called by create_GMCs)
+
+    Arguments
+    ---------
+    '''
+
+    if n_cores == 1:
+
+        f1,newm_gmc,newx,newy,newz = [0]*len(index_range),[0]*len(index_range),[0]*len(index_range),[0]*len(index_range),[0]*len(index_range)
+        #,np.zeros(len(index_range)),np.zeros(len(index_range)),np.zeros(len(index_range)),np.zeros(len(index_range))
+
+        for i in index_range:
+
+            ra      =   np.random.rand(nn)  # draw nn random numbers between 0 and 1
+            Mg      =   np.zeros(nn)
+            newm_gmc[i]     =   np.zeros(1)
+
+            if Mneu[i] < Mmin+tol:
+                newm_gmc[i]         =   Mneu[i]
+
+            else:
+                for ii in range(0,nn):
+                    k           =   (1/(1-b)*(Mmax**(1-b)-Mmin**(1-b)))**(-1)       # Normalization constant (changing with Mmax)
+                    Mg[ii]      =   (ra[ii]*(1-b)/k+Mmin**(1-b))**(1./(1-b))        # Draw mass (from cumulative distribution function)
+                    if ii==0 and np.sum(newm_gmc[i])+Mg[ii] < Mneu[i]+tol:             # Is it the 1st draw and is the GMC mass below total neutral gas mass (M_neutral) available?
+                        newm_gmc[i]         =   np.array(Mg[ii])                            # - then add that GMC mass
+                    if ii>0 and np.sum(newm_gmc[i])+Mg[ii] < Mneu[i]+tol:              # Is the sum of GMC masses still below M_neutral+tolerance?
+                        newm_gmc[i]         =   np.append(newm_gmc[i],Mg[ii])                       # - then add that GMC mass
+                    if np.sum(newm_gmc[i]) > Mneu[i]-tol:                              # Is the sum of GMC masses above M_neutral-tolerance?
+                        break                                                       # - fine! then stop here
+                # If we're still very fra from Mneu, repeat loop!
+                while np.sum(newm_gmc[i]) < 0.9*Mneu[i]:
+                    ra      =   np.random.rand(nn)  # draw nn random numbers between 0 and 1
+                    for ii in range(0,nn):
+                        k           =   (1/(1-b)*(Mmax**(1-b)-Mmin**(1-b)))**(-1)       # Normalization constant (changing with Mmax)
+                        Mg[ii]      =   (ra[ii]*(1-b)/k+Mmin**(1-b))**(1./(1-b))        # Draw mass (from cumulative distribution function)
+                        if ii==0 and np.sum(newm_gmc[i])+Mg[ii] < Mneu[i]+tol:             # Is it the 1st draw and is the GMC mass below total neutral gas mass (M_neutral) available?
+                            newm_gmc[i]         =   np.array(Mg[ii])                            # - then add that GMC mass
+                        if ii>0 and np.sum(newm_gmc[i])+Mg[ii] < Mneu[i]+tol:              # Is the sum of GMC masses still below M_neutral+tolerance?
+                            newm_gmc[i]         =   np.append(newm_gmc[i],Mg[ii])                       # - then add that GMC mass
+                        if np.sum(newm_gmc[i]) > Mneu[i]-tol:                              # Is the sum of GMC masses above M_neutral-tolerance?
+                            break                                                       # - fine! then stop here
+
+            # Add SPH info to new DataFrame (same for all GMCs to this SPH parent)
+            # Save indices of original SPH particles
+            f1[i]      =   np.size(newm_gmc[i])
+            if f1[i] == 1:
+                if newm_gmc == 0:
+                    print('No GMCs created for this one?')
+                    pdb.set_trace()
+
+            SPHindex    =   np.zeros(f1[i])+i
+            # but change coordinates!!
+            ra          =   np.random.rand(f1[i])  # draw nn random numbers between 0 and 1
+            ra1         =   np.random.rand(f1[i])  # draw nn random numbers between 0 and 1
+            ra2         =   np.random.rand(f1[i])  # draw nn random numbers between 0 and 1
+            ra_R        =   ra*frac_h*h[i]
+            ra_phi      =   ra1*2*np.pi
+            ra_theta    =   ra2*np.pi
+            ra          =   [ra_R*np.sin(ra_theta)*np.cos(ra_phi),+\
+                ra_R*np.sin(ra_theta)*np.sin(ra_phi),+\
+                ra_R*np.cos(ra_theta)]
+            newx[i]        =   np.array(ra)[0,:]
+            newy[i]        =   np.array(ra)[1,:]
+            newz[i]        =   np.array(ra)[2,:]
+            # Neutral mass that remains is distributed in equal fractions around the GMCs:
+        return f1,newm_gmc,newx,newy,newz
+
+    else:
+
+        f1, newm_gmc, newx, newy, newz = [0], [0], [0], [0], [0]
+
+        ra = np.random.rand(nn)  # draw nn random numbers between 0 and 1
+        Mg = np.zeros(nn)
+        newm_gmc = np.zeros(1)
+
+        if Mneu[index_range] < Mmin + tol:
+            newm_gmc = Mneu[index_range]
+
+        else:
+            for ii in range(0, nn):
+                # Normalization constant (changing with Mmax)
+                k = (1 / (1 - b) * (Mmax**(1 - b) - Mmin**(1 - b)))**(-1)
+
+                # Draw mass (from cumulative distribution function)
+                Mg[ii] = (ra[ii] * (1 - b) / k + Mmin**(1 - b))**(1. / (1 - b))
+                # Is it the 1st draw and is the GMC mass below total neutral gas
+                # mass (M_neutral) available?
+                if ii == 0 and np.sum(newm_gmc) + Mg[ii] < Mneu[index_range] + tol:
+                    # - then add that GMC mass
+                    newm_gmc = np.array(Mg[ii])
+
+                # Is the sum of GMC masses still below M_neutral+tolerance?
+                if ii > 0 and np.sum(newm_gmc) + Mg[ii] < Mneu[index_range] + tol:
+                    # - then add that GMC mass
+                    newm_gmc = np.append(newm_gmc, Mg[ii])
+
+                # Is the sum of GMC masses above M_neutral-tolerance?
+                if np.sum(newm_gmc) > Mneu[index_range] - tol:
+                    break                                                       # - fine! then stop here
+
+            # If we're still very fra from Mneu, repeat loop!
+            while np.sum(newm_gmc) < 0.9 * Mneu[index_range]:
+                ra = np.random.rand(nn)  # draw nn random numbers between 0 and 1
+                for ii in range(0, nn):
+                    # Normalization constant (changing with Mmax)
+                    k = (1 / (1 - b) * (Mmax**(1 - b) - Mmin**(1 - b)))**(-1)
+                    # Draw mass (from cumulative distribution function)
+                    Mg[ii] = (ra[ii] * (1 - b) / k + Mmin**(1 - b))**(1. / (1 - b))
+                    # Is it the 1st draw and is the GMC mass below total neutral gas
+                    # mass (M_neutral) available?
+                    if ii == 0 and np.sum(newm_gmc) + Mg[ii] < Mneu[index_range] + tol:
+                        # - then add that GMC mass
+                        newm_gmc = np.array(Mg[ii])
+                    # Is the sum of GMC masses still below M_neutral+tolerance?
+                    if ii > 0 and np.sum(newm_gmc) + Mg[ii] < Mneu[index_range] + tol:
+                        # - then add that GMC mass
+                        newm_gmc = np.append(newm_gmc, Mg[ii])
+                    # Is the sum of GMC masses above M_neutral-tolerance?
+                    if np.sum(newm_gmc) > Mneu[index_range] - tol:
+                        break                                                       # - fine! then stop here
+
+        # Add SPH info to new DataFrame (same for all GMCs to this SPH parent)
+        # Save indices of original SPH particles
+        f1 = np.size(newm_gmc)
+        if f1 == 1:
+            if newm_gmc == 0:
+                print('No GMCs created for this one?')
+                pdb.set_trace()
+
+        # but change coordinates!!
+        ra = np.random.rand(f1)  # draw nn random numbers between 0 and 1
+        ra1 = np.random.rand(f1)  # draw nn random numbers between 0 and 1
+        ra2 = np.random.rand(f1)  # draw nn random numbers between 0 and 1
+        ra_R = ra * frac_h * h[index_range]
+        ra_phi = ra1 * 2 * np.pi
+        ra_theta = ra2 * np.pi
+        ra = [ra_R * np.sin(ra_theta) * np.cos(ra_phi), +
+              ra_R * np.sin(ra_theta) * np.sin(ra_phi), +
+              ra_R * np.cos(ra_theta)]
+        newx = np.array(ra)[0, :]
+        newy = np.array(ra)[1, :]
+        newz = np.array(ra)[2, :]
+
+        return index_range, f1,newm_gmc,newx,newy,newz
+
+
+#===========================================================================
+""" For interpolation step"""
+#---------------------------------------------------------------------------
+
+def interpolate_in_GMC_models(GMCgas,cloudy_grid_param,cloudy_grid):
+
+    # Parameters used in the interpolation
+    int_parameters      =   ['m','FUV','Z','P_ext']
+
+    # Looking at GMC properties in log space
+    # GMCgas              =   GMCgas[0:5000]
+    N_GMCs              =   len(GMCgas)
+    GMCgas1             =   np.log10(GMCgas[int_parameters])
+    # print('Interpolating for %s GMCs' % N_GMCs)
+
+    # Make sure we don't go outside of grid:
+    for _ in int_parameters:
+        GMCgas1.ix[GMCgas1[_] < min(cloudy_grid_param[_+'s']),_] = min(cloudy_grid_param[_+'s'])
+        GMCgas1.ix[GMCgas1[_] > max(cloudy_grid_param[_+'s']),_] = max(cloudy_grid_param[_+'s'])
+
+    # Values used for interpolation in cloudy models:
+    GMCs                        =   np.column_stack((GMCgas1['m'].values,GMCgas1['FUV'].values,GMCgas1['Z'].values,GMCgas1['P_ext'].values))
+
+    # List of target items that we are interpolating for:
+    target_list                 =   ['Mgmc_fit','FUV_fit','Z_fit','P_ext_fit',\
+                                    'f_H2','f_HI','m_dust','m_H','m_H2','m_HI','m_HII',\
+                                    'm_C','m_CII','m_CIII','m_CIV','m_CO',\
+                                    'Tkmw','nHmw','nHmin','nHmax']
+
+    for line in lines: target_list.append('L_'+line)
+
+    cloudy_grid['Mgmc_fit']     =   cloudy_grid['Mgmc']
+    cloudy_grid['FUV_fit']      =   cloudy_grid['FUV']
+    cloudy_grid['Z_fit']        =   cloudy_grid['Z']
+    cloudy_grid['P_ext_fit']    =   cloudy_grid['P_ext']
+
+    # Make grid of model results corresponding target grid values and interpolate in it
+    for target in target_list:
+        target_grid                 =   np.zeros([len(cloudy_grid_param['Mgmcs']),len(cloudy_grid_param['FUVs']),len(cloudy_grid_param['Zs']),len(cloudy_grid_param['P_exts'])])
+        i                           =   0
+        for i1 in range(0,len(cloudy_grid_param['Mgmcs'])):
+            for i2 in range(0,len(cloudy_grid_param['FUVs'])):
+                for i3 in range(0,len(cloudy_grid_param['Zs'])):
+                    for i4 in range(0,len(cloudy_grid_param['P_exts'])):
+                        target_grid[i1,i2,i3,i4]    =   cloudy_grid[target][i]
+                        i                           +=  1
+
+        # Make function that will do the interpolation:
+        interp                      =   RegularGridInterpolator((cloudy_grid_param['Mgmcs'],cloudy_grid_param['FUVs'],cloudy_grid_param['Zs'],cloudy_grid_param['P_exts']), target_grid)
+        # And interpolate:
+        GMCgas[target]              =   interp(GMCs)
+
+    GMCgas['f_HII']             =   1.-(GMCgas['f_H2']+GMCgas['f_HI'])
+
+    # Find index of closest models!
+    model_numbers               =   np.zeros([len(cloudy_grid_param['Mgmcs']),len(cloudy_grid_param['FUVs']),len(cloudy_grid_param['Zs']),len(cloudy_grid_param['P_exts'])])
+    j                           =   0
+    for i1 in range(0,len(cloudy_grid_param['Mgmcs'])):
+        for i2 in range(0,len(cloudy_grid_param['FUVs'])):
+            for i3 in range(0,len(cloudy_grid_param['Zs'])):
+                for i4 in range(0,len(cloudy_grid_param['P_exts'])):
+                    model_numbers[i1,i2,i3,i4]      =   j
+                    j                               +=  1
+    closest_model_i             =   np.zeros(N_GMCs)
+    for i in range(0,N_GMCs):
+        Mgmc                        =   GMCgas['m'][i]
+        FUV                         =   GMCgas['FUV'][i]
+        Z                           =   GMCgas['Z'][i]
+        P_ext                       =   GMCgas['P_ext'][i]
+        i_Mgmc                      =   np.argmin(abs(10.**cloudy_grid_param['Mgmcs']-Mgmc))
+        i_FUV                       =   np.argmin(abs(10.**cloudy_grid_param['FUVs']-FUV))
+        i_Z                         =   np.argmin(abs(10.**cloudy_grid_param['Zs']-Z))
+        i_P_ext                     =   np.argmin(abs(10.**cloudy_grid_param['P_exts']-P_ext))
+        closest_model_i[i]          =   int(model_numbers[i_Mgmc,i_FUV,i_Z,i_P_ext])
+    GMCgas['closest_model_i']   =   closest_model_i
+
+    # Check sum of L_[CII] using closest model number
+    L_tot               =   0.
+    for i in range(0,N_GMCs):
+        L_tot               +=   cloudy_grid['L_CII'][GMCgas['closest_model_i'][i]]
+    print('Sum of L_[CII] using closest model number: %s Lsun' % L_tot)
+    print('Sum of L_[CII] using interpolation: %s Lsun' % np.sum(GMCgas['L_CII']))
+
+
+    print('Integrating entire radial profiles:')
+    print(str.format("{0:.2f}",sum(GMCgas['f_H2']*GMCgas['m'])/sum(GMCgas['m'])*100.)+' % of gas mass is molecular')
+    print(str.format("{0:.2f}",sum(GMCgas['f_HI']*GMCgas['m'])/sum(GMCgas['m'])*100.)+' % of gas mass is atomic')
+    print(str.format("{0:.2f}",sum(GMCgas['f_HII']*GMCgas['m'])/sum(GMCgas['m'])*100.)+' % of gas mass is ionized')
+    print('Using boundaries:')
+    print(str.format("{0:.2f}",sum(GMCgas['m_H2'])/sum(GMCgas['m_H'])*100.)+' % of gas mass is molecular')
+    print(str.format("{0:.2f}",sum(GMCgas['m_HI'])/sum(GMCgas['m_H'])*100.)+' % of gas mass is atomic')
+    print(str.format("{0:.2f}",sum(GMCgas['m_HII'])/sum(GMCgas['m_H'])*100.)+' % of gas mass is ionized')
+
+    for line in lines:
+        print('Total L_'+line+': %.2e L_sun' % (sum(GMCgas['L_'+line])))
+
+    # Add some attributes to GMC dataframe
+    GMCgas.M_dust               =   np.sum(GMCgas['m_dust'])
+    GMCgas.M_H2                 =   np.sum(GMCgas['m_H2'])
+    GMCgas.M_HI                 =   np.sum(GMCgas['m_HI'])
+    GMCgas.M_HII                =   np.sum(GMCgas['m_HII'])
+    GMCgas.M_C                  =   np.sum(GMCgas['m_C'])
+    GMCgas.M_CII                =   np.sum(GMCgas['m_CII'])
+    GMCgas.M_CIII               =   np.sum(GMCgas['m_CIII'])
+    GMCgas.M_CO                 =   np.sum(GMCgas['m_CO'])
+
+    return(GMCgas)
+
+def interpolate_in_dif_models(difgas,cloudy_grid_param,cloudy_grid):
+
+    # Parameters used in the interpolation
+    int_parameters      =   ['nH','R','Z','Tk']
+
+    # Looking at dif properties in log space
+    N_difs              =   len(difgas)
+    difgas1             =   np.log10(difgas[int_parameters])
+
+    # Make sure we don't go outside of grid:
+    for _ in int_parameters:
+        difgas1.ix[difgas1[_] < min(cloudy_grid_param[_+'s']),_] = min(cloudy_grid_param[_+'s'])
+        difgas1.ix[difgas1[_] > max(cloudy_grid_param[_+'s']),_] = max(cloudy_grid_param[_+'s'])
+
+    # Values used for interpolation in cloudy models:
+    difs                        =   np.column_stack((difgas1['nH'].values,difgas1['R'].values,difgas1['Z'].values,difgas1['Tk'].values))
+
+    # List of target items that we are interpolating for:
+    target_list                 =   ['index','m_dust','Tk_DNG','Tk_DIG',\
+                                    'fm_DNG','fm_H_DNG','fm_HI_DNG','fm_HII_DNG','fm_H2_DNG',\
+                                    'fm_C_DNG','fm_CII_DNG','fm_CIII_DNG','fm_CIV_DNG','fm_CO_DNG',\
+                                    'fm_H_DIG','fm_HI_DIG','fm_HII_DIG','fm_H2_DIG',\
+                                    'fm_C_DIG','fm_CII_DIG','fm_CIII_DIG','fm_CIV_DIG','fm_CO_DIG']
+
+    for line in lines: target_list.append('L_'+line)
+    for line in lines: target_list.append('L_'+line+'_int')
+    for line in lines: target_list.append('f_'+line+'_DNG')
+
+    cloudy_grid['nH_fit']       =   cloudy_grid['nH']
+    cloudy_grid['R_fit']        =   cloudy_grid['R']
+    cloudy_grid['Z_fit']        =   cloudy_grid['Z']
+    cloudy_grid['Tk_fit']       =   cloudy_grid['Tk']
+
+    # Make grid of model results corresponding target grid values and interpolate in it
+    for target in target_list:
+        target_grid                 =   np.zeros([len(cloudy_grid_param['nHs']),len(cloudy_grid_param['Rs']),len(cloudy_grid_param['Zs']),len(cloudy_grid_param['Tks'])])
+        i                           =   0
+        for i1 in range(0,len(cloudy_grid_param['nHs'])):
+            for i2 in range(0,len(cloudy_grid_param['Rs'])):
+                for i3 in range(0,len(cloudy_grid_param['Zs'])):
+                    for i4 in range(0,len(cloudy_grid_param['Tks'])):
+                        target_grid[i1,i2,i3,i4]    =   cloudy_grid[target][i]
+                        i                           +=  1
+
+        # Make function that will do the interpolation:
+        interp                      =   RegularGridInterpolator((cloudy_grid_param['nHs'],cloudy_grid_param['Rs'],cloudy_grid_param['Zs'],cloudy_grid_param['Tks']), target_grid, method = 'linear')
+        # And interpolate:
+        difgas[target]              =   interp(difs)
+
+    # Find index of closest models!
+    model_numbers               =   np.zeros([len(cloudy_grid_param['nHs']),len(cloudy_grid_param['Rs']),len(cloudy_grid_param['Zs']),len(cloudy_grid_param['Tks'])])
+    j                           =   0
+    for i1 in range(0,len(cloudy_grid_param['nHs'])):
+        for i2 in range(0,len(cloudy_grid_param['Rs'])):
+            for i3 in range(0,len(cloudy_grid_param['Zs'])):
+                for i4 in range(0,len(cloudy_grid_param['Tks'])):
+                    model_numbers[i1,i2,i3,i4]      =   j
+                    j                               +=  1
+    closest_model_i             =   np.zeros(N_difs)
+    for i in range(0,N_difs):
+        nH                          =   difgas['nH'][i]
+        R                           =   difgas['R'][i]
+        Z                           =   difgas['Z'][i]
+        Tk                          =   difgas['Tk'][i]
+        i_nH                        =   np.argmin(abs(10.**cloudy_grid_param['nHs']-nH))
+        i_R                         =   np.argmin(abs(10.**cloudy_grid_param['Rs']-R))
+        i_Z                         =   np.argmin(abs(10.**cloudy_grid_param['Zs']-Z))
+        i_Tk                        =   np.argmin(abs(10.**cloudy_grid_param['Tks']-Tk))
+        closest_model_i[i]          =   int(model_numbers[i_nH,i_R,i_Z,i_Tk])
+    difgas['closest_model_i']   =   closest_model_i
+
+    # Check sum of L_[CII] using closest model number
+    L_tot               =   0.
+    for i in range(0,N_difs):
+        L_tot               +=   cloudy_grid['L_CII'][difgas['closest_model_i'][i]]
+    print('Sum of L_[CII] using closest model number: %s Lsun' % L_tot)
+    print('Sum of L_[CII] using interpolation: %s Lsun' % np.sum(difgas['L_CII']))
+
+
+    # Calculate mass fractions in ionized vs neutral diffuse gas:
+    difgas['m_DNG']         =   difgas['m']*difgas['fm_DNG']
+    difgas['m_DIG']         =   difgas['m']*(1-difgas['fm_DNG'])
+    for mass in ['H','HI','H2','HII','C','CII','CIII','CIV','CO']:
+        difgas['m_'+mass+'_DNG']       =   difgas['m_DNG']*difgas['fm_'+mass+'_DNG']
+        difgas['m_'+mass+'_DIG']       =   difgas['m_DIG']*difgas['fm_'+mass+'_DIG']
+
+    # Check masses
+    print('Total diffuse gas mass: %s Msun' % (sum(difgas['m'])))
+    print('Total diffuse neutral gas (DNG) mass: %s or %s %%' % (np.sum(difgas['m_DNG']),np.sum(difgas['m_DNG'])/np.sum(difgas['m'])*100.))
+    print('Total diffuse ionized gas (DIG) mass: %s or %s %%' % (np.sum(difgas['m_DIG']),np.sum(difgas['m_DIG'])/np.sum(difgas['m'])*100.))
+    print('Check sum: %s %%' % (sum(difgas['m'])/(sum(difgas['m_DNG'])+sum(difgas['m_DIG']))*100.))
+
+    # Prune the dataframe a bit:
+    difgas1                 =   difgas[['x','y','z','vx','vy','vz','vel_disp_gas',\
+                                'm','nH','R','Z','Tk','FUV',\
+                                'm_DNG','m_DIG','m_H_DNG','m_H_DIG','m_HI_DNG','m_HI_DIG',\
+                                'm_H2_DNG','m_H2_DIG','m_HII_DNG','m_HII_DIG',\
+                                'm_C_DNG','m_C_DIG','m_CII_DNG','m_CII_DIG','m_CIV_DNG','m_CIV_DIG','m_CIII_DNG','m_CIII_DIG','m_CO_DNG','m_CO_DIG',\
+                                'm_dust','Tk_DNG','Tk_DIG','closest_model_i']].copy()
+
+    # Store line emission from ionized vs neutral diffuse gas
+    for line in lines:
+        difgas1['L_'+line]              =   difgas['L_'+line]
+        difgas1['L_'+line+'_int']       =   difgas['L_'+line+'_int']
+        difgas1['L_'+line+'_DNG']       =   difgas['L_'+line]*difgas['f_'+line+'_DNG']
+        difgas1['L_'+line+'_DNG_int']   =   difgas['L_'+line+'_int']*difgas['f_'+line+'_DNG']
+        difgas1['L_'+line+'_DIG']       =   difgas['L_'+line]*(1.-difgas['f_'+line+'_DNG'])
+        difgas1['L_'+line+'_DIG_int']   =   difgas['L_'+line+'_int']*(1.-difgas['f_'+line+'_DNG'])
+        print('Total L_'+line+': %.2e L_sun' % (sum(difgas1['L_'+line])))
+
+    # Dust masses:
+    difgas1['m_dust_DNG']       =   difgas1['m_dust']/difgas1['m']*difgas1['m_DNG']
+    difgas1['m_dust_DIG']       =   difgas1['m_dust']/difgas1['m']*difgas1['m_DIG']
+
+    # Gas phases within diffuse gas:
+    print('In DNG:')
+    print('%.2f %% of hydrogen is molecular' % (np.sum(difgas1['m_H2_DNG'])/np.sum(difgas1['m_H_DNG'])*100.))
+    print('%.2f %% of hydrogen is atomic' % (np.sum(difgas1['m_HI_DNG'])/np.sum(difgas1['m_H_DNG'])*100.))
+    print('%.2f %% of hydrogen is ionized' % (np.sum(difgas1['m_HII_DNG'])/np.sum(difgas1['m_H_DNG'])*100.))
+    print('In DIG:')
+    print('%.2f %% of hydrogen is molecular' % (np.sum(difgas1['m_H2_DIG'])/np.sum(difgas1['m_H_DIG'])*100.))
+    print('%.2f %% of hydrogen is atomic' % (np.sum(difgas1['m_HI_DIG'])/np.sum(difgas1['m_H_DIG'])*100.))
+    print('%.2f %% of hydrogen is ionized' % (np.sum(difgas1['m_HII_DIG'])/np.sum(difgas1['m_H_DIG'])*100.))
+
+    # Add some attributes to dif dataframe
+    difgas1.M_DNG               =   np.sum(difgas1['m_DNG'])
+    difgas1.M_DIG               =   np.sum(difgas1['m_DIG'])
+    difgas1.M_dust_DNG          =   np.sum(difgas1['m_dust_DNG'])
+    difgas1.M_dust_DIG          =   np.sum(difgas1['m_dust_DIG'])
+
+    return(difgas1)
+
+#===========================================================================
+""" For datacube step"""
+#---------------------------------------------------------------------------
+
+def get_v_axis():
+    """Returns velocity axis.
+    """
+    v_axis              =   np.arange(-v_max,v_max+v_max/1e6,v_res)
+    dv                  =   v_axis[1]-v_axis[0]
+    v_axis              =   v_axis[0:len(v_axis)-1]+v_res/2.
+    return v_axis
+
+def get_x_axis_kpc():
+    """Returns position (x or y) axis in kpc.
+    """
+    x_axis              =   np.arange(-x_max_pc,x_max_pc+x_max_pc/1e6,x_res_pc)
+    dx                  =   x_axis[1]-x_axis[0]
+    x_axis_kpc          =   (x_axis[0:len(x_axis)-1]+x_res_pc/2.)/1000.
+    return x_axis_kpc
+
+def mk_datacube(gal_ob,dataframe,ISM_dc_phase='GMC'):
+    """
+    Creates a datacube for specific galaxy, ISM phase and target
+
+    Parameters
+    ----------
+    gal_ob : class object
+        Galaxy object
+    dataframe : pandas dataframe
+        Dataframe containing particle data for this ISM phase
+    ISM_dc_phase : str
+        ISM phase, default: 'GMC'
+    """
+
+    print('\nNOW CREATING DATACUBES OF %s FOR ISM PHASE %s' % (target,ISM_dc_phase))
+
+    # Derive an extension for the file names
+    if ISM_dc_phase == 'GMC': ISM_ext = ISM_dc_phase
+    if ISM_dc_phase != 'GMC': ISM_ext = ISM_dc_phase + '_' + gal_ob.UV_str + 'UV'
+    ext                 =   '%s_%s_%s' % (target,z1,ISM_ext)
+    if target == 'Z': ext = ext.replace('Z_','m_') # for metallicity, we just need the mass profiles
+
+    # Create velocity and position axes
+    v_axis              =   get_v_axis()
+    x_axis_kpc          =   get_x_axis_kpc()
+
+    print(' 1) Create (if not there already) radial profiles of all model clouds')
+    rad_prof_path = d_cloud_profiles+'rad_profs_%s.npy' % ext
+    print('Looking for: %s ' % rad_prof_path)
+    if not os.path.exists(rad_prof_path):
+        mk_cloud_rad_profiles(ISM_dc_phase=ISM_dc_phase,target=target,FUV=gal_ob.UV_str,rad_prof_path=rad_prof_path)
+        # mk_cloud_rad_profiles(ISM_dc_phase=ISM_dc_phase,target=target,FUV=gal_ob.UV_str,rad_prof_path=rad_prof_path)
+
+    print(' 2) Load clouds in galaxy')
+    t1 = time.clock()
+    global clouds
+    clouds                                      =   load_clouds(dataframe,target,ISM_dc_phase)
+    print('Total number of clouds to be drizzled: %s' % len(clouds))
+
+    print('3) Check how many models are available')
+    model_rad_profs         =   np.load(rad_prof_path)
+    models_r_pc             =   model_rad_profs[1,:,:]  # pc
+    model_index             =   clouds['closest_model_i'].values
+    clouds_r_pc             =   [models_r_pc[int(i)] for i in model_index]
+    clouds_R_pc             =   np.max(clouds_r_pc,axis=1)
+    print('%s corresponding models did not finish ' % len(clouds_R_pc[clouds_R_pc == 0]))
+    print('out of %s clouds' % len(clouds))
+
+    print('4) Drizzle onto datacube')
+    if N_cores == 1:
+        print('(Not using multiprocessing - 1 core in use)')
+        # Make one for loop
+        start_end           =   [0,len(clouds)]
+        dc                  =   drizzle(start_end,v_axis,x_axis_kpc,rad_prof_path,ISM_dc_phase,target,gal_ob.UV_str,gal_ob.zred)
+
+    if N_cores > 1:
+        # Set up a pool of workers to run more for loops in parallel
+        pool                =   mp.Pool(processes = N_cores)        # 8 processors on my Mac Pro, 16 on Betty
+        n_clouds            =   500
+
+        if len(clouds) < n_clouds: n_clouds = len(clouds)
+        work_division       =   [(_*n_clouds,(_+1)*n_clouds) for _ in range(0,int(np.floor(len(clouds)/n_clouds)))]
+
+        if (work_division[-1][1] - len(clouds)) > 0:
+            work_division.append((work_division[-1][1],len(clouds)))
+        # result = drizzle(work_division[0],v_axis,x_axis_kpc,rad_prof_path,ISM_dc_phase,target,gal_ob.UV_str,gal_ob.zred) # for testing
+        # a = asdaf
+        results             =   [pool.apply_async(drizzle,args=(start_end,v_axis,x_axis_kpc,rad_prof_path,ISM_dc_phase,target,gal_ob.UV_str,gal_ob.zred)) for start_end in work_division]
+        print('(Using multiprocessing on %s clouds at a time! %s cores in use)' % (n_clouds,N_cores))
+        pool.close()
+        pool.join()
+        sub_ims             =   [p.get() for p in results]
+        dc                  =   sub_ims[0]
+        for _ in range(1,len(sub_ims)):
+            dc                  +=      sub_ims[_]
+        t2 = time.clock()
+        dt = t2-t1
+        if dt < 60: print('Time it took to do this ISM phase: %.2f s' % (t2-t1))
+        if dt > 60: print('Time it took to do this ISM phase: %.2f min' % ((t2-t1)/60.))
+
+    dc                  =   np.nan_to_num(dc)
+    dc_sum              =   np.sum(dc)
+    if target in ['L_' + l for l in lines]:
+        print(target + ' = %.2e Lsun from interpolated clouds' % (np.sum(clouds[target][0:len(clouds)])))
+        print(target + ' = %.2e Lsun from datacube (will be smaller due to missing radial profiles for models that did not run)' % np.sum(dc_sum))
+    else:
+        print(target + ' = %.2e [unit] from interpolated clouds' % (np.sum(clouds[target][0:len(clouds)])))
+        print(target + ' = %.2e [unit] from datacube (will be smaller due to missing radial profiles for models that did not run)' % np.sum(dc_sum))
+    return(dc,dc_sum)
+
+def drizzle(start_end,v_axis,x_axis_kpc,rad_prof_path,ISM_dc_phase,target,FUV,zred,plotting=True,verbose=False,checkplot=False):
+
+    '''
+    Purpose
+    ---------
+    Drizzle *all* clouds onto galaxy grid in velocity and space
+
+    '''
+    # Only look at these clouds:
+    clouds1                  =   clouds[start_end[0]:start_end[1]]
+    N_clouds                =   len(clouds1)
+    print('Now drizzling %s %s clouds (# %s to %s) onto galaxy grid at %s x MW FUV...' % (N_clouds,ISM_dc_phase,start_end[0],start_end[1]-1,FUV))
+
+    # Empty numpy array to hold result
+    lenv,lenx               =   len(v_axis),len(x_axis_kpc)
+    result                  =   np.zeros([lenv,lenx,lenx])
+
+    if verbose:
+        if ISM_dc_phase == 'GMC':
+            model_path      =   d_cloud_models+'GMC/output/GMC_'
+            models          =   pd.read_pickle(d_cloud_models+'cloud_models/GMCgrid'+ ext_DENSE + '_' + z1+'_em.models')
+
+        if ISM_dc_phase in ['DNG','DIG']:
+            model_path      =   d_cloud_models+'dif/output/dif_'
+            models          =   pd.read_pickle(d_cloud_models+'cloud_models/dif/grids/difgrid_'+FUV+'UV'+ ext_DIFFUSE + '_' + z1+'_em.models')
+
+    # For reference, get total values of "target" from interpolation
+    if target == 'm':
+        interpolation_result =  clouds1[target].values
+    if target == 'Z':
+        interpolation_result =  clouds1['m'].values*clouds1['Z'].values # Do a mass-weighted mean of metallicities
+    else:
+        # target = 'L_' + target
+        if ISM_dc_phase in ['GMC']:        interpolation_result    =   clouds1[target].values
+        if ISM_dc_phase in ['DNG','DIG']:  interpolation_result    =   clouds1[target+'_'+ISM_dc_phase].values
+
+    # LOADING
+    model_rad_profs         =   np.load(rad_prof_path)
+    all_inner_r_pc = model_rad_profs[0,:,0]
+    # print('%s models did not finish ' % len(all_inner_r_pc[all_inner_r_pc == 0]))
+
+    models_r_pc             =   model_rad_profs[1,:,:]  # pc
+    models_SB               =   model_rad_profs[0,:,:]  # Lsun/pc^2
+    # Assign these models to clouds in the galaxy:
+    model_index             =   clouds1['closest_model_i'].values
+    clouds_r_pc             =   [models_r_pc[int(i)] for i in model_index]
+    clouds_SB               =   [models_SB[int(i)] for i in model_index]
+    clouds_R_pc             =   np.max(clouds_r_pc,axis=1)
+    vel_disp_gas            =   clouds1['vel_disp_gas'].values
+    v_proj                  =   clouds1['v_proj'].values
+    x_cloud                 =   clouds1['x'].values
+    y_cloud                 =   clouds1['y'].values
+
+    # SETUP
+    # Some things we will need
+    v_max, v_res            =   max(v_axis),v_axis[1]-v_axis[0]
+    fine_v_axis             =   np.arange(-v_max,v_max+v_max/1e6,v_res/8.)
+    x_res_kpc               =   x_axis_kpc[1]-x_axis_kpc[0]
+    x_res_pc                =   x_res_kpc*1000.
+    npix_highres_def        =   9# highres pixels per galaxy pixel, giving 3 pixels on either side of central pixel (of resolution x_res_pc)
+    x_res_kpc_highres       =   x_res_kpc/npix_highres_def # size of high resolution pixel
+    x_res_pc_highres        =   x_res_kpc_highres*1000. # size of high resolution pixel
+    pix_area_highres_kpc    =   x_res_kpc_highres**2. # area of high resolution pixel
+    pix_area_highres_pc     =   x_res_pc_highres**2. # area of high resolution pixel
+
+    # What galaxy pixel center comes closest to this cloud center?
+    min_x                   =   np.min(x_axis_kpc)
+    range_x                 =   np.max(x_axis_kpc) - min_x
+    x_index                 =   np.round((x_cloud-min_x)/range_x*(lenx-1)).astype(int)
+    y_index                 =   np.round((y_cloud-min_x)/range_x*(lenx-1)).astype(int)
+
+
+    # ----------------------------------------------
+    # SMALL CLOUDS
+    # Clouds that are "very" small compared to pixel size in galaxy image
+    # give all their luminosity to one galaxy pixel
+    small_cloud_index       =   [(0 < clouds_R_pc) & (clouds_R_pc <= x_res_kpc*1000./8.)][0]
+    print('%s small clouds, unresolved by galaxy pixels' % (len(small_cloud_index[small_cloud_index == True])))
+    small_cloud_x_index     =   np.extract(small_cloud_index,x_index)
+    small_cloud_y_index     =   np.extract(small_cloud_index,y_index)
+    small_cloud_targets     =   np.extract(small_cloud_index,interpolation_result)
+    small_cloud_vdisp_gas   =   np.extract(small_cloud_index,vel_disp_gas)
+    small_cloud_v_proj      =   np.extract(small_cloud_index,v_proj)
+    pixels_outside          =   0
+    for target1,vel_disp_gas1,v_proj1,i_x,i_y in zip(small_cloud_targets,small_cloud_vdisp_gas,small_cloud_v_proj,small_cloud_x_index,small_cloud_y_index):
+        vel_prof                =       mk_cloud_vel_profile(v_proj1,vel_disp_gas1,fine_v_axis,v_axis)
+        try:
+            result[:,i_x,i_y]       +=      vel_prof*target1
+        except:
+            pixels_outside      +=  1
+
+    # ----------------------------------------------
+    # LARGER CLOUDS
+    # Cloud is NOT very small compared to pixel size in galaxy image
+    # => resolve cloud and split into nearby pixels
+    large_cloud_index       =   [(0 < clouds_R_pc) & (clouds_R_pc > x_res_pc/8.)][0] # boolean array
+    print('%s large clouds, resolved by galaxy pixels' % (len(large_cloud_index[large_cloud_index == True])))
+
+    # Total number of highres pixels to (more than) cover this cloud
+    Npix_highres            =   2.2*np.extract(large_cloud_index,clouds_R_pc)/(x_res_pc_highres)
+    Npix_highres            =   np.ceil(Npix_highres).astype(int)
+    # Count highres cloud pixels in surrounding galaxy pixels
+    max_pix_dif             =   np.extract(large_cloud_index,clouds_R_pc)/x_res_pc
+    max_pix_dif             =   np.ceil(max_pix_dif).astype(int)
+    highres_axis_max        =   (np.array(Npix_highres)*x_res_pc_highres)/2.
+    large_cloud_interpol    =   np.extract(large_cloud_index,interpolation_result)
+    large_cloud_model_index =   np.extract(large_cloud_index,model_index)
+    large_cloud_x_index     =   np.extract(large_cloud_index,x_index)
+    large_cloud_y_index     =   np.extract(large_cloud_index,y_index)
+    large_cloud_targets     =   np.extract(large_cloud_index,clouds1[target].values)
+    large_cloud_vdisp_gas   =   np.extract(large_cloud_index,vel_disp_gas)
+    large_cloud_v_proj      =   np.extract(large_cloud_index,v_proj)
+    large_cloud_R_pc        =   np.extract(large_cloud_index,clouds_R_pc)
+    large_models_r_pc       =   [models_r_pc[int(_)] for _ in large_cloud_model_index]
+    large_models_SB         =   [models_SB[int(_)] for _ in large_cloud_model_index]
+    i                       =   0
+    pixels_outside          =   0
+    # overwrite_me            =   np.zeros([lenv,lenx,lenx])
+
+    for target1,vel_disp_gas1,v_proj1,i_x,i_y,npix_highres in zip(large_cloud_targets,large_cloud_vdisp_gas,large_cloud_v_proj,large_cloud_x_index,large_cloud_y_index,Npix_highres):
+        if np.sum(large_models_SB[i]) > 0:
+            # overwrite_me        =   overwrite_me*0.
+            vel_prof            =   mk_cloud_vel_profile(v_proj1,vel_disp_gas1,fine_v_axis,v_axis)
+            # create grid of coordinates for high-res image of cloud:
+            # npix_highres = npix_highres*10. # CHECK
+            # x_res_pc_highres = x_res_pc_highres/10. # CHECK
+            x_highres_axis      =   np.linspace(-highres_axis_max[i],highres_axis_max[i],npix_highres)
+            x_highres_mesh, y_highres_mesh = np.mgrid[slice(-max(x_highres_axis) + x_res_pc_highres/2., max(x_highres_axis) - x_res_pc_highres/2. + x_res_pc_highres/1e6, x_res_pc_highres),\
+                            slice(-max(x_highres_axis) + x_res_pc_highres/2., max(x_highres_axis) - x_res_pc_highres/2. + x_res_pc_highres/1e6, x_res_pc_highres)]
+            radius              =   np.sqrt(x_highres_mesh**2+y_highres_mesh**2)
+            # create high-res image of this cloud, evaluating surface brightness at the center of each high-res pixel
+            interp_func_r       =   interp1d(large_models_r_pc[i],large_models_SB[i],fill_value=large_models_SB[i][-1],bounds_error=False)
+            im_cloud            =   interp_func_r(radius)
+            im_cloud[radius > large_cloud_R_pc[i]]  =   0.
+
+            # Remove "per area" from image units [Lsun/pc^2 -> Lsun or Msun/pc^2 -> Msun]
+            im_cloud            =   im_cloud*pix_area_highres_pc
+
+            # CHECK plot
+            # R_max = highres_axis_max[i]
+            # plt.close('all')
+            # plot.simple_plot(figsize=(6, 6),xr=[-R_max,R_max],yr=[-R_max,R_max],aspect='equal',\
+            #     x1=x_highres_axis,y1=x_highres_axis,col1=im_cloud,\
+            #     contour_type1='mesh',xlab='x [pc]',ylab='y [pc]',\
+            #     colorbar1=True,lab_colorbar1='L$_{\odot}$ per cell')
+            # plt.show(block=False)
+
+
+            # Normalize to total luminosity of this cloud:
+            im_cloud            =   im_cloud*large_cloud_interpol[i]/np.sum(im_cloud)
+
+            if verbose: print('check\n%.2e Msun from cloud image' % (np.sum(im_cloud)))
+
+            # Identify low rew pixels that we will be filling up
+            x_indices           =   [large_cloud_x_index[i] + _ for _ in np.arange(-max_pix_dif[i],max_pix_dif[i]+1)]
+            y_indices           =   [large_cloud_y_index[i] + _ for _ in np.arange(-max_pix_dif[i],max_pix_dif[i]+1)]
+            x_index_mesh, y_index_mesh = np.mgrid[slice(x_indices[0], x_indices[-1] + 1./1e6, 1),\
+                slice(y_indices[0], y_indices[-1] + 1./1e6, 1)]
+            x_index_array       =   x_index_mesh.reshape(len(x_indices)**2)
+            y_index_array       =   y_index_mesh.reshape(len(y_indices)**2)
+            # Center in x and y direction for highres cloud image:
+            i_highres_center    =   float(npix_highres)/2.-0.5
+            check               =   np.zeros([lenv,lenx,lenx])
+
+            for x_i,y_i in zip(x_index_array,y_index_array):
+                xdist_highres_from_cloud_center         =   (int(x_i) - large_cloud_x_index[i]) * npix_highres_def
+                ydist_highres_from_cloud_center         =   (int(y_i) - large_cloud_y_index[i]) * npix_highres_def
+                x_i_highres         =   int(i_highres_center + xdist_highres_from_cloud_center)# - (npix_highres-1)/2.)
+                y_i_highres         =   int(i_highres_center + ydist_highres_from_cloud_center)# - (npix_highres-1)/2.)
+                try:
+                    # result[:,int(x_i),int(y_i)]             +=  vel_prof*np.sum(im_cloud[x_i_highres:x_i_highres+npix_highres_def+1, y_i_highres:y_i_highres+npix_highres_def+1])
+                    check[:,int(x_i),int(y_i)]      +=  vel_prof*np.sum(im_cloud[x_i_highres:x_i_highres+npix_highres_def+1, y_i_highres:y_i_highres+npix_highres_def+1])
+                    # overwrite_me                            +=  vel_prof*np.sum(im_cloud[x_i_highres:x_i_highres+npix_highres_def+1, y_i_highres:y_i_highres+npix_highres_def+1])
+                except:
+                    pixels_outside                  +=1
+                    pass
+
+            if np.sum(check) != 0:
+                check              =   check*large_cloud_interpol[i]/np.sum(check)
+                result             +=   check
+
+            if verbose:
+                if target == 'm':
+                    print('%.2e Msun from drizzled image of cloud' % (np.sum(check)))
+                    print('%.2e Msun from cloudy model result grid' % (large_cloud_interpol[i]))
+                else:
+                    print('%.2e Lsun from drizzled image of cloud' % (np.sum(check)))
+                    if ISM_dc_phase == 'GMC':
+                        print('%.2e Lsun from cloudy grid' % (models[target][large_cloud_model_index[i]]))
+                    if ISM_dc_phase in ['DNG','DIG']:
+                        if ISM_dc_phase == 'DNG':
+                            nearest = models[target][large_cloud_model_index[i]]*models['f_'+line+'_DNG'][large_cloud_model_index[i]]
+                            print('%.2e Lsun from cloudy grid nearest model' % nearest)
+                            print('%.2e Lsun from interpolation' % (large_cloud_interpol[i]))
+                        if ISM_dc_phase == 'DIG':
+                            print('%.2e Lsun from cloudy grid nearest model' % (models[target][large_cloud_model_index[i]]*(1-models['f_'+line+'_DNG'][large_cloud_model_index[i]])))
+
+        i                   +=  1
+
+    print('%s highres cloud pixels went outside galaxy image' % (pixels_outside))
+
+    return(result)
+
+def load_clouds(dataframe,target,ISM_dc_phase):
+    '''
+    Purpose
+    ---------
+    Load clouds from saved galaxy files, and convert to a similar format.
+
+    '''
+
+    clouds1             =   dataframe.copy()
+    print('Total number of clouds loaded: %s' % len(clouds1))
+
+    if ISM_dc_phase in ['DNG','DIG']:
+        if target == 'Z': clouds1[target]     =   dataframe['Z'].values
+        if target != 'Z':
+            if target in ['L_' + l for l in lines]:
+                clouds1[target]     =   dataframe[target+'_'+ISM_dc_phase].values
+            else:
+                clouds1[target]     =   dataframe[target+'_'+ISM_dc_phase].values
+
+    if ISM_dc_phase == 'GMC':
+        clouds1['R']        =   dataframe['Rgmc'].values
+
+    # TEST
+    # clouds1             =   clouds1[0:550]
+
+
+    clouds1['x']        =   dataframe['x'] # kpc
+    clouds1['y']        =   dataframe['y'] # kpc
+    clouds1['z']        =   dataframe['z'] # kpc
+
+    # TEST
+    # clouds1['vx']         =   clouds1['vx']*0.+100.
+    # clouds1['vx'][clouds['x'] < 0] =  -100.
+    # clouds1['vy']         =   clouds1['vy']*0.
+    # clouds1['vz']         =   clouds1['vz']*0.
+
+    # Rotate cloud positions and velocities around y axis
+    inc_rad             =   2.*np.pi*float(inc_dc)/360.
+    coord               =   np.array([clouds1['x'],clouds1['y'],clouds1['z']])
+    coord_rot           =   np.dot(rotmatrix(inc_rad,axis='y'),coord)
+    clouds1['x'] = coord_rot[0]
+    clouds1['y'] = coord_rot[1]
+    clouds1['z'] = coord_rot[2]
+    vel                 =   np.array([clouds1['vx'],clouds1['vy'],clouds1['vz']])
+    vel_rot             =   np.dot(rotmatrix(inc_rad,axis='y'),vel)
+    clouds1['vx'] = vel_rot[0]; clouds1['vy'] = vel_rot[1]; clouds1['vz'] = vel_rot[2]
+    clouds1['v_proj']   =   clouds1['vz'] # km/s
+    # pdb.set_trace()
+
+    # Cut out only what's inside image:
+    radius_pc           =   np.sqrt(clouds1['x']**2 + clouds1['y']**2)
+    clouds1             =   clouds1[radius_pc < x_max_pc/1000.]
+    clouds1             =   clouds1.reset_index(drop=True)
+
+    # TEST!!
+    # clouds1           =   clouds1.iloc[0:2]
+    # clouds1['x'][0]   =   0
+    # clouds1['y'][0]   =   0
+
+    return(clouds1)
+
+def mk_cloud_vel_profile(v_proj,vel_disp_gas,fine_v_axis,v_axis,plotting=False):
+    '''
+    Purpose
+    ---------
+    Make the velocity profile for *one* cloud
+
+    What this function does
+    ---------
+    Calculates the fraction of total flux [Jy] going into the different velocity bins
+
+    Arguments
+    ---------
+    v_proj: projected line-of-sight velocity of the cloud
+
+    vel_disp_gas: velocity dispersion of the cloud
+
+    v_axis: larger velocity axis to project clouds onto
+    '''
+
+    if vel_disp_gas > 0:
+
+        # Evaluate Gaussian on fine velocity axis
+        Gaussian                =   1./np.sqrt(2*np.pi*vel_disp_gas**2) * np.exp( -(fine_v_axis-v_proj)**2 / (2*vel_disp_gas**2) )
+
+        # Numerical integration over velocity axis bins
+        v_res                   =   (v_axis[1]-v_axis[0])/2.
+
+        vel_prof                =   abs(np.array([integrate.trapz(fine_v_axis[(fine_v_axis >= v-v_res) & (fine_v_axis < v+v_res)], Gaussian[(fine_v_axis >= v-v_res) & (fine_v_axis < v+v_res)]) for v in v_axis]))
+
+        if plotting:
+            plot.simple_plot(fig=2,
+                fontsize=12,xlab='v [km/s]',ylab='F [proportional to Jy]',\
+                x1=fine_v_axis,y1=Gaussian,col1='r',ls1='--',\
+                x2=v_axis,y2=vel_prof,col2='b',ls2='-.')
+
+            plt.show(block=False)
+
+        # Normalize that profile
+        vel_prof                =   vel_prof*1./np.sum(vel_prof)
+
+        # If vel_disp_gas is very small, vel_prof sometimes comes out with only nans, use a kind of Dirac delta function:
+        if np.isnan(np.max(vel_prof)):
+            vel_prof                =   v_axis*0.
+            vel_prof[find_nearest(v_axis,v_proj,find='index')] = 1.
+
+    else:
+        # If vel_disp_gas = 0 km/s, use a kind of Dirac delta function:
+        vel_prof                =   v_axis*0.
+        vel_prof[find_nearest(v_axis,v_proj,find='index')] = 1.
+
+    return(vel_prof)
 
 #===============================================================================
 """ Cosmology """

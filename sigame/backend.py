@@ -60,9 +60,10 @@ def datacubes(GR):
             do_DNG_dc  =   False
             do_DIG_dc  =   False
             # Try to load datacubes
-            if not os.path.isfile(aux.get_file_location(gal_ob,target=target,ISM_dc_phase='GMC')) : do_GMC_dc = True
-            if not os.path.isfile(aux.get_file_location(gal_ob,target=target,ISM_dc_phase='DNG')) : do_DNG_dc = True
-            if not os.path.isfile(aux.get_file_location(gal_ob,target=target,ISM_dc_phase='DIG')) : do_DIG_dc = True
+            print(aux.get_file_location(gal_ob=gal_ob,gal_ob_present=True,target=target,ISM_dc_phase='GMC'))
+            if not os.path.isfile(aux.get_file_location(gal_ob=gal_ob,gal_ob_present=True,target=target,ISM_dc_phase='GMC')) : do_GMC_dc = True
+            if not os.path.isfile(aux.get_file_location(gal_ob=gal_ob,gal_ob_present=True,target=target,ISM_dc_phase='DNG')) : do_DNG_dc = True
+            if not os.path.isfile(aux.get_file_location(gal_ob=gal_ob,gal_ob_present=True,target=target,ISM_dc_phase='DIG')) : do_DIG_dc = True
             print('Overwrite is OFF, will do:')
             if do_GMC_dc: print('- Create datacube for GMCs')
             if do_DNG_dc: print('- Create datacube for DNG')
