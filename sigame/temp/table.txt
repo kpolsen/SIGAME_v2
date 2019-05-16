@@ -1,2 +1,0 @@
-Galaxy name | z | R_gal | M_star | M_gas | SFR | Sigma_SFR | Z | M_GMC/M_gas | M_DNG/M_gas | M_DIG/M_gas $  \\
-G1 & 	6.00 & 	10.84 	& 	0.000 & 	13.159 & 	22.455 & 	0.370 & 	0.103 & 	0.052 & 	0.844 \\

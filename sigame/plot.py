@@ -1,17 +1,26 @@
 # coding=utf-8
 """
-###     Submodule: plot.py of SIGAME                    ###
+Module: plot
 """
 
+# Import other SIGAME modules
+import sigame.global_results as glo
+import sigame.aux as aux
+import sigame.galaxy as gal
+
+# Import other modules
+# from __future__ import division
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import matplotlib.animation as animation
+import matplotlib.animation as FuncAnimation
 from matplotlib import gridspec
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pandas as pd
 import numpy as np
 import pdb as pdb
 from scipy.interpolate import RegularGridInterpolator
 from matplotlib.mlab import griddata
+import matplotlib.ticker as ticker
 import scipy as scipy
 from matplotlib.colors import ListedColormap
 import scipy.stats as stats
@@ -28,229 +37,242 @@ import re                               # to replace parts of string
 import itertools
 import math
 import os.path
-import emcee
-import corner
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter, MaxNLocator
-import classes as cl
-import analysis as analysis   
-import aux as aux
+import sympy as sy
+from sympy.solvers import solve
+from argparse import Namespace
+
 
 #===============================================================================
 """  Load parameters """
 #-------------------------------------------------------------------------------
 
-params                      =   np.load('sigame/temp/params.npy').item()
+params                      =   aux.load_parameters()
+g                           =   globals()
 for key,val in params.items():
-    exec(key + '=val')
+    exec(key + '=val',g)
 
 #===============================================================================
 """  Basic plotting """
 #-------------------------------------------------------------------------------
 
 def simple_plot(**kwargs):
-    '''
-    Purpose
-    ---------
-    A function to standardize all plots
+    '''A function to standardize all plots
 
-    What this function does
-    ---------
     Plots that can be created this way:
-    1. errorbar plot (with x and/or y errorbars)
-    2. line
-    3. histogram
-    4. markers
-    5. bar
-    6. hexbin
-    7. scatter plot
-    8. filled region
+        - 1. errorbar plot (with x and/or y errorbars)
+        - 2. line
+        - 3. histogram
+        - 4. markers
+        - 5. bar
+        - 6. hexbin
+        - 7. contour plot
+        - 8. scatter plot
+        - 9. hatched/filled region
+
+    The '1' below can be replaced by '2', '3', '4' etc for several plotting options in the same figure.
 
 
-    Arguments
-    ---------
-    The '1' below can be replaced by '2', '3', '4' etc for several plotting options in the same axis
+    Parameters
+    ----------
 
-    add: if True add to existing axis object, otherwise new figure+axes will be created - bool
-    default = False
+    add : bool
+        If True add to existing axis object, otherwise new figure+axes will be created, default: False
 
-    fig: figure number - int
-    default = 0
+    fig : int
+        Figure number, default: 0
 
-    figsize: figure size - (x,y) tuple
-    default = (8,6)
+    figsize : tuple
+        Figure size, default: (8,6)
 
-    x1: x values - list or numpy array
+    figname : str
+        If defined, a figure will be saved with this path+name, default = not defined (no figure saved)
 
-    y1: y values - list or numpy array
+    figtype : str
+        Format of figure, default: 'png'
 
-    xr,yr: x and/or y range - list
-    default = set automatically by matplotlib
+    figres : float
+        The dpi of the saved figure, default: 1000
 
-    xlog,ylog: determines if x and/or y axes should be logarithmic - bool
-    default = False (range set automatically by matplotlib)
+    fontsize : float
+        Fontsize of tick labels, default: 15
 
-    fill1: if defined, markers will be used - str
-    options:
-        - 'y': use filled markers
-        - 'n': use open markers
-    default = 'y'
+    x1 : list or numpy array
+        x values
 
-    ls1: linestyle - str
-    default = 'None' (does markers by default)
+    y1 : list or numpy array
+        y values
 
-    ma1: marker type - str
-    default = 'x'
+    xr : list
+        x range
 
-    ms1: marker size - float/int
-    default = 5
+    yr : list
+        y range
 
-    mew1: marker edge width - float/int
-    default = 2
+    xlog : bool
+        If True: x-axis will be in log units
 
-    col1: color of markers/lines - str
-    default = 'k'
+    ylog : bool
+        If True: y-axis will be in log units
 
-    ecol1: edgecolor - str
-    default = 'k'
+    fill1 : str
+        If defined, markers will be used ('y' for filled markers, 'n' for open markers), default: 'y'
 
-    lab1: label for x1,y7 - 'str'
-    default = ''
+    ls1 : str
+        Linestyle, default: 'None' (does markers by default)
 
-    alpha1: transparency factor - float
-    default = '1.1'
+    ma1 : str
+        Marker type, default: 'x'
 
-    dashes1: custom-made dashes/dots - str
-    default = ''
+    ms1 : int/float
+        Marker size, default: 5
 
-    legend: whether to plot legend or not - bool
-    default = False
+    mew1 : int/float
+        Marker edge width, default: 2
 
-    leg_fs: legend fontsize - float
-    default = not defined (same as fontsize for labels/tick marks)
+    col1 : str
+        Color of markers/lines, default: 'k'
 
-    legloc: legend location - str or list of coordinates
-    default =
+    ecol1 : str
+        Edgecolor, default: 'k'
 
-    cmap1: colormap for contour plots - str
-    default = 'viridis'
+    lab1 : str
+        Label for x1,y1 points, default: ''
 
-    xlab: x axis label - str
-    default = no label
+    alpha1 : float
+        Transparency fraction, default: 1.1
 
-    ylab: y axis label - str
-    default = no label
+    dashes1 : str
+        Custom-made dashes/dots, default = ''
 
-    title: plot title - str
-    default = no title
+    legend : bool
+        Whether to plot legend or not, default: False
 
-    xticks,yticks: whether to put x ticks and/or y ticks or not - bool
-    default = True,True
+    leg_fs : float
+        Legend fontsize, default: not defined (same as fontsize for labels/tick marks)
 
-    fontsize: fontsize of tick labels - float
-    default = 15
+    legloc : str or list of coordinates
+        Legend location, default: 'best'
 
-    lab_to_tick: if axis labels should be larger than tick marks, say how much here - float/int
-    default = 1.0
+    cmap1 : str
+        Colormap for contour plots, default: 'viridis'
 
-    lex1,uex1: lower and upper errorbars on x1 - list or numpy array
-    options:
-        - if an element in uex1 is 0 that element will be plotted as upper limit in x
-    default = None
+    xlab : str
+        x axis label, default: no label
 
-    ley1,uey1: lower and upper errorbars on y1 - list or numpy array
-    options:
-        - if an element in uey1 is 0 that element will be plotted as upper limit in y
-    default = None
+    ylab : str
+        y axis label, default: no label
 
-    histo1: whether to make a histogram of x1 values - bool
-    default = False
+    title : str
+        Plot title, default: no title
 
-    histo_real1: whether to use real values for histogram or percentages on y axis - bool
-    default = False
+    xticks: bool
+        Whether to put x ticks or not, default: True
 
-    bins1: number of bins in histogram - int
-    default = 100
+    yticks: bool
+        Whether to put y ticks or not, default: True
 
-    weights1: weights to histogram - list or numpy array
-    default = np.ones(len(x1))
+    lab_to_tick : int/float
+        If axis labels should be larger than tick marks, say how much here, default: 1.0
 
-    hexbin1: if True, will make hexbin contour plot - bool
-    default = False
+    lex1,uex1: list or numpy array
+        Lower and upper errorbars on x1, default: None, **options**:
+        If an element in uex1 is 0 that element will be plotted as upper limit in x
 
-    contour_type1: it defined, will make contour plot - 'str'
-    options:
-        -
-    default = not defined (will not make contour plot)
+    ley1,uey1: list or numpy array
+        lower and upper errorbars on y1, default: None, **options**:
+        If an element in uey1 is 0 that element will be plotted as upper limit in y
 
-    barwidth1: if defined, will make bar plot with this barwidth - float
-    default = not defined (will not do bar plot)
+    histo1 : bool
+        Whether to make a histogram of x1 values, default: False
 
-    scatter_color1: if defined, will make scatter plot with this color - list or numpy array
-    default = not defined (will not do scatter plot)
+    histo_real1 : bool
+        Whether to use real values for histogram or percentages on y axis, default: False
 
-    colormin1: minimum value for colorbar in scatter plot - float
-    default = not defined (will use all values in scatter_color1)
+    bins1 : int
+        Number of bins in histogram, default: 100
 
-    lab_colorbar: label for colorbar un scatter plot - str
-    default = not defined (will not make colorbar)
+    weights1 : list or numpy array
+        weights to histogram, default: np.ones(len(x1))
 
-    hatchstyle1: if defined, make hatched filled region - str
-    options:
-        - if set to '', fill with one color
-        - otherwise, use '/' '//' '///'' etc.
-    default = not defined (will not make hatched region)
+    hexbin1 : bool
+        If True, will make hexbin contour plot, default: False
 
-    text: if defined, add text to figure with this string - str
-    default: not defined (no text added)
+    contour_type1 : str
+        If defined, will make contour plot, default: not defined, **options**:
+        plain: use contourf on colors alone, optionally with contour levels only (no filling),
+        hexbin: use hexbin on colors alone,
+        median: use contourf on median of colors,
+        mean: use contourf on mean of colors,
+        sum: use contourf on sum of colors
 
-    textloc: must be specified in normalized axis units - list
-    default = [0.1,0.9]
+    barwidth1 : float
+        If defined, will make bar plot with this barwidth
 
-    textbox: if True, put a box around text - bool
-    default = False
+    scatter_color1 : list or numpy array
+        If defined, will make scatter plot with this color, default: not defined (will not do scatter plot)
 
-    fontsize_text: fontsize of text on plot - float/int
-    default = 0/7 * fontsize
+    colormin1 : float
+        Minimum value for colorbar in scatter plot, default: not defined (will use all values in scatter_color1)
 
-    grid: turn on grid lines - bool
-    default = False
+    lab_colorbar : str
+        Label for colorbar un scatter plot, default: not defined (will not make colorbar)
 
-    figname: if defined, a figure will be saved with this path+name - str
-    default = not defined (no figure saved)
+    hatchstyle1 : str
+        If defined, make hatched filled region, default: not defined (will not make hatched region), **options**:
+        if set to '', fill with one color,
+        otherwise, use '/' '//' '///'' etc.
 
-    figtype: format of figure - str
-    default = 'png'
+    text : str
+        If defined, add text to figure with this string, default: not defined (no text added)
 
-    figres: dpi of saved figure - float
-    default = 1000
+    textloc : list
+        Must be specified in normalized axis units, default: [0.1,0.9]
 
-    SC_return: return scatter plot object or not - bool
-    default = False
+    textbox : bool
+        If True, put a box around text, default: False
+
+    fontsize_text : int/float
+        Fontsize of text on plot, default: 0/7 * fontsize
+
+    grid : bool
+        Turn on grid lines, default: False
+
+    SC_return : bool
+        Return scatter plot object or not, default = False
 
     '''
 
     # Set fontsize
     if mpl.rcParams['ytick.labelsize'] == 'medium':
         fontsize            =   15
-        if kwargs.has_key('fontsize'): fontsize = kwargs['fontsize']
+    if 'fontsize' in kwargs:
+        fontsize            =   kwargs['fontsize']
         mpl.rcParams['ytick.labelsize'] = fontsize
         mpl.rcParams['xtick.labelsize'] = fontsize
-    else: fontsize            =   mpl.rcParams['ytick.labelsize']
+    else:
+        fontsize            =   15
     lab_to_tick         =   1.
-    if kwargs.has_key('lab_to_tick'): lab_to_tick = kwargs['lab_to_tick']
+    if 'lab_to_tick' in kwargs: lab_to_tick = kwargs['lab_to_tick']
     textcol             =   'black'
+    if 'textcol' in kwargs: textcol = kwargs['textcol']
     fontsize_text       =   fontsize*0.7
 
-
-    if kwargs.has_key('add'):
+    # Get axes object
+    if 'add' in kwargs:
         ax1                 =   plt.gca()
     else:
         fig                 =   0                                       # default figure number
-        if kwargs.has_key('fig'): fig = kwargs['fig']
+        if 'fig' in kwargs: fig = kwargs['fig']
         figsize             =   (8,6)                                   # slightly smaller figure size than default
-        if kwargs.has_key('figsize'): figsize = kwargs['figsize']
-        fig                 =   plt.figure(fig,figsize=figsize)
+        if 'figsize' in kwargs: figsize = kwargs['figsize']
+        fig                 =   plt.figure(fig)
         ax1                 =   fig.add_subplot(1,1,1)
+    # if kwargs.has_key('aspect'): ax1.set_aspect(kwargs['aspect'])
+
+    if 'plot_margin' in kwargs:
+        plt.subplots_adjust(left=kwargs['plot_margin'], right=1-kwargs['plot_margin'], top=1-kwargs['plot_margin'], bottom=kwargs['plot_margin'])
+        # pdb.set_trace()
 
     # Default line and marker settings
     ls0                 =   'None'              # do markers by default
@@ -268,32 +290,38 @@ def simple_plot(**kwargs):
     legend              =   False
     cmap0               =   'viridis'
     bins0               =   100
+    zorder0             =   100
+    fillstyle0          =   'full'
 
     # Set axis settings
     xlab,ylab           =   '',''
-    if kwargs.has_key('xlab'):
+    if 'xlab' in kwargs:
         ax1.set_xlabel(kwargs['xlab'],fontsize=fontsize*lab_to_tick)
-    if kwargs.has_key('ylab'):
+    if 'ylab' in kwargs:
         ax1.set_ylabel(kwargs['ylab'],fontsize=fontsize*lab_to_tick)
-    if kwargs.has_key('title'):
+    if 'title' in kwargs:
         ax1.set_title(kwargs['title'],fontsize=fontsize*lab_to_tick)
-    if kwargs.has_key('histo'):
+    if 'histo' in kwargs:
         ax1.set_ylabel('Number fraction [%]',fontsize=fontsize*lab_to_tick)
 
+    # Set aspect here before colorbar
+    # if kwargs.has_key('aspect'):
+    #     ax1.set_aspect(kwargs['aspect'])
 
     # Add lines/points to plot
-    for i in range(1,10):
+    for i in range(1,20):
         done            =   'n'
-        if kwargs.has_key('x'+str(i)):
-            if kwargs.has_key('x'+str(i)): x = kwargs['x'+str(i)]
-            if kwargs.has_key('y'+str(i)): y = kwargs['y'+str(i)]
+        if 'x'+str(i) in kwargs:
+            if 'x'+str(i) in kwargs: x = kwargs['x'+str(i)]
+            if 'y'+str(i) in kwargs: y = kwargs['y'+str(i)]
             # If no x values, make them up
-            if not kwargs.has_key('x'+str(i)): x = np.arange(len(y))+1
+            if not 'x'+str(i) in kwargs: x = np.arange(len(y))+1
             ls              =   ls0
             lw              =   lw0
             mew             =   mew0
             ma              =   ma0
             col             =   col0
+            mfc             =   col0
             ecol            =   ecol0
             ms              =   ms0
             lab             =   lab0
@@ -302,79 +330,86 @@ def simple_plot(**kwargs):
             alpha           =   alpha0
             cmap            =   cmap0
             bins            =   bins0
-            if kwargs.has_key('ls'+str(i)):
+            zorder          =   zorder0
+            fillstyle       =   fillstyle0
+            if 'ls'+str(i) in kwargs:
                 if kwargs['ls'+str(i)] != 'None': ls = kwargs['ls'+str(i)]
                 if kwargs['ls'+str(i)] == 'None': ls = 'None'
-            if kwargs.has_key('lw'+str(i)): lw = kwargs['lw'+str(i)]
-            if kwargs.has_key('lw'): lw = kwargs['lw'] # or there is a general keyword for ALL lines...
-            if kwargs.has_key('mew'+str(i)): mew = kwargs['mew'+str(i)]
-            if kwargs.has_key('ma'+str(i)): ma = kwargs['ma'+str(i)]
-            if kwargs.has_key('ms'+str(i)): ms = kwargs['ms'+str(i)]
-            if kwargs.has_key('col'+str(i)): col = kwargs['col'+str(i)]
-            if kwargs.has_key('ecol'+str(i)): ecol = kwargs['ecol'+str(i)]
-            if kwargs.has_key('lab'+str(i)): lab = kwargs['lab'+str(i)]
-            if kwargs.has_key('lab'+str(i)): legend = 'on' # do make legend
-            if kwargs.has_key('legend'):
-                if not kwargs['legend']: legend = 'off' # no legend, if legend = False
-            if kwargs.has_key('ls'+str(i)): ls = kwargs['ls'+str(i)]
-            if kwargs.has_key('fill'+str(i)): fill = kwargs['fill'+str(i)]
-            if kwargs.has_key('alpha'+str(i)): alpha = kwargs['alpha'+str(i)]
-            if kwargs.has_key('cmap'+str(i)): cmap = kwargs['cmap'+str(i)]
+            if 'lw'+str(i) in kwargs: lw = kwargs['lw'+str(i)]
+            if 'lw' in kwargs: lw = kwargs['lw'] # or there is a general keyword for ALL lines...
+            if 'mew'+str(i) in kwargs: mew = kwargs['mew'+str(i)]
+            if 'ma'+str(i) in kwargs: ma = kwargs['ma'+str(i)]
+            if 'ms'+str(i) in kwargs: ms = kwargs['ms'+str(i)]
+            if 'col'+str(i) in kwargs: col, mfc = kwargs['col'+str(i)], kwargs['col'+str(i)]
+            if 'ecol'+str(i) in kwargs: ecol = kwargs['ecol'+str(i)]
+            if 'lab'+str(i) in kwargs: lab = kwargs['lab'+str(i)]
+            if 'lab'+str(i) in kwargs: legend = 'on' # do make legend
+            legend          =   False
+            if 'legend' in kwargs: legend = kwargs['legend']
+            if 'ls'+str(i) in kwargs: ls = kwargs['ls'+str(i)]
+            if 'alpha'+str(i) in kwargs: alpha = kwargs['alpha'+str(i)]
+            if 'cmap'+str(i) in kwargs: cmap = kwargs['cmap'+str(i)]
+            if 'zorder'+str(i) in kwargs: zorder = kwargs['zorder'+str(i)]
+            if 'fill'+str(i) in kwargs:
+                fill                = kwargs['fill'+str(i)]
+                if kwargs['fill'+str(i)] == 'y': fillstyle  = 'full'
+                if kwargs['fill'+str(i)] == 'n': fillstyle, mfc, alpha  = 'none', 'None', None
 
 
             # ----------------------------------------------
             # 1. Errorbar plot
             # Errorbars/arrows in x AND y direction
-            if kwargs.has_key('lex'+str(i)):
-                if kwargs.has_key('ley'+str(i)):
+            if 'lex'+str(i) in kwargs:
+                if 'ley'+str(i) in kwargs:
                     for x1,y1,lex,uex,ley,uey in zip(x,y,kwargs['lex'+str(i)],kwargs['uex'+str(i)],kwargs['ley'+str(i)],kwargs['uey'+str(i)]):
-                        ax1.errorbar(x1,y1,color=col,linestyle="None",xerr=[[lex],[uex]],yerr=[[ley],[uey]],elinewidth=lw,capsize=0,\
+                        ax1.errorbar(x1,y1,color=col,linestyle="None",fillstyle=fillstyle,xerr=[[lex],[uex]],yerr=[[ley],[uey]],elinewidth=lw,capsize=0,\
                             capthick=0,marker=kwargs['ma'+str(i)],label=kwargs['lab'+str(i)])
             # Errorbars/arrows in x direction
-            if kwargs.has_key('lex'+str(i)):
+            if 'lex'+str(i) in kwargs:
                 # print('>> Adding x errorbars!')
                 for x1,y1,lex,uex in zip(x,y,kwargs['lex'+str(i)],kwargs['uex'+str(i)]):
                     if uex > 0: # not upper limit, plot errobars
-                        ax1.errorbar(x1,y1,color=col,linestyle="None",xerr=[[lex],[uex]],elinewidth=lw,capsize=0,\
+                        ax1.errorbar(x1,y1,color=col,linestyle="None",fillstyle=fillstyle,xerr=[[lex],[uex]],elinewidth=lw,capsize=0,\
                             capthick=0,marker=kwargs['ma'+str(i)])
                     if uex == 0: # upper limit, plot arrows
                         ax1.errorbar(x1,y1,color=col,xerr=lex,\
-                           xuplims=True,linestyle="None",linewidth=lw,mew=0,capthick=lw*2)
+                           xuplims=True,linestyle="None",fillstyle=fillstyle,linewidth=lw,mew=0,capthick=lw*2)
             # Errorbars/arrows in y direction
-            if kwargs.has_key('ley'+str(i)):
+            if 'ley'+str(i) in kwargs:
                 # print('>> Adding y errorbars!')
                 for x1,y1,ley,uey in zip(x,y,kwargs['ley'+str(i)],kwargs['uey'+str(i)]):
-                    if uey > 0: # not upper limit, plot errobars
-                        ax1.errorbar(x1,y1,color=col,linestyle="None",yerr=[[ley],[uey]],elinewidth=lw,capsize=0,\
-                            capthick=0,marker=kwargs['ma'+str(i)])
+                    if uey > 0: # not upper limit, plot errorbars
+                        ax1.errorbar(x1,y1,color=col,linestyle='None',fillstyle=fillstyle,yerr=[[ley],[uey]],elinewidth=lw,\
+                            capsize=0,capthick=0,marker=ma)
                     if uey == 0: # upper limit, plot arrows
                         ax1.errorbar(x1,y1,color=col,yerr=ley,\
-                           uplims=True,linestyle="None",linewidth=lw,mew=0,capthick=lw*2)
+                           uplims=True,linestyle="None",fillstyle=fillstyle,linewidth=lw,mew=0,capthick=lw*2)
+                    continue
 
             # ----------------------------------------------
             # 2. Line connecting the dots
-            if kwargs.has_key('y'+str(i)):
+            if 'y'+str(i) in kwargs:
 
                 if type(kwargs['y'+str(i)]) == str: y = ax1.get_ylim()
-                if kwargs.has_key('dashes'+str(i)):
+                if 'dashes'+str(i) in kwargs:
                     # print('>> Line plot!')
-                    ax1.plot(x,y,linestyle=ls,color=col,lw=lw,label=lab,dashes=kwargs['dashes'+str(i)])
+                    ax1.plot(x,y,linestyle=ls,color=col,lw=lw,label=lab,dashes=kwargs['dashes'+str(i)],zorder=zorder)
                     continue
                 else:
-                    if kwargs.has_key('ls'+str(i)):
+                    if 'ls'+str(i) in kwargs:
                         # print('>> Line plot!')
-                        ax1.plot(x,y,linestyle=ls,color=col,lw=lw,label=lab)
+                        ax1.plot(x,y,linestyle=ls,color=col,lw=lw,label=lab,zorder=zorder)
                         continue
 
             # ----------------------------------------------
             # 3. Histogram
-            if kwargs.has_key('histo'+str(i)):
+            if 'histo'+str(i) in kwargs:
                 # print('>> Histogram!')
                 if ls == 'None': ls = '-'
                 weights             =   np.ones(len(x))
-                if kwargs.has_key('bins'+str(i)): bins = kwargs['bins'+str(i)]
-                if kwargs.has_key('weights'+str(i)): weights = kwargs.has_key['weights'+str(i)]
-                if kwargs.has_key('histo_real'+str(i)):
+                if 'bins'+str(i) in kwargs: bins = kwargs['bins'+str(i)]
+                if 'weights'+str(i) in kwargs: weights = 'weights'+str(i) in kwargs
+                if 'histo_real'+str(i) in kwargs:
                     make_histo(x,bins,col,lab,percent=False,weights=weights,lw=lw,ls=ls)
                 else:
                     make_histo(x,bins,col,lab,percent=True,weights=weights,lw=lw,ls=ls)
@@ -382,30 +417,26 @@ def simple_plot(**kwargs):
 
             # ----------------------------------------------
             # 4. Marker plot
-            if kwargs.has_key('fill'+str(i)):
+            if 'fill'+str(i) in kwargs:
                 # print('>> Marker plot!')
-                if kwargs['fill'+str(i)] == 'y':
-                    ax1.plot(x,y,linestyle='None',color=col,marker=ma,mew=mew,ms=ms,label=lab,alpha=alpha)
-                    continue
-                if kwargs['fill'+str(i)] == 'n':
-                    ax1.plot(x,y,linestyle='None',color=col,marker=ma,mew=mew,ms=ms,label=lab,fillstyle='none')
-                    continue
+                ax1.plot(x,y,linestyle='None',color=col,marker=ma,mew=mew,ms=ms,fillstyle=fillstyle,alpha=alpha,markerfacecolor=mfc,zorder=zorder,label=lab)
+                continue
 
             # ----------------------------------------------
             # 5. Bar plot
-            if kwargs.has_key('barwidth'+str(i)):
+            if 'barwidth'+str(i) in kwargs:
                 # print('>> Bar plot!')
                 plt.bar(x,y,width=kwargs['barwidth'+str(i)],color=col,alpha=alpha)
                 continue
 
             # ----------------------------------------------
             # 6. Hexbin contour bin
-            if kwargs.has_key('hexbin'+str(i)):
+            if 'hexbin'+str(i) in kwargs:
                 # print('>> Hexbin contour plot!')
                 bins                =   300
-                if kwargs.has_key('bins'+str(i)): bins = kwargs['bins'+str(i)]
-                if kwargs.has_key('alpha'+str(i)): alpha = kwargs['alpha'+str(i)]
-                if kwargs.has_key('col'+str(i)):
+                if 'bins'+str(i) in kwargs: bins = kwargs['bins'+str(i)]
+                if 'alpha'+str(i) in kwargs: alpha = kwargs['alpha'+str(i)]
+                if 'col'+str(i) in kwargs:
                     colors          =   kwargs['col'+str(i)]
                     CS              =   ax1.hexbin(x, y, C=colors, gridsize=bins, cmap=cmap, alpha=alpha)
                 else:
@@ -415,16 +446,31 @@ def simple_plot(**kwargs):
             # ----------------------------------------------
             # 7. Contour map
 
-            if kwargs.has_key('contour_type'+str(i)):
+            if 'contour_type'+str(i) in kwargs:
                 CS                  =   make_contour(i,fontsize,kwargs=kwargs)
+
+            if 'colorbar'+str(i) in kwargs:
+                if kwargs['colorbar'+str(i)]:
+                    if only_one_colorbar == 1: pad = 0
+                    if only_one_colorbar < 0: pad = 0.03
+                    ax2 = ax1.twinx()
+                    ax2.get_xaxis().set_visible(False)
+                    ax2.get_yaxis().set_visible(False)
+                    divider = make_axes_locatable(ax2)
+                    cax = divider.append_axes("right", size="5%", pad=pad)
+                    cbar                    =   plt.colorbar(CS,cax=cax)
+                    cbar.set_label(label=kwargs['lab_colorbar'+str(i)],size=fontsize-5)   # colorbar in it's own axis
+                    cbar.ax.tick_params(labelsize=fontsize-5)
+                    only_one_colorbar       =   -1
+                    plt.axes(ax1)
 
             # ----------------------------------------------
             # 8. Scatter plot (colored according to a third parameter)
-            if kwargs.has_key('scatter_color'+str(i)):
+            if 'scatter_color'+str(i) in kwargs:
                 # print('>> Scatter plot!')
-                SC              =   ax1.scatter(x,y,marker=ma,lw=mew,s=ms,c=kwargs['scatter_color'+str(i)],cmap='viridis',alpha=alpha,label=lab,edgecolor=ecol)
-                if kwargs.has_key('colormin'+str(i)): SC.set_clim(kwargs['colormin'+str(i)],max(kwargs['scatter_color'+str(i)]))
-                if kwargs.has_key('lab_colorbar'):
+                SC              =   ax1.scatter(x,y,marker=ma,lw=mew,s=ms,c=kwargs['scatter_color'+str(i)],cmap=cmap,alpha=alpha,label=lab,edgecolor=ecol,zorder=zorder)
+                if 'colormin'+str(i) in kwargs: SC.set_clim(kwargs['colormin'+str(i)],max(kwargs['scatter_color'+str(i)]))
+                if 'lab_colorbar' in kwargs:
                     if only_one_colorbar > 0:
                         cbar                    =   plt.colorbar(SC,pad=0)
                         cbar.set_label(label=kwargs['lab_colorbar'],size=fontsize-2)   # colorbar in it's own axis
@@ -434,36 +480,37 @@ def simple_plot(**kwargs):
 
             # ----------------------------------------------
             # 8. Filled region
-            if kwargs.has_key('hatchstyle'+str(i)):
+            if 'hatchstyle'+str(i) in kwargs:
                 # print('>> Fill a region!')
                 from matplotlib.patches import Ellipse, Polygon
-                ax1.add_patch(Polygon([[x[0],y[0]],[x[0],y[1]],[x[1],y[1]],[x[1],y[0]]],closed=True,fill=False,hatch=kwargs['hatchstyle'+str(i)],color=col))
-                if kwargs['hatchstyle'+str(i)] == '': ax1.fill_between(x,y[0],y[1],facecolor=col,color=col,alpha=alpha,lw=0)
+                if kwargs['hatchstyle'+str(i)] != '': ax1.add_patch(Polygon([[x[0],y[0]],[x[0],y[1]],[x[1],y[1]],[x[1],y[0]]],closed=True,fill=False,hatch=kwargs['hatchstyle'+str(i)],color=col),zorder=zorder)
+                if kwargs['hatchstyle'+str(i)] == '': ax1.fill_between(x,y[0],y[1],facecolor=col,color=col,alpha=alpha,lw=0,zorder=zorder)
                 continue
 
     # Log or not log?
-    if kwargs.has_key('xlog'):
+    if 'xlog' in kwargs:
         if kwargs['xlog']: ax1.set_xscale('log')
-    if kwargs.has_key('ylog'):
+    if 'ylog' in kwargs:
         if kwargs['ylog']: ax1.set_yscale('log')
 
     # Legend
     if legend:
-        legloc          =   [0.4,0.02]
-        if kwargs.has_key('legloc'): legloc = kwargs['legloc']
-        frameon         =   not kwargs.has_key('frameon') or kwargs['frameon']          # if "not" true that frameon is set, take frameon to kwargs['frameon'], otherwise always frameon=True
+        legloc          =   'best'
+        if 'legloc' in kwargs: legloc = kwargs['legloc']
+        frameon         =   not 'frameon' in kwargs or kwargs['frameon']          # if "not" true that frameon is set, take frameon to kwargs['frameon'], otherwise always frameon=True
         handles1, labels1     =   ax1.get_legend_handles_labels()
-        leg_fs          =   int(fontsize*0.7)
-        if kwargs.has_key('leg_fs'): leg_fs = kwargs['leg_fs']
-        ax1.legend(loc=legloc,fontsize=leg_fs,numpoints=1,scatterpoints = 1,frameon=frameon)
+        leg_fs          =   fontsize#int(fontsize*0.7)
+        if 'leg_fs' in kwargs: leg_fs = kwargs['leg_fs']
+        leg = ax1.legend(loc=legloc,fontsize=leg_fs,numpoints=1,scatterpoints = 1,frameon=frameon)
+        leg.set_zorder(zorder)
 
     # Add text to plot
-    if kwargs.has_key('text'):
-        textloc             =   [0.1,0.9]
-        if kwargs.has_key('textloc'): textloc = kwargs['textloc']
+    if 'text' in kwargs:
+        textloc             =   [0.1,0.95]
+        if 'textloc' in kwargs: textloc = kwargs['textloc']
         fontsize_text       =   fontsize
-        if kwargs.has_key('textfs'): fontsize_text=kwargs['textfs']
-        if kwargs.has_key('textbox'):
+        if 'textfs' in kwargs: fontsize_text=kwargs['textfs']
+        if 'textbox' in kwargs:
             ax1.text(textloc[0],textloc[1],kwargs['text'][0],\
                 transform=ax1.transAxes,verticalalignment='top', horizontalalignment='right',fontsize=fontsize_text,\
                 bbox=dict(facecolor='white', edgecolor='k', boxstyle='round,pad=1'))
@@ -476,86 +523,64 @@ def simple_plot(**kwargs):
                     ax1.text(l[0],l[1],t,color='black',\
                         verticalalignment='top', horizontalalignment='left',fontsize=fontsize_text)
 
-    if kwargs.has_key('grid'): ax1.grid()
+    if 'grid' in kwargs: ax1.grid()
 
-    if kwargs.has_key('xticks'):
+    if 'xticks' in kwargs:
         if kwargs['xticks']:
-            ax1.tick_params(labelbottom='off')
+            ax1.set_xticks(kwargs['xticks'])
+            ax1.set_xticklabels(str(_) for _ in kwargs['xticks'])
         else:
             ax1.set_xticks(kwargs['xticks'])
             ax1.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
-    if kwargs.has_key('xticklabels'): ax1.set_xticklabels(kwargs['xticklabels'])
+    if 'xticklabels' in kwargs: ax1.set_xticklabels(kwargs['xticklabels'])
 
-    if kwargs.has_key('yticks'):
+    if 'yticks' in kwargs:
         if kwargs['yticks']:
-            ax1.set_yticks([])
-            ax1.tick_params(labelleft='off')
+            ax1.set_yticks(kwargs['yticks'])
+            ax1.set_yticklabels(str(_) for _ in kwargs['yticks'])
         else:
             ax1.set_yticks(kwargs['yticks'])
             ax1.get_yaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
-    if kwargs.has_key('yticklabels'): ax1.set_yticklabels(kwargs['yticklabels'])
+    if 'yticklabels' in kwargs: ax1.set_yticklabels(kwargs['yticklabels'])
 
-    if kwargs.has_key('xr'): ax1.set_xlim(kwargs['xr'])
-    if kwargs.has_key('yr'): ax1.set_ylim(kwargs['yr'])
+    if 'xr' in kwargs: ax1.set_xlim(kwargs['xr'])
+    if 'yr' in kwargs: ax1.set_ylim(kwargs['yr'])
 
     # plt.tight_layout()
 
     # Save plot if figure name is supplied
-    if kwargs.has_key('figres'):
+    if 'figres' in kwargs:
         dpi = kwargs['figres']
     else:
         dpi = 1000
-    if kwargs.has_key('figname'):
+    if 'figname' in kwargs:
         figname = kwargs['figname']
         figtype = 'png'
-        if kwargs.has_key('figtype'): figtype = kwargs['figtype']
+        if 'figtype' in kwargs: figtype = kwargs['figtype']
         plt.savefig(figname+'.'+figtype, format=figtype, dpi=dpi) # .eps for paper!
+
+    if 'show' in kwargs:
+        plt.show(block=False)
+
 
     # restoring defaults
     # mpl.rcParams['xtick.labelsize'] = u'medium'
     # mpl.rcParams['ytick.labelsize'] = u'medium'
 
-    if kwargs.has_key('SC_return'):
-        return SC
-
-def make_histo(x,bins,col,lab,percent=True,weights=1,lw=1,ls='-'):
-    '''
-    Purpose
-    ---------
-    Makes a histogram (called by simple_plot)
-    '''
-
-    ax1             =   plt.gca()
-    hist            =   np.histogram(x,bins,weights=weights)
-    hist1           =   np.asarray(hist[0])
-    hist2           =   np.asarray(hist[1])
-    if percent: hist1           =   hist1*1./sum(hist1)*100.
-    wid             =   (hist2[1]-hist2[0])
-    # add some zeros to bring histogram down
-    hist2           =   np.append([hist2],[hist2.max()+wid])
-    hist2           =   np.append([hist2.min()-wid],[hist2])
-    hist1           =   np.append([hist1],[0])
-    hist1           =   np.append([0],[hist1])
-    # plot it!
-    ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps'+ls,color=col,label=lab,lw=lw)
+    if 'fig_return' in kwargs:
+        return fig
 
 def make_contour(i,fontsize,kwargs):
-    '''
-    Purpose
-    ---------
-    Makes contour plot (called by simple_plot)
+    '''Makes contour plot (called by simple_plot)
 
-    Arguments
-    ---------
-    contour_type: method used to create contour map - str
-    options1:
-        - plain: use contourf on colors alone, optionally with contour levels only (no filling)
-        - hexbin: use hexbin on colors alone
-        - median: use contourf on median of colors
-        - mean: use contourf on mean of colors
-        - sum: use contourf on sum of colors
+    Parameters
+    ----------
+    contour_type: str
+        Method used to create contour map (see simple_plot)
 
     '''
+
+    # print('Contour plot!')
 
     ax1                 =   plt.gca()
 
@@ -566,19 +591,19 @@ def make_contour(i,fontsize,kwargs):
     only_one_colorbar   =   1
 
     # Put on regular grid!
-    if kwargs.has_key('y'+str(i)):
+    if 'y'+str(i) in kwargs:
 
         y               =   kwargs['y'+str(i)]
         x               =   kwargs['x'+str(i)]
         colors          =   kwargs['col'+str(i)]
         linecol         =   linecol0
-        if kwargs.has_key('linecol'+str(i)): linecol = kwargs['linecol'+str(i)]
+        if 'linecol'+str(i) in kwargs: linecol = kwargs['linecol'+str(i)]
         cmap            =   cmap0
-        if kwargs.has_key('cmap'+str(i)): cmap = kwargs['cmap'+str(i)]
+        if 'cmap'+str(i) in kwargs: cmap = kwargs['cmap'+str(i)]
         alpha           =   alpha0
-        if kwargs.has_key('alpha'+str(i)): alpha = kwargs['alpha'+str(i)]
+        if 'alpha'+str(i) in kwargs: alpha = kwargs['alpha'+str(i)]
         nlev            =   nlev0
-        if kwargs.has_key('nlev'+str(i)): nlev = kwargs['nlev'+str(i)]
+        if 'nlev'+str(i) in kwargs: nlev = kwargs['nlev'+str(i)]
 
         if kwargs['contour_type'+str(i)] == 'plain':
 
@@ -587,20 +612,24 @@ def make_contour(i,fontsize,kwargs):
                 CS = ax1.contour(x,y,colors, nlev, colors=linecol)
                 plt.clabel(CS, fontsize=9, inline=1)
 
-            if kwargs.has_key('colormin'+str(i)):
-                print('Colormap with a minimum value')
-                CS = ax1.contourf(x,y,colors, nlev, cmap=cmap, alpha=alpha, vmin=kwargs['colormin'+str(i)])
+            if 'colormin'+str(i) in kwargs:
+                # print('Colormap with a minimum value')
+                CS = ax1.contourf(x,y,colors, nlev, cmap=cmap)
+                ax1.contourf(x,y,colors, levels=kwargs['colormin'+str(i)], colors='k')
 
             else:
-                if kwargs.has_key('alpha'+str(i)):
+                if 'alpha'+str(i) in kwargs:
                     print('with alpha')
                     CS = ax1.contourf(x,y,colors, nlev, cmap=cmap, alpha=kwargs['alpha'+str(i)])
-                if not kwargs.has_key('alpha'+str(i)):
-                    print('without alpha')
+                if not 'alpha'+str(i) in kwargs:
+                    # print('without alpha')
                     CS = ax1.contourf(x,y,colors, nlev, cmap=cmap)#, lw=0, antialiased=True)
 
         if kwargs['contour_type'+str(i)] == 'hexbin':
             CS              =   ax1.hexbin(x, y, C=colors, cmap=cmap)
+
+        if kwargs['contour_type'+str(i)] == 'mesh':
+            CS              =   ax1.pcolormesh(x,y,colors, cmap=cmap)
 
         if kwargs['contour_type'+str(i)] in ['median','mean','sum']:
             gridx           =   np.arange(min(x),max(x),kwargs['dx'+str(i)])
@@ -617,76 +646,57 @@ def make_contour(i,fontsize,kwargs):
                         if kwargs['contour_type'+str(i)] == 'median': z[i1,i2]       =   np.median(colors1)
                         if kwargs['contour_type'+str(i)] == 'mean': z[i1,i2]         =   np.mean(colors1)
                         if kwargs['contour_type'+str(i)] == 'sum': z[i1,i2]          =   np.sum(colors1)
-            if kwargs.has_key('nlev'+str(i)): nlev0 = kwargs['nlev'+str(i)]
+            if 'nlev'+str(i) in kwargs: nlev0 = kwargs['nlev'+str(i)]
             CS               =   ax1.contourf(gridx, gridy, z.T, nlev0, cmap=cmap)
             mpl.rcParams['contour.negative_linestyle'] = 'solid'
             # CS               =   ax1.contour(gridx, gridy, z.T, 5, colors='k')
             # plt.clabel(CS, inline=1, fontsize=10)
-            if kwargs.has_key('colormin'+str(i)): CS.set_clim(kwargs['colormin'+str(i)],max(z.reshape(lx*ly,1)))
-            if kwargs.has_key('colormin'+str(i)): print(kwargs['colormin'+str(i)])
+            if 'colormin'+str(i) in kwargs: CS.set_clim(kwargs['colormin'+str(i)],max(z.reshape(lx*ly,1)))
+            if 'colormin'+str(i) in kwargs: print(kwargs['colormin'+str(i)])
             CS.cmap.set_under('k')
-
-    if kwargs.has_key('colorbar'+str(i)):
-        if kwargs['colorbar'+str(i)]:
-            if only_one_colorbar == 1: pad = 0
-            if only_one_colorbar < 0: pad = 0.03
-            cbar                    =   plt.colorbar(CS,pad=pad)
-            cbar.set_label(label=kwargs['lab_colorbar'+str(i)],size=fontsize-2)   # colorbar in it's own axis
-            cbar.ax.tick_params(labelsize=fontsize-2)
-            only_one_colorbar       =   -1
-
 
     # plt.subplots_adjust(left=0.13, right=0.94, bottom=0.14, top=0.95)
 
     return CS
 
-def histos(bins=100,galnames=galnames,col=col,add=False,one_color=True):
-    '''
-    Purpose
+def histos(**kwargs):
+    '''Makes histograms of all (particles in all) galaxies in the sample on the same plot.
+
+    Parameters
     ---------
-    Makes figure with several histograms on top of each other.
+    bins : int/float
+        Number of bins, default: 100
 
-    Arguments
-    ---------
-    bins: number of bins - float/int
-    default = 100
+    add : bool
+        If True, add to an existing plot, default: False
+
+    one_color : bool
+        If True, use only one color for all lines, default: True
+
+    fs_labels : int/float
+        Fontsize, default: 15
 
     '''
 
-    fs_labels       =   15
+    GR                      =   glo.global_results()
+
+    # set label sizes
     mpl.rcParams['xtick.labelsize'] = fs_labels
     mpl.rcParams['ytick.labelsize'] = fs_labels
 
-    # models          =   pd.read_pickle('sigame/temp/global_results/'+z1+'_'+str(len(galnames))+'gals'+ext_DENSE+ext_DIFFUSE)
-    # galnames_sorted =   models['galname'].values
-    nGal            =   len(galnames)
-
     # Ask a lot of questions!!
-    foo1            =   raw_input('For which type of gas? [default: sim] '+\
+    data_type       =   input('For which data type? [default: sim] '+\
                         '\n gmc for Giant Molecular Clouds'+\
-                        '\n sim for raw simulation data'+\
+                        '\n sim for raw simulation data (gas/stars/dark matter)'+\
                         '\n dng for Diffuse Neutral Gas'+\
                         '\n dig for Diffuse Ionized Gas'+\
-                        '...?\n')
-    if foo1 == '': foo1 =   'sim'
-    if foo1 == 'sim':
-        foo11        =   raw_input('gas or star? [default: gas] ... ')
-        if foo11 == '': foo11 =   'gas'
-    foo4            =   raw_input('over what quantity? [default: m]... ')
-    if foo4 == '': foo4 =   'm'
-    foo2            =   raw_input('mass or number-weighted (m vs n)? [default: n] ... ')
-    if foo2 == '': foo2 =   'n'
-    foo31           =   raw_input('logarithmix x-axis? [default: y] ... ')
-    if foo31 == '': foo31 =   'y'
-    foo32           =   raw_input('logarithmix y-axis? [default: y] ... ')
-    if foo32 == '': foo32 =   'y'
+                        '...? ')
+    if data_type == '': data_type =   'sim'
+    data_type = data_type.upper()
 
-    # Save which phase we're looking at, for plots:
-    if foo1 == 'sim': phase = 'gas elements'
-    if foo1 == 'DNG': phase = 'DNG'
-    if foo1 == 'DIG': phase = 'DIG'
-    if foo1 == 'gmc': phase = 'GMCs'
-    if foo1 == 'halo': phase = 'halo'
+    if data_type == 'SIM':
+        sim_type        =   input('\nGas or star or dark matter (dm)? [default: gas] ... ')
+        if sim_type == '': sim_type =   'gas'
 
     # Start plotting (fignum = 1: first plot)
     if not add:
@@ -695,66 +705,78 @@ def histos(bins=100,galnames=galnames,col=col,add=False,one_color=True):
     redo        =   'y'
     fignum      =   1
     while redo == 'y':
-        if add:
-            print('adding to already existing figure')
-            fig         =   plt.gcf()
-            ax1         =   fig.add_subplot(add[0],add[1],add[2])
-        else:
-            print('creating new figure')
-            fig         =   plt.figure(fignum,figsize=(8,6))
-            ax1         =   fig.add_subplot(1,1,1)
         if fignum >1:
-            foo4        =   raw_input('over what quantity? [default: m]... ')
-            if foo4 == '': foo4 =   'm'
-        # Get data
+            quant        =   input('\nOver what quantity? [default: m]... ')
+            if quant == '': quant =   'm'
+        histos1     =   np.zeros([len(GR.galnames),bins+2])
+        histos2     =   np.zeros([len(GR.galnames),bins+3])
         igal        =   0
-        histos1     =   np.zeros([len(galnames),bins+2])
-        histos2     =   np.zeros([len(galnames),bins+3])
-        for zred,galname in zip(zreds,galnames):
-            if foo1 == 'halo':
-                dat0 = pd.read_pickle('sigame/temp/halo_x_e_z6_'+galnames_sorted[0])
-            if foo1 == 'sim':
-                # if foo11 == 'gas': dat0 = pd.read_pickle('sigame/temp/sim/z'+'{:.2f}'.format(zred)+'_'+galname+'_sim0.gas')
-                if foo11 == 'gas': dat0 = pd.read_pickle('sigame/temp/sim_FUV/z'+'{:.2f}'.format(zred)+'_'+galname+'_sim1.gas')
-                if foo11 == 'star': dat0 = pd.read_pickle('sigame/temp/sim/z'+'{:.2f}'.format(zred)+'_'+galname+'_sim0.star')
-                # if foo11 == 'star': dat0 = pd.read_pickle('sigame/temp/sim_FUV/z'+str(int(zred))+'_'+galname+'_sim1.star')
-            if foo1 == 'gmc': dat0 = pd.read_pickle('sigame/temp/GMC/'+'z'+'{:.2f}'.format(zred)+'_'+galname+'_GMC.gas')
-            if foo1 == 'DNG' or foo1 == 'DIG':
-                dat0 = pd.read_pickle(dif_path+'z'+'{:.2f}'.format(zred)+'_'+galname+'_dif'+ext_DIFFUSE+'_em.gas')
-                if foo1 == 'DNG': dat0 = dat0[dat0['m_DNG'] > dat0['m_DIG']]
-                if foo1 == 'DIG': dat0 = dat0[dat0['m_DIG'] > dat0['m_DNG']]
-            if foo4 == 'm_mol': dat0['m_mol'] = dat0['f_H2'].values*dat0['m'].values
-            dat         =   dat0[foo4].values.squeeze()
-            print('Percent of particles with value = 0: %s %%' % (100.*len(dat[dat == 0])/len(dat)))
-            # print('median: ',np.median(dat))
-            if foo2 == 'm': w           =   dat0['m']                   # default weights
-            if foo2 == 'n': w           =   1./len(dat0)                   # default weights
-            if foo1 == 'sim':
-                if foo4 == 'nH': dat = dat/(mH*1000.)/1e6       # Hydrogen only per cm^3
-            if foo31 == 'y':            # if x-axis is logarithmic, take log and remove NaNs from data and their weights
-                if foo4 == 'Z': dat[dat == 0] = 1e-30 # to avoid crash if metallicity is zero
-                # if foo4 == 'Z':
-                    # print('TEST: 20 x Z')
-                    # dat     =   dat*20. # to avoid crash if metallicity is zero
+        Ngal        =   0
+        indices     =   []
+        for gal_index in range(len(GR.galnames)): #TEST
+            zred,galname        =   GR.zreds[gal_index],GR.galnames[gal_index]
+            gal_ob              =   gal.galaxy(gal_index=gal_index)
+
+            if data_type == 'SIM': dat0 = aux.load_temp_file(gal_ob=gal_ob,sim_type=sim_type)
+            if data_type == 'GMC': dat0 = gal_ob.particle_data.get_raw_data(data='ISM')[data_type]
+            if data_type in ['DNG','DIG']:
+                dat0 = gal_ob.particle_data.get_raw_data(data='ISM')['dif']
+                if data_type == 'DNG': dat0 = dat0[dat0['m_DNG'] > dat0['m_DIG']]
+                if data_type == 'DIG': dat0 = dat0[dat0['m_DIG'] > dat0['m_DNG']]
+
+            # Choose what to make histogram over and start figure
+            if gal_index == 0:
+                print('\nOver what quantity? Options:')
+                keys = ''
+                for key in dat0.keys(): keys = keys + key + ', '
+
+                quant           =   input('[default: m]... ')
+                if quant == '': quant =   'm'
+
+                weigh           =   input('\nMass or number-weighted (m vs n)? [default: n] ... ')
+                if weigh == '': weigh =   'n'
+
+                logx            =   input('\nLogarithmix x-axis? [default: y] ... ')
+                if logx == '': logx =   'y'
+
+                logy            =   input('\nLogarithmix y-axis? [default: y] ... ')
+                if logy == '': logy =   'y'
+
+                if add:
+                    print('\nadding to already existing figure')
+                    fig         =   plt.gcf()
+                    ax1         =   fig.add_subplot(add[0],add[1],add[2])
+                else:
+                    print('\ncreating new figure')
+                    fig         =   plt.figure(fignum,figsize=(8,6))
+                    ax1         =   fig.add_subplot(1,1,1)
+
+            # Weigh the data (optional) and calculate histogram
+            if quant == 'm_mol': dat0['m_mol'] = dat0['f_H2'].values*dat0['m'].values
+            dat         =   dat0[quant].values.squeeze()
+            if weigh == 'm': w           =   dat0['m']
+            if weigh == 'n': w           =   1./len(dat0)
+            if data_type == 'SIM':
+                if quant == 'nH': dat = dat/(mH*1000.)/1e6 # Hydrogen only per cm^3
+            if logx == 'y':
+                if quant == 'Z': dat[dat == 0] = 1e-30 # to avoid crash if metallicity is zero
                 dat = np.log10(dat)
-                # remove data values = 0 !!
                 i_nan   =   np.isnan(dat)
-                if foo2 == 'm':  w       =   w[i_nan == False]
+                if weigh == 'm':  w       =   w[i_nan == False]
                 dat     =   dat[i_nan == False]
-            print('min and max: %s and %s ' % (np.min(dat[dat > -100]),dat.max()))
-            # remove data values = -inf !!
-            if foo31 == 'n':
-                if foo2 == 'm':  w       =   w[dat > -10.**(20)]
+            # print('min and max: %s and %s ' % (np.min(dat[dat > -100]),dat.max()))
+            if logy == 'n':
+                if weigh == 'm':  w       =   w[dat > -10.**(20)]
                 dat     =   dat[dat > -10.**(20)]
-            if foo31 == 'y':
-                if foo2 == 'm':  w       =   w[dat > -20]
+            if logy == 'y':
+                if weigh == 'm':  w       =   w[dat > -20]
                 dat     =   dat[dat > -20]
-            if foo2 == 'n':    hist        =   np.histogram(dat,bins=bins)
-            if foo2 == 'm':      hist        =   np.histogram(dat,bins=bins,weights=w)
-            if foo4 == 'f_HI':
+            if weigh == 'n':    hist        =   np.histogram(dat,bins=bins)
+            if weigh == 'm':    hist        =   np.histogram(dat,bins=bins,weights=w)
+            if 'f_HI' in quant:
                 print('Particles are above 0.9: %s %%' % (1.*len(dat[dat > 0.9])/len(dat)*100.))
                 print('Particles are below 0.1: %s %%' % (1.*len(dat[dat < 0.1])/len(dat)*100.))
-            if foo4 == 'f_H2':
+            if 'f_H2' in quant:
                 print('Particles are above 0.9: %s %%' % (1.*len(dat[dat > 0.9])/len(dat)*100.))
                 print('Particles are below 0.1: %s %%' % (1.*len(dat[dat < 0.1])/len(dat)*100.))
             hist1            =  np.asarray(hist[0])
@@ -773,359 +795,284 @@ def histos(bins=100,galnames=galnames,col=col,add=False,one_color=True):
                 ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps',color=col[igal],label='G'+str(int(igal+1)))
 
             igal             +=  1
+            Ngal             +=  1
+            indices.append(gal_index)
+
+        histos1             =   histos1[0:Ngal,:]
+        histos2             =   histos2[0:Ngal,:]
 
         if one_color:
+
             # Plot as background the 2 sigma distribution around the mean in each bin
             minhistos1,maxhistos1,meanhistos1       =   np.zeros(bins+2), np.zeros(bins+2), np.zeros(bins+2)
             for i in range(0,bins+2):
-                meanhistos1[i]     =    np.mean(histos1[:,i])
+                meanhistos1[i]     =   np.mean(histos1[:,i])
                 minhistos1[i]      =   meanhistos1[i]-2.*np.std(histos1[:,i])
                 maxhistos1[i]      =   meanhistos1[i]+2.*np.std(histos1[:,i])
             ax1.fill_between(hist2[0:len(hist1)]+wid/2, minhistos1, maxhistos1, facecolor='lightgreen', alpha=0.5, lw=0)
 
             # Now plot actual histograms
-            for galname,i in zip(galnames,range(0,len(galnames))):
+            for i in range(Ngal):
+                # pdb.set_trace()
                 hist2           =   histos2[i,:]
                 hist1           =   histos1[i,:]
-                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps',color='teal',label='G'+str(int(i+1)),alpha=0.7,lw=1)
+                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps',color='teal',label='G'+str(int(indices[i]+1)),alpha=0.7,lw=1)
 
             # Now plot mean of histograms
-            if len(galnames) > 1: ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='steps',color='blue',lw=1)
-        if foo32 == 'y':     ax1.set_yscale('log')
+            if Ngal > 1: ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='steps',color='blue',lw=1)
+        # if logx == 'y':     ax1.set_xscale('log')
 
         # labels and ranges
-        xl          =   getlabel(foo4)
-        if foo31    == 'y': xl = getlabel('l'+foo4)
+        xl          =   getlabel(quant)
+        if logy    == 'y': xl = getlabel('l'+quant)
         ax1.set_xlabel(xl,fontsize=fs_labels)
-        if foo2     == 'n': ax1.set_ylabel('Number fraction [%]',fontsize=fs_labels)
-        if foo2     == 'm': ax1.set_ylabel('Mass fraction [%]',fontsize=fs_labels)
-        # leg    =   ax1.legend(fontsize=10,loc=[0.03,0.7],ncol=5,handlelength=2)
+        if weigh     == 'n': ax1.set_ylabel('Number fraction [%]',fontsize=fs_labels)
+        if weigh     == 'm': ax1.set_ylabel('Mass fraction [%]',fontsize=fs_labels)
         ax1.set_ylim([max(hist1)/1e4,max(hist1)*10.])
+
         if not add:
-            if foo1 == 'halo': ax1.set_title('halo mass: '+str.format("{0:.2f}",sum(dat0['m'].values)/1e10)+' x10^10 Msun')
             fig.canvas.draw()
 
-        # legends
-        foo6        =   raw_input('Change x limits? [default: n] ... ')
-        if foo6 == '': foo6 =   'n'
-        if foo6 == 'y':
-            x1          =   raw_input('Lower x lim (in log if used): ')
-            x2          =   raw_input('Upper x lim (in log if used): ')
-            ax1.set_xlim([float(x1),float(x2)])
-        foo7        =   raw_input('Change y limits? [default: n] ... ')
-        if foo7 == '': foo7 =   'n'
-        if foo7 == 'y':
-            y1          =   raw_input('Lower y lim (in log if used): ')
-            y2          =   raw_input('Upper y lim (in log if used): ')
-            ax1.set_ylim([10.**float(y1),10.**float(y2)])
-        fig.canvas.draw()
-        # mv          =   raw_input('move legend to the right? [default: n] ... ')
-        # if mv == '': mv='n'
-        # if mv == 'y':
-        #     leg.remove()
-        #     ax1.legend(fontsize=10,loc=[0.8,0.45],ncol=5,handlelength=2)
-        # fig.canvas.draw()
+            # axes ranges
+            if xlim: ax1.set_xlim(xlim)
+            if ylim:
+                if logy == 'y':
+                    ax1.set_ylim([10.**ylim[0],10.**ylim[1]])
+                else:
+                    ax1.set_ylim(ylim)
+            fig.canvas.draw()
 
-        savefig         =   raw_input('Save figure? [default: n] ... ')
-        if savefig == '': savefig = 'n'
-        if savefig == 'y':
-            name            =   raw_input('Figure name? ... ')
-            plt.savefig(name+'.png', format='png', dpi=250) # .eps for paper!
+            if logy    == 'y': ax1.set_yscale('log')
 
-        pdb.set_trace()
+            savefig         =   input('Save figure? [default: n] ... ')
+            if savefig == '': savefig = 'n'
+            if savefig == 'y':
+                if not os.path.exists('plots/histos/'):
+                    os.makedirs('plots/histos/')
+                name            =   input('Figure name? plots/histos/... ')
+                if name == '':
+                    name = galname + '_' + data_type + '_' + quant
+                plt.savefig('plots/histos/'+name+'.png', format='png', dpi=250) # .eps for paper!
 
-        # New figure?
-        if add:
-            redo = 'n'
-        else:
-            redo        =   raw_input('plot another quantity? [default: n] ... ')
-            if redo == '': redo='n'
-            if redo == 'n':
-                # restoring defaults
-                mpl.rcParams['xtick.labelsize'] = u'medium'
-                mpl.rcParams['ytick.labelsize'] = u'medium'
-                break
-            fignum      +=1
-            foo6, foo7  =   'n','n'
+            # New figure?
+            if add:
+                redo = 'n'
+            else:
+                redo        =   input('plot another quantity? [default: n] ... ')
+                if redo == '': redo='n'
+                if redo == 'n':
+                    # restoring defaults
+                    mpl.rcParams['xtick.labelsize'] = u'medium'
+                    mpl.rcParams['ytick.labelsize'] = u'medium'
+                    # break
+                fignum      +=1
+                changex, changey  =   'n','n'
 
 #===============================================================================
 """ Global gas properties in simulation """
 #-------------------------------------------------------------------------------
 
-def SFR_Mstar():
+def SFR_Mstar(**kwargs):
+    '''Plot of SFR vs stellar mass for one or more redshift groups
+
+    Parameters
+    ----------
+
+    color : str
+        What to color-code the galaxies by, default: age
+
+    Example
+    -------
+    >>> import sigame as si
+    >>> si.plot.SFR_Mstar(color='age')
     '''
-    Purpose
-    ---------
-    Plot of SFR vs stellar mass
-    '''
+
+    # color galaxies by...
+    color = 'age'
 
     plt.close('all')
 
-    models                      =   aux.find_model_results()
-    for key in models.keys():
-        exec(key + '=models[key].values')
+    redshift        =   float(z1.replace('z',''))
 
-    # Mass-weighted ages
-    ages            =   np.zeros(len(models))
-    i               =   0
-    for galname,zred in zip(galnames,zreds):
-        simstar         =   pd.read_pickle(d_sim+'z'+'{:.2f}'.format(zred)+'_'+galname+'_sim0.star')
-        ages[i]         =   np.sum(simstar['age'].values*simstar['m'])/np.sum(simstar['m'])
-        i               +=  1
+    # Get models
+    GR              =   glo.global_results()
 
-    xr              =   np.array([min(M_star)/2.,max(M_star)*1.5])#/1e9
-    xr              =   10.**np.array([7.8,10.8])
-    yr              =   [min(SFR)/2.,max(SFR)*1.5]
-    yr              =   10.**np.array([0.3,2.8])
+    # Get M_star range
+    xr              =   axis_range(GR.M_star,log=True)
 
-    if z1 == 'z6':
-	age = 0.984                           # age of universe, Omega_m = 0.3, Omega_lambda = 0.7, h = 0.65
-    	MS              =   10.**((0.84-0.026*age)*np.log10(xr)-(6.51-0.11*age))
-    	# z ~ 6 LBGs and LAEs
-    	columns         =   ['ID','age(M)','mass(G)','SFR_Lya','SFR_UV','E(B-V)']
-    	J16             =   pd.read_table(d_t+'Observations/SFR_Mstar/Jiang16.txt',names=columns,skiprows=1,sep=r'\s*',engine='python')
-    	SFR_J16         =   J16['SFR_UV'].values
-    	No_J16          =   J16['ID'].values
-    	ebv             =   J16['E(B-V)'].values
-    	age_J16         =   J16['age(M)'].values
-    	M_star_J13      =   np.array([7.2,3.4,21.1,32.8,57.9,3.8,66.5,17.4,2.7,26.8,2.4,250,81.1,46.4,30.8,172.9,391.1,35.6,9.0,51.5,61.6,66.3,115,9.4,41.3,1.4,32])*1e8
-    	No_J13          =   np.array([3,4,15,20,23,24,25,27,28,30,31,34,35,36,43,44,47,49,50,54,58,61,62,63,64,66,67])
-    	SFR_J16         =   [float(SFR_J16[No_J16 == No][0]) for No in No_J13]
-    	# From Linhua Jiang
-    	klambda         =   8.5  #at 2200A
-    	SFR_J16         =   SFR_J16 * 10.**(0.4*klambda*ebv)
+    # Get observed MS SFR-Mstar relation
+    MS =   aux.MS_SFR_Mstar(Mstars=xr,redshift=redshift)
 
-    simple_plot(fignum=0,xlog='y',ylog='y',xr=xr,yr=yr,fontsize=16,\
-        xlab='M$_{\mathrm{*}}$ [M$_{\odot}$]',ylab='SFR [M$_{\odot}$ yr$^{-1}$]',legloc=[0.01,0.75],frameon=False,\
-        x1=1,y1=1,ma1='o',col1='lightseagreen',fill1='y',ms1=8,mew1=2,lab1='Model galaxies (this work)$_{}$',\
-        x2=xr,y2=MS,col2='k',lw2=1,lab2='$z\sim6$ main sequence [Speagle+14]$_{}$',ls2='-',\
+    if color == 'age':
+        if z1 == 'z0': colors,lab = GR.mw_age/1000.,'Mass-weighted stellar age [Gyr]'
+        if z1 == 'z6': colors,lab = GR.mw_age,'Mass-weighted stellar age [Myr]'
+
+    # Plot MS and models
+    simple_plot(add='y',
+                xlab=getlabel('M_star'), ylab=getlabel('SFR'),
+                xlog='y', ylog='y', xr=xr, legloc='upper left', frameon=False,
+                x1=GR.M_star, y1=GR.SFR, ma1=galaxy_marker,
+                scatter_color1=colors, ms1=80, alpha1=1, mew1=0,
+                lab1='$z\sim$'+str(int(redshift))+' model galaxies (this work)$_{}$',
+                zorder1=100, lab_colorbar=lab,
+                x2=xr, y2=MS, lw2=2, col2='k',
+                lab2='$z\sim$'+str(int(redshift))+' main sequence [Speagle+14]$_{}$',ls2='--',
+                legend=True)
+
+    # more updated SFMS at z~6
+    from astropy.cosmology import FlatLambdaCDM
+
+    cosmo = FlatLambdaCDM(H0=hubble*100.,
+                          Om0=omega_m,
+                          Ob0=1-omega_m-omega_lambda)
+
+    age = cosmo.age(redshift).value # Gyr
+    MS_Iyer = 10.**((0.80-0.017*age)*np.log10(xr)-(6.487-0.039*age))
+
+    simple_plot(add='y',
+                x3=xr, y3=MS_Iyer, col3='orange',lw3=2, ls3='--',
+                lab3='$z\sim$'+str(int(redshift))+' main sequence [Iyer+18]$_{}$',
+                legend=True)
+
+    # Spread around MS
+    simple_plot(add='y',\
         x3=xr,y3=10.**(np.log10(MS)-0.2),col3='k',lw3=1,ls3='--',\
         x4=xr,y4=10.**(np.log10(MS)+0.2),col4='k',lw4=1,ls4='--',\
         x5=xr,y5=10.**(np.log10(MS)-3.*0.2),col5='k',lw5=1,ls5=':',\
         x6=xr,y6=10.**(np.log10(MS)+3.*0.2),col6='k',lw6=1,ls6=':',legend=False)
 
-    ax1             =   plt.gca()
     if z1 == 'z6':
-	simple_plot(add='y',x1=M_star_J13[age_J16 > 30],y1=SFR_J16[age_J16 > 30],fill1='y',ma1='x',col1='r',ms1=10,mew1=2,lab1='Old $z\sim6$ LBGs/LAEs [Jiang+16]',\
-			x2=M_star_J13[age_J16 < 30],y2=SFR_J16[age_J16 < 30],fill2='y',ma2='+',col2='b',ms2=11,mew2=2,lab2='Young $z\sim6$ LBGs/LAEs [Jiang+16]',legloc='upper left')
-
-    # Plot models
-    SC = ax1.scatter(M_star,SFR,marker='o',lw=2,s=64,c=ages,edgecolor='black',cmap='viridis',alpha=1,label='',zorder=10)
-    cbar            =   plt.colorbar(SC,pad=0)
-    cbar.set_label(label='Mass-weighted stellar age [Myr]')   # colorbar in it's own axis
+        # Add z ~ 6 LBGs and LAEs
+        columns         =   ['ID','age(M)','mass(G)','SFR_Lya','SFR_UV','E(B-V)']
+        J16             =   pd.read_table('Tables/Observations/SFR_Mstar/Jiang16.txt',names=columns,skiprows=1,sep=r'\s*',engine='python')
+        SFR_J16         =   J16['SFR_UV'].values
+        No_J16          =   J16['ID'].values
+        ebv             =   J16['E(B-V)'].values
+        age_J16         =   J16['age(M)'].values
+        M_star_J13      =   np.array([7.2,3.4,21.1,32.8,57.9,3.8,66.5,17.4,2.7,26.8,2.4,250,81.1,46.4,30.8,172.9,391.1,35.6,9.0,51.5,61.6,66.3,115,9.4,41.3,1.4,32])*1e8
+        No_J13          =   np.array([3,4,15,20,23,24,25,27,28,30,31,34,35,36,43,44,47,49,50,54,58,61,62,63,64,66,67])
+        SFR_J16         =   [float(SFR_J16[No_J16 == No][0]) for No in No_J13]
+        # From Linhua Jiang
+        klambda         =   8.5  #at 2200A
+        SFR_J16         =   SFR_J16 * 10.**(0.4*klambda*ebv)
+        ax1             =   plt.gca()
+        simple_plot(add='y',x1=M_star_J13[age_J16 > 30],y1=SFR_J16[age_J16 > 30],fill1='y',ma1='x',col1='r',ms1=10,mew1=2,lab1='Old $z\sim6$ LBGs/LAEs [Jiang+16]',\
+                x2=M_star_J13[age_J16 < 30],y2=SFR_J16[age_J16 < 30],fill2='y',ma2='+',col2='b',ms2=11,mew2=2,lab2='Young $z\sim6$ LBGs/LAEs [Jiang+16]',legloc='upper left', legend=True)
 
     plt.tight_layout()
     plt.show(block=False)
-    plt.savefig('plots/galaxy_sims/SFR_Mstar/M_SFR_sample_'+z1+'.eps', format='eps', dpi=1000) # .eps for paper!
+    if not os.path.exists('plots/galaxy_sims/SFR_Mstar/'):
+        os.makedirs('plots/galaxy_sims/SFR_Mstar/')
+    plt.savefig('plots/galaxy_sims/SFR_Mstar/M_SFR_sample_'+z1+'.png', dpi=200, format='png') # .eps for paper!
+
 
 #===============================================================================
 """ Line emission plotting """
 #-------------------------------------------------------------------------------
 
-def CII_SFR_z6(plot_models=True,plot_fits=True,plot_obs=True,twopanel=True,obs_grey=True,mark_reasons=False,mark_uplim=False,mark_det=False,legend=True):
+def line_SFR(**kwargs):
+    '''Plots line luminosity against SFR (together with observations)
+
+    Parameters
+    ----------
+    line: str
+        Line to look at, default: 'CII'
+
     '''
-    Purpose
-    ---------
-    Plots L_[CII] and SFR together with observations at z~6
-    '''
 
-    plt.close('all')        # close all windows
+    plt.close('all')
 
-    models                      =   aux.find_model_results()
-    for key in models.keys():
-        exec(key + '=models[key].values')
-    L_CII_tot           =   L_CII_GMC+L_CII_DNG+L_CII_DIG
+    set_mpl_params()
 
-    z1                  =   'z6'
+    # Redshift sample that we're at:
+    z2                      =   z1.replace('z','')
 
-    # Plotting parameters
-    mpl.rcParams['xtick.minor.size'] = 4
-    mpl.rcParams['xtick.major.size'] = 6
-    mpl.rcParams['xtick.minor.width'] = 1.5
-    mpl.rcParams['xtick.major.width'] = 1.5
-    fs_labels = 20
-    if twopanel: fs_labels = 17
-    # Change y or x range here
-    xr                  =   10.**np.array([0,3.05])               # SFR range
-    yr                  =   10.**np.array([6.5,9.8])              # [CII] range
-    if twopanel:
-        fig = plt.figure(figsize = (18,8))
-        gs = gridspec.GridSpec(1, 2, width_ratios=[6, 5])
-        ax1 = plt.subplot(gs[1])
-    if not twopanel:
-        fig = plt.figure(figsize = (12,9))
-        ax1 = fig.add_subplot(1,1,1)
-    ax1.set_xlabel('SFR [M$_{\odot}$ yr$^{-1}$]',fontsize=fs_labels)
-    ax1.set_ylabel('L$_{[\mathrm{CII}]}$ [L$_{\odot}$]',fontsize=fs_labels)
+    # handle default values and kwargs
+    args                    =   dict(line='CII',colorbar='SFRsd',extract_from='regions',save=True,plot_DeLooze14=True,one_symbol_only=False)
+    args                    =   aux.update_dictionary(args,kwargs)
+    for key in args: exec(key + '=args[key]')
+
+    # construct global results and galaxy
+    GR                      =   glo.global_results()
+
+    load                    =   input('Restore previous saved result? (y/n)')
+    if load == '': load = 'y'
+    if load == 'n':
+        SFRs                    =   np.array([])
+        SFRsds                  =   np.array([])
+        line_lums               =   np.array([])
+        for gal_index in range(0,25):#len(models)):
+            if GR.zreds[gal_index] < 0.03:
+                gal_ob             =   gal.galaxy(gal_index=gal_index)
+                line_lum            =   gal_ob.datacube.get_total_sum(target='L_'+line,all_phases=True)
+                line_lums           =   np.append(line_lums,line_lum)
+                SFRs                =   np.append(SFRs,gal_ob.SFR)
+                SFRsds              =   np.append(SFRsds,gal_ob.SFRsd)
+        results                 =   pd.DataFrame(dict(SFRs=SFRs,line_lums=line_lums,SFRsds=SFRsds))
+        results.to_pickle(d_t+'model_L_'+line+'_SFRs')
+        print('Found %s model galaxies' % (len(SFRs)))
+    if load == 'y':
+        results = pd.read_pickle(d_t+'model_L_'+line+'_SFRs')
+
+    for key in results: exec(key + '=results[key].values')
+
+    # Start figure
+    simple_plot(fignum=0,xlab=getlabel('SFR'),ylab='L$_{\mathrm{%s}}$ [L$_{\odot}$]' % aux.line_name(line))
+    ax1                 =   plt.gca()
+    xr                  =   axis_range(SFRs,log='y',dex=[0.5,1])
+    yr                  =   axis_range(line_lums,log='y',dex=[0.5,2])
     ax1.set_xlim(xr)
     ax1.set_ylim(yr)
-    xlab                =   ax1.get_xticks()
-    ylab                =   ax1.get_yticks()
-    ax1.set_xticklabels(xlab,fontsize=fs_labels)
-    ax1.set_yticklabels(ylab,fontsize=fs_labels)
     ax1.set_xscale('log')
     ax1.set_yscale('log')
-    ax1.xaxis.set_major_formatter(ScalarFormatter())
-    lw                  =   2           # line width
 
-    # ----------------------------------------------------------------------
-    # Models!
-    # ======================================================================
+    # Add observations to figure
+    if line == 'CII': add_CII_observations_to_plot(plot='line_SFR',one_symbol_only=one_symbol_only,plot_DeLooze14=plot_DeLooze14,fillstyle='none')
 
-    # Powerlaw fit to z=0 metal-poor dwarf galaxies [de Looze et al. 2014]
-    logL_CII            =  np.array([4,11])
-    logSFR              =  -5.73+0.80*logL_CII
-    ax1.fill_between(10.**logSFR, 10.**(logL_CII-0.37), 10.**(logL_CII+0.37), facecolor='lightgrey', linewidth=0, alpha=0.5)
-    fit0                =   ax1.plot(10.**logSFR,10.**logL_CII,c='grey',ls='--',lw=lw)
-    # Powerlaw fit to z=0 starburst galaxies [de Looze et al. 2014]
-    logL_CII            =  np.array([4,11])
-    logSFR              =  -7.06+1.00*logL_CII
-    ax1.fill_between(10.**logSFR, 10.**(logL_CII-0.27), 10.**(logL_CII+0.27), facecolor='lightgrey', linewidth=0, alpha=0.5)
-    fit1                =   ax1.plot(10.**logSFR,10.**logL_CII,c='grey',ls='--',dashes=(1,4),lw=lw)
+    # Add models from literature to figure
+    # Vallini+15 model results for the mean mass-weighted metallicity of our galaxies:
+    if line == 'CII' and z1 == 'z6': Zmw_mean = add_Vallini_2015(xr,zreds,galnames,color='purple')
 
-    # Powerlaw fit to model galaxies at z=6
-    slope_models,intercept_models,slope_dev,inter_dev = aux.lin_reg_boot(np.log10(SFR),np.log10(L_CII_tot))
+    # Add MW?
+    if z1 == 'z0' and line == 'CII':
+        SFR_MW              =   1.9 # Chomiuk and Povich 2011
+        L_tot_MW            =   10.**41*1e-7/Lsun # Pineda+14
+        simple_plot(add='y',\
+            x1=SFR_MW,y1=L_tot_MW,col1='k',fill1='y',ma1='x',ms1=10,lw=2,lab1='MW [Pineda+14]')
 
-    # Making different line styles for the SFR-range covered by the simulations and 
-    # the SFR-range where an extrapolation is necessary
-    L_CII_model         =   10.**(slope_models*np.log10(xr)+intercept_models)
-    xr2                 =   [min(SFR),max(SFR)]
-    L_CII_model2        =   10.**(slope_models*np.log10(xr2)+intercept_models)
-    # dex spread around relation:
-    dex                 =   np.std(np.abs(np.log10(L_CII_tot)-(slope_models*np.log10(SFR)+intercept_models)))
-    print('Dex: %s' % dex)
-    if not twopanel:
-        if plot_models:
-                fit = ax1.plot(xr,L_CII_model,ls='--',color='purple',lw=1.8)
-                fit = ax1.plot(xr2,L_CII_model2,ls='-',color='purple',lw=1.8)
-                fit = ax1.plot(xr,L_CII_model,ls='--',color='purple',lw=1.8)
-                fit = ax1.plot(xr2,L_CII_model2,ls='-',color='purple',lw=1.8)
-    if plot_fits:
-        # Powerlaw fit to Vallini+15, z~7 eq. 8
-        sims                =   cl.sim(sim_paths)
-        Zfit                =   np.mean(sims.Zmw())
-        L_CII_V15           =   10.**(7.0 + 1.2*np.log10(xr) + 0.021*np.log10(Zfit) + \
-                                0.012*np.log10(xr)*np.log10(Zfit) - 0.74*np.log10(Zfit)**2.)
-        fit2                =   ax1.plot(xr,L_CII_V15,c='orange',ls='--',dashes=(6,4,1,4),lw=lw)
-        print('Plotting Vallini at Z = '+str(Zfit))
-        print('Slope of Vallini: '+str(1.2+0.012*np.log10(Zfit)))
+    # Add our 2015 results for z = 2 ?
+    # if redshift == 2 and line == 'CII':
+    #     # Powerlaw fit to model galaxies at z=2 [Olsen+15]
+    #     Lcii_model_z2       =   0.78e7*np.array(xr)**1.27
+    #     simple_plot(add='y',\
+    #         x1=xr,y1=Lcii_model_z2,col1='grey',ls1='--',lab1=u'$z=2$ models [Olsen+15] $_{}$')
 
-        # PCA fit to L_[CII](SFR,Z)
-        Zfit2               =   np.mean(Zsfr)
-        L_CII_PCA           =   10.**(7.17+0.55*np.log10(xr)+0.23*np.log10(Zfit2))
-        ax1.plot(xr,L_CII_PCA,c='purple',ls='--',dashes=(6,4,1,4,1,4),lw=lw)
+    # Add our most recent models to figure with a power law fit
+    if colorbar == 'SFRsd':
+        slope,intercept,slope_dev,inter_dev = aux.lin_reg_boot(np.log10(SFRs),np.log10(line_lums))
+        fit                 =   10.**(slope*np.log10(xr)+intercept)
+        simple_plot(add='y',\
+            x1=xr,y1=fit,col1=redshift_colors[int(z2)],ls1='--',lw1=2,lab1='Power law fit',zorder1=10,\
+            x2=SFRs,y2=line_lums,scatter_color2=np.log10(SFRsds),ecol2='k',lw2=2,ma2='o',ms2=64,lab2=r'S$\mathrm{\'I}$GAME at z$\sim$'+z2+' (this work)',zorder2=200,\
+            lab_colorbar=getlabel('lSFRsd'))
+    if colorbar == 'none':
+        slope,intercept,slope_dev,inter_dev = aux.lin_reg_boot(np.log10(SFRs),np.log10(line_lums))
+        fit                 =   10.**(slope*np.log10(xr)+intercept)
+        simple_plot(add='y',\
+            x1=xr,y1=fit,col1=redshift_colors[int(z2)],ls1='--',lw1=2,lab1='Power law fit',zorder1=10,\
+            x2=SFRs,y2=line_lums,fill2='y',col2=redshift_colors[int(z2)],alpha2=0.7,lw2=2,ma2='o',ms2=8,lab2=r'S$\mathrm{\'I}$GAME at z$\sim$'+z2+' (this work)',zorder2=200)
 
-        if len(galnames) > 1: 
-            ax1.fill_between(xr, 10.**(np.log10(L_CII_model)-dex), 10.**(np.log10(L_CII_model)+dex),facecolor='lightgreen', linewidth=0, alpha=0.5)
-            fit = ax1.plot(xr,L_CII_model,ls='--',color='purple',lw=1.8)
-            fit = ax1.plot(xr2,L_CII_model2,ls='-',color='purple',lw=1.8)
-            fit = ax1.plot(xr,L_CII_model,ls='--',color='purple',lw=1.8)
-            fit = ax1.plot(xr2,L_CII_model2,ls='-',color='purple',lw=1.8)
-        print('Slope of linear fit to z=6 galaxies: '+str(slope_models))
-        print('and intercept: '+str(intercept_models))
-        chi2_models         =   chisquare(slope_models*np.log10(SFR)+intercept_models, f_exp=np.log10(L_CII_tot))
-        print('with chi^s: '+str(chi2_models[0]))
-        dev                 =   np.log10(L_CII_tot) - (slope_models*np.log10(SFR)+intercept_models)
-        rms_dex             =   np.sqrt(np.sum(dev**2./len(dev)))
-        print('rms error of: '+str(rms_dex)+' dex')
+    # Add legend
+    ax1                 =   plt.gca()
+    handles, labels     =   ax1.get_legend_handles_labels()
+    fs_legend           =   mpl.rcParams['ytick.labelsize']*0.8
+    ax1.legend(handles[::-1], labels[::-1],loc='upper left',fontsize=fs_legend)
 
-        if len(galnames) > 1: 
-            print('On average this far below observed relation:')
-            L_CII_obs           =   10.**((np.log10(SFR)+7.06)/1.00)
-            print(str(np.mean((L_CII_obs-L_CII_tot)/L_CII_obs)*100.)+' %')
-            print(str(np.mean(np.log10(L_CII_obs)-np.log10(L_CII_tot)))+' dex')
-            print('Power law fit this far above Vallini+15:')
-            L_CII_V15           =   10.**(7.0 + 1.2*np.log10(min(SFR)) + 0.021*np.log10(Zfit) + \
-                                    0.012*np.log10(min(SFR))*np.log10(Zfit) - 0.74*np.log10(Zfit)**2.)
-            L_CII                =   10.**(slope_models*np.log10(min(SFR))+intercept_models)
-            print('at min SFR : '+str(np.log10(L_CII)-np.log10(L_CII_V15))+' dex')
-            L_CII_V15           =   10.**(7.0 + 1.2*np.log10(max(SFR)) + 0.021*np.log10(Zfit) + \
-                                    0.012*np.log10(max(SFR))*np.log10(Zfit) - 0.74*np.log10(Zfit)**2.)
-            L_CII                =   10.**(slope_models*np.log10(max(SFR))+intercept_models)
-            print('at max SFR : '+str(np.log10(L_CII)-np.log10(L_CII_V15))+' dex')
 
-        # Powerlaw fit to model galaxies at z=2 [Olsen+15]
-        L_CII_model_z2      =   0.78e7*xr**1.27
-        fit = ax1.plot(xr,L_CII_model_z2,'--k',lw=1.8,dashes=(15,10))
-
-        # Legend for fits
-        if plot_fits:
-            ax1.plot(10.**logSFR, 10.**(logL_CII-10), '--',dashes=(1,4), lw=1.8, c='grey', label = u'Local starburst galaxies, [De Looze et al. 2014] $_{}$')
-            ax1.plot(10.**logSFR, 10.**(logL_CII-10), '--', lw=1.8, c='grey', label = u'Local metal-poor dwarf galaxies, [De Looze et al. 2014] $_{}$')
-            ax1.plot([1e20,1e30],[1e20,1e30],'--',dashes=(6,4,1,4),lw=1.8,c='orange',label=u'$z\sim7$ models with $Z$ = '+str.format("{0:.2f}",Zfit)+' [Vallini+15]')
-            ax1.plot([1e20,1e30],[1e20,1e30],'--k',lw=1.8,dashes=(15,10),label = u'$z=2$ models [Olsen+15] $_{}$')#: log(L$_{\mathrm{[CII]}}$) = '+str.format("{0:.2f}",1.27)+'$\cdot$log(SFR) + ' + str.format("{0:.2f}",np.log10(0.78e7))+' [Olsen+15]')
-            # ax1.plot([1e20,1e30],[1e20,1e30],'purple',lw=lw,dashes=(6,4,1,4,1,4),label = u'$z=6$ models, $Z$ = '+str.format("{0:.2f}",Zfit2)+' (this work)' )
-            if len(galnames) > 1: ax1.plot([1e20,1e30],[1e20,1e30],'purple',lw=1.8,label = u'$z=6$ models: log(L$_{\mathrm{[CII]}}$) = '+str.format("{0:.2f}",slope_models)+'$\cdot$log(SFR) + ' + str.format("{0:.2f}" + ' (this work)',intercept_models))
-            handles1, labels1     =   ax1.get_legend_handles_labels()
-        if legend:
-            ax1.legend(handles1,labels1,loc='upper left',fontsize=11,frameon=True,\
-                numpoints=1,scatterpoints=1,handlelength=3)
-
-    # ----------------------------------------------------------------------
-    # Observations!
-    # ======================================================================
-    if twopanel:
-        ax1 = plt.subplot(gs[0])
-        ax1.set_xlim(xr)
-        ax1.set_ylim(yr)
-        ax1.set_ylabel('L$_{[\mathrm{CII}]}$ [L$_{\odot}$]',fontsize=fs_labels)
-        ax1.set_xlabel('SFR [M$_{\odot}$ yr$^{-1}$]',fontsize=fs_labels)
-        xlab                =   ax1.get_xticks()
-        ylab                =   ax1.get_yticks()
-        ax1.set_xticklabels(xlab,fontsize=fs_labels)
-        ax1.set_yticklabels(ylab,fontsize=fs_labels)
-        ax1.set_xscale('log')
-        ax1.set_yscale('log')
-        if plot_models:
-            if len(galnames) > 1: 
-                ax1.fill_between(xr, 10.**(np.log10(L_CII_model)-dex), 10.**(np.log10(L_CII_model)+dex),facecolor='lightgreen', linewidth=0, alpha=0.5)
-                fit = ax1.plot(xr,L_CII_model,ls='--',color='purple',lw=1.8)
-                fit = ax1.plot(xr2,L_CII_model2,ls='-',color='purple',lw=1.8)
-        # else:
-        # Powerlaw fit to z=0 metal-poor dwarf galaxies
-        logL_CII            =  np.array([4,11])
-        logSFR              =  -5.73+0.80*logL_CII
-        ax1.fill_between(10.**logSFR, 10.**(logL_CII-0.37), 10.**(logL_CII+0.37), facecolor='lightgrey', linewidth=0, alpha=0.5,zorder=0)
-        fit0                =   ax1.plot(10.**logSFR,10.**logL_CII,c='grey',ls='--',lw=lw,zorder=0)
-        # Powerlaw fit to z=0 starburst galaxies
-        logL_CII            =  np.array([4,11])
-        logSFR              =  -7.06+1.00*logL_CII
-        ax1.fill_between(10.**logSFR, 10.**(logL_CII-0.27), 10.**(logL_CII+0.27), facecolor='lightgrey', linewidth=0, alpha=0.5,zorder=0)
-        fit1                =   ax1.plot(10.**logSFR,10.**logL_CII,c='grey',ls='--',dashes=(1,4),lw=lw,zorder=0)
-
-    if plot_obs: add_observations_to_plot(slope_models,intercept_models,mark_reasons,mark_uplim,mark_det,z1=z1)
-
-    # Legends for observations!
-    if plot_models: ax1.scatter([1e20,1e30],[1e20,1e30],marker='o',s=64,color='lightseagreen',label=r'S$\mathrm{\'I}$GAME (this work)$_{}$',lw=2,edgecolor='black')
-    handles2, labels2 = ax1.get_legend_handles_labels()
-    # remove the errorbars
-    handles2 = [h[0] if isinstance(h, mpl.container.ErrorbarContainer) else h for h in handles2]
-    # Re-order:
-    if plot_models: handles2 = [handles2[i] for i in [14,0,1,2,3,4,5,6,7,8,9,10,11,12,13,15]]
-    if plot_models: labels2 = [labels2[i] for i in [14,0,1,2,3,4,5,6,7,8,9,10,11,12,13,15]]
-    # use them in the legend
-    if legend:
-        ax1.legend(handles2, labels2, loc='upper left',fontsize=11,frameon=False,numpoints=1,borderpad=1)
-
-    # Model galaxies
-    ax1.xaxis.set_major_formatter(ScalarFormatter())
-    if plot_models:
-        plot = ax1.scatter(SFR,L_CII_tot,marker='o',edgecolor='black',c=np.log10(SFRsd),s=64,lw=2,cmap='viridis',zorder=200)
-        cbar = fig.colorbar(plot,ax=ax1,pad=0)#,cax = cbar_ax)
-        cbar.set_label(label=getlabel('lSFRsd'),size=13)#,weight='bold')
-
-    for axis in ['top','bottom','left','right']:
-        ax1.spines[axis].set_linewidth(1.)
-
-    plt.subplots_adjust(left=0.07, right=0.97, bottom=0.1, top=0.97, wspace=0.2)
-    if not twopanel:
-        plt.subplots_adjust(left=0.12, right=0.95, bottom=0.1, top=0.95, wspace=0.2)
-        if not plot_models:
-            plt.subplots_adjust(left=0.12, right=0.825, bottom=0.1, top=0.95, wspace=0.13)
-
-    plt.show(block=False)
-
-    if twopanel: plt.savefig('plots/line_emission/line_SFR/CII_SFR/CII_SFR_'+z1+ext_DENSE+ext_DIFFUSE+'.pdf', format='pdf') # .eps for paper!
+    if save:
+        plt.tight_layout()
+        plt.show(block=False)
+        plt.savefig('plots/line_emission/line_SFR/'+line+'_SFR_'+z1+ext_DENSE+ext_DIFFUSE+'.pdf',format='pdf')
 
 def OI_OIII_SFR(plotmodels=True,twopanel=True):
     '''
@@ -1137,7 +1084,8 @@ def OI_OIII_SFR(plotmodels=True,twopanel=True):
     lines                   =   ['[OI]','[OIII]','[CII]']
     wavelengths             =   np.array([63,88,122,158])
 
-    models                      =   aux.find_model_results()
+    models                      =  glo.global_results()
+
     for key in models.keys():
         exec(key + '=models[key].values')
 
@@ -1181,17 +1129,17 @@ def OI_OIII_SFR(plotmodels=True,twopanel=True):
     # Fit to our models:
     slope,intercept,r_value,p_value,std_err     =   scipy.stats.linregress(np.log10(SFR),np.log10(L_OI))
     powlaw                  =   10.**(slope*np.log10(xr)+intercept)
-    simple_plot(add='y',xr=xr,yr=yr, ylog='y',xlog='y',\
+    simple_plot(add='y',xr=xr,yr=yr, ylog='y',xlog='y',fontsize=13,\
         x1=xr, y1=10.**L_OI_L14_DG, ls1='--', lw1=2,  col1='grey', lab1=u'Local metal-poor dwarf galaxies, [De Looze et al. 2014] $_{}$',\
         x2=xr, y2=10.**L_OI_L14_SB, ls2=':', dashes2=(1,4), lw2=2,  col2='grey', lab2=u'Local starburst galaxies, [De Looze et al. 2014] $_{}$',\
         # x3=xr, y3=powlaw, ls3='-', lw3=2,  col3='black', \
         x4=SFR, y4=L_OI, ma4='o', scatter_color4='lightseagreen', mew4=2, ms4=64,\
         xlab='',xticks='n',ylab=getlabel('L_OI'),\
-        legloc=[0.04,0.8])
+        legloc=[0.04,0.8],legend=True)
     # pdb.set_trace()
     ax1                     =   fig.add_subplot(2,1,2)
     yr                      =   axis_range(L_OIII,log='y',dex=1)
-    yr                      =   [10**6.3,yr[1]]
+    yr                      =   [10**5.8,yr[1]]
     L_OIII_L14_DG,dex       =   (np.log10(xr) + 6.71)/0.92,0.30
     ax1.fill_between(xr, 10.**(L_OIII_L14_DG-dex), 10.**(L_OIII_L14_DG+dex), facecolor='grey', linewidth=0, alpha=0.5)
     L_OIII_L14_SB,dex       =   (np.log10(xr) + 3.89)/0.69,0.23
@@ -1203,7 +1151,6 @@ def OI_OIII_SFR(plotmodels=True,twopanel=True):
         xr1                     =   [np.min(models['SFR'].values),np.max(models['SFR'].values)]
         powlaw1                 =   10.**(slope*np.log10(xr1)+intercept)
         dex                     =   np.std(np.abs(np.log10(L_OIII)-(slope*np.log10(SFR)+intercept)))
-
     # Observation by Inoue+16
     L_OIII_I16              =   np.array([9.898411,2.083876,2.083876])*1e8 # magnification-corrected (~2)
     SFR_I16                 =   np.array([10.**2.54,10.**2.54-10.**(2.54-0.71),10.**2.54+10.**(2.54+0.17)]) # SED
@@ -1351,43 +1298,314 @@ def comp_ISM_phases(**kwargs):
 
     return fig
 
+def map_line(**kwargs):
+    """Makes moment0 map of line using datacubes.
+    Parameters
+    ----------
+    gal_index: int
+        Galaxy index, default: 0
+    line : str
+        Line to use for map, default: 'CII'
+    R_max : float
+        Maximum radius for moment0 map in kpc, default: 15
+    ISM_dc_phase : str
+        ISM phase(s) to map, default: 'tot' (sum of all)
+    units : str
+        Units; 'Wm2' for W/m^2, 'Jykms' for Jy*km/s, default: 'Jykms'
+    convolve : bool
+        Whether moment0 map should be convolved by corresponding Herschel beam, default: True
+    min_fraction : float
+        Fraction of maximum in image used as lower limit for colorbar, default: 1/1e6
+    """
+
+    for key,val in kwargs.items():
+        exec('globals()["' + key + '"]' + '=val')
+
+    plt.close('all')
+
+    # Initialize galaxy object and plot moment0 map
+    gal_ob              =   gal.galaxy(gal_index=gal_index)
+    mom0                =   gal_ob.datacube.get_moment0_map(**kwargs)
+
+    min_value               =   np.max(mom0)*min_fraction
+    mom0[mom0 < min_value]  =   min_value
+    if Iunits == 'Wm2_sr': lab = aux.line_name(line) + r' log(F$_{\nu}$ [$\,$W/m$^2\,$sr$^{-1}$])'
+    if Iunits == 'Jykms': lab = aux.line_name(line) + r' log(F$_{\nu}$ [$\,$Jy km s$^{-1}$ per pixel])'
+
+    # Size of pixels in steradians
+    pix_arcsec      =   np.tan(x_res_pc/1000./gal_ob.ang_dist_kpc)*60*60*360./(2*np.pi)
+    pix_sr          =   aux.arcsec2_to_sr(pix_arcsec**2)
+    if Iunits == 'Wm2_sr':   mom0        =   aux.Jykm_s_to_W_m2(line,self.gal_ob.zred,mom0)/pix_sr # W/m^2/sr
+
+    simple_plot(figsize=(8, 8),plot_margin=0.15,xr=[-R_max,R_max],yr=[-R_max,R_max],\
+        x1=aux.get_x_axis_kpc(),y1=aux.get_x_axis_kpc(),col1=np.log10(mom0),\
+        colorbar1=True,lab_colorbar1=lab,\
+        aspect='equal',\
+        contour_type1='plain',nlev1=100,xlab='x [kpc]',ylab='y [kpc]',title='G%s' % (gal_ob.gal_index+1),\
+        textfs=9,textcol='white')
+
+    if convolve:
+        FWHM_arcsec         =   aux.get_Herschel_FWHM(line)
+        FWHM_kpc            =   np.arctan(FWHM_arcsec/60./60./360.*2.*np.pi)*gal_ob.ang_dist_kpc
+        ax1                 =   plt.gca()
+        patches             =   [Wedge((R_max*0.8,-0.8*R_max), FWHM_kpc/2., 0, 360, width=0.05)]
+        patches_col         =   PatchCollection(patches, alpha=1, edgecolors='g',linestyle='-')
+        ax1.add_collection(patches_col)
+
+    if not os.path.exists('plots/maps/'):
+        os.mkdir('plots/maps/')
+    plt.savefig(('plots/maps/%s_%s_%s_%s.png' % (z1, line, gal_ob.name, ISM_dc_phase)),format='png',dpi=300)
+    plt.show(block=False)
+
 #===============================================================================
 """ Plot cloudy models """
 #-------------------------------------------------------------------------------
 
-def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
+def grid_parameters_checkParam(histo_color='teal', FUV=0.002, ISM_phase='GMC',figsize=(10,7)):
+
     '''
-    Purpose
-    ---------
-    Make histograms of galaxies with grid points on top
+    Make histograms of galaxies to check what parameters to be used for dif_cloud_grid.py and GMC_cloud_grid.py to make cloudy grids.
 
-    What this function does
-    ---------
-    1) Makes 4-panel figure with histograms of [Mgmc, G0, Z, P_ext] in GMCs
-    2) OR makes 4-panel figure with histograms of [nH, R, Z, Tk] in diffuse clouds
+    Parameters
+    ----------
+    ISM_phase: str
+        if 'GMC': make 4-panel figure with histograms of [Mgmc, G0, Z, P_ext] in GMCs
+        if 'dif': make 4-panel figure with histograms of [nH, R, Z, Tk] in diffuse clouds
 
-    Arguments
-    ---------
-    histo_color: color selection for histograms - str
-    options:
-        - '<a specific color>': all histograms will have this color
-        - 'colsel': each galaxy will have a different color, using colsel from param_module.read_params
-
+    histo_color: str
+        color selection for histograms
+        options:
+            - '<a specific color>': all histograms will have this color
+            - 'colsel': each galaxy will have a different color, using colsel from param_module.read_params
     '''
 
     plt.close('all')        # close all windows
 
-    models                      =   aux.find_model_results()
-    for key in models.keys():
-        exec(key + '=models[key].values')
+    # handle default values and kwargs
+    # args                    =   dict(region_size=16.8, max_regions_per_gal=30,gal_index=0,ISM_phase='GMC',line1='CII',line2='NII_205',extract_from='regions')
+    # args                    =   aux.update_dictionary(args,kwargs)
+    # for key in args: exec(key + '=args[key]')
+
+    # construct global results and galaxy
+    GR                      =   glo.global_results()
+
 
     if ISM_phase == 'GMC':
 
         print('\n Now looking at GMC grid parameters')
         plot_these          =   ['Mgmc','FUV','Z','P_ext']
         bins                =   80
+        fontsize            =   12
+        mpl.rcParams['xtick.labelsize'] = fontsize
+        mpl.rcParams['ytick.labelsize'] = fontsize
 
-        grid_params         =   pd.read_pickle('cloudy_models/GMC/grids/GMCgrid'+ext_DENSE+'_'+z1+'.param')
+        plt.ion()
+        fig                 =   plt.figure(1,figsize = figsize)
+        panel               =   1
+        if z1 == 'z6':
+                ranges = [[3.5,6.],[0,7],[-4,0.5],[3,13]]
+        if z1 == 'z2':
+                ranges = [[3.5,6.],[-5,7],[-2.2,1],[0,12.]]
+        if z1 == 'z0':
+                ranges = [[3.8,6],[-8.,5],[-1.5,1],[-2,12.]]
+        for name in plot_these:
+            x_max       =   np.array([])
+            x_min       =   np.array([])
+            ax1         =   fig.add_subplot(2,2,panel)
+            # Make histograms
+            histos1     =   np.zeros([GR.N_gal,bins+2])
+            histos2     =   np.zeros([GR.N_gal,bins+3])
+            n_histos    =   0
+            for gal_index in range(0,GR.N_gal):
+                gal_ob          =   gal.galaxy(gal_index=gal_index)
+                dat0            =   gal_ob.particle_data.get_raw_data(data='ISM')['GMC']
+                w               =   dat0['m'].values
+                dat0['Mgmc']    =   dat0['m'].values
+                dat             =   dat0[name].values
+                w               =   w[dat > 0]
+                dat             =   dat[dat > 0]
+                dat             =   np.log10(dat)
+                i_nan           =   np.isnan(dat)
+                w               =   w[i_nan == False]
+                dat             =   dat[i_nan == False]
+                if name == 'Mgmc': w = np.zeros(len(w))+1.
+                hist            =   np.histogram(dat,range=ranges[panel-1],bins=bins,weights=w)
+                # Convert counts to percent:
+                hist1           =   np.asarray(hist[0])
+                hist2           =   np.asarray(hist[1])
+                hist1           =   hist1*1./sum(hist1)*100.
+                # add some zeros to bring histogram down
+                wid             =   (hist2[1]-hist2[0])
+                hist2           =   np.append([hist2],[hist2.max()+wid])
+                hist2           =   np.append([hist2.min()-wid],[hist2])
+                hist1           =   np.append([hist1],[0])
+                hist1           =   np.append([0],[hist1])
+                x_min           =   np.append(x_min,min(hist2[0:len(hist1)]+wid/2))
+                x_max           =   np.append(x_max,max(hist2[0:len(hist1)]+wid/2))
+                histos1[n_histos,:]    =   hist1
+                histos2[n_histos,:]    =   hist2
+                n_histos        +=   1
+            histos1         =   histos1[0:n_histos,:]
+            histos2         =   histos2[0:n_histos,:]
+            # Plot as background the 2 sigma distribution around the mean in each bin
+            minhistos1,maxhistos1,meanhistos1       =   np.zeros(bins+2), np.zeros(bins+2), np.zeros(bins+2)
+            for i in range(0,bins+2):
+                meanhistos1[i]     =   np.mean(histos1[:,i])
+                minhistos1[i]      =   meanhistos1[i]-2.*np.std(histos1[:,i])
+                maxhistos1[i]      =   meanhistos1[i]+2.*np.std(histos1[:,i])
+            # ax1.fill_between(histos2[0,0:len(hist1)], minhistos1, maxhistos1, facecolor='lightgreen', alpha=0.5, lw=0)
+            # Now plot actual histograms
+            for i in range(0,n_histos):
+                if histo_color == 'teal': color = 'teal'
+                if histo_color == 'colsel': color = colsel[i]
+                hist2           =   histos2[i,:]
+                hist1           =   histos1[i,:]
+                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps',color=color,label='G'+str(int(i+1)),alpha=0.7,lw=1)
+            ax1.set_xlabel('log('+getlabel(name)+')')
+            if name == 'Mgmc':
+                ax1.set_ylabel('Number fraction [%]')
+            else:
+                ax1.set_ylabel('Mass fraction [%]')
+
+            # Now plot mean of histograms
+            ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='steps',color='blue',lw=1.5)
+
+            # Fix axes
+            ax1.set_yscale('log')
+            ymin        =   10**(-1.)
+            ax1.set_ylim([ymin,10.**(np.log10(max(maxhistos1))+(np.log10(max(maxhistos1))-np.log10(ymin))/4.)])
+            ax1.set_ylim([0.1,100])
+            dx                  =   (max(x_max)-min(x_min))/10.
+            ax1.set_xlim(ranges[panel-1])
+
+            if panel == 1:
+                if histo_color == 'colsel': ax1.legend(loc='upper left')
+
+            panel              +=  1
+
+        plt.show(block=False)
+        savepath = 'plots/GMCs/grid_parameters_checkParam/'
+        if not os.path.exists(savepath):
+            os.mkdir(savepath)
+        plt.savefig('plots/GMCs/grid_parameters_checkParam/GMC_histos'+ext_DENSE+'_'+z1+'.pdf',format='pdf')
+
+    if ISM_phase == 'dif':
+
+        print('\n Now looking at diffuse gas grid parameters')
+        plot_these          =   ['nH','R','Z','Tk']
+        bins                =   80
+        ext_DIF1            =   '_'+str(FUV)+'UV'+ext_DIFFUSE
+        plt.ion()
+        fig                 =   plt.figure(2,figsize = figsize)
+        panel               =   1
+        if z1 == 'z6': ranges              =   [[-7,4],[-2.5,1],[-5,1],[0,7]]
+        if z1 == 'z2': ranges              =   [[-7,2.2],[-1.7,1],[-6,1],[0,9]]
+        if z1 == 'z0': ranges              =   [[-7,1],[-1.3,1.6],[-5,1],[1,8]]
+        for name in plot_these:
+            x_max       =   np.array([])
+            x_min       =   np.array([])
+            ax1         =   fig.add_subplot(2,2,panel)
+            # Make histograms
+            histos1     =   np.zeros([GR.N_gal,bins+2])
+            histos2     =   np.zeros([GR.N_gal,bins+3])
+            n_histos    =   0
+            for gal_index in range(0,GR.N_gal):
+                gal_ob          =   gal.galaxy(gal_index=gal_index)
+                dat0            =   gal_ob.particle_data.get_raw_data(data='ISM')['dif']
+                w               =   dat0['m'].values
+                dat             =   dat0[name].values
+                w               =   w[dat > 0]
+                dat             =   dat[dat > 0]
+                dat             =   np.log10(dat)
+                hist            =   np.histogram(dat,range=ranges[panel-1],bins=bins,weights=w)
+                # Convert counts to percent:
+                hist1           =   np.asarray(hist[0])
+                hist2           =   np.asarray(hist[1])
+                hist1           =   hist1*1./sum(hist1)*100.
+                # add some zeros to bring histogram down
+                wid             =   (hist2[1]-hist2[0])
+                hist2           =   np.append([hist2],[hist2.max()+wid])
+                hist2           =   np.append([hist2.min()-wid],[hist2])
+                hist1           =   np.append([hist1],[0])
+                hist1           =   np.append([0],[hist1])
+                x_min           =   np.append(x_min,min(hist2[0:len(hist1)]+wid/2))
+                x_max           =   np.append(x_max,max(hist2[0:len(hist1)]+wid/2))
+                histos1[n_histos,:]    =   hist1
+                histos2[n_histos,:]    =   hist2
+                n_histos        +=   1
+            histos1         =   histos1[0:n_histos,:]
+            histos2         =   histos2[0:n_histos,:]
+            # Plot as background the 2 sigma distribution around the mean in each bin
+            minhistos1,maxhistos1,meanhistos1       =   np.zeros(bins+2), np.zeros(bins+2), np.zeros(bins+2)
+            for i in range(0,bins+2):
+                meanhistos1[i]     =    np.mean(histos1[:,i])
+                minhistos1[i]      =   meanhistos1[i]-2.*np.std(histos1[:,i])
+                maxhistos1[i]      =   meanhistos1[i]+2.*np.std(histos1[:,i])
+
+            # Now plot actual histograms
+            for i in range(0,n_histos):
+                if histo_color == 'teal': color = 'teal'
+                if histo_color == 'colsel': color = colsel[i]
+                hist2           =   histos2[i,:]
+                hist1           =   histos1[i,:]
+                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps',color=color,label='G'+str(int(i+1)),alpha=0.7,lw=1)
+            ax1.set_xlabel('log('+getlabel(name)+')')
+            ax1.set_ylabel('Mass fraction [%]')
+
+            # Now plot mean of histograms
+            ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='steps',color='blue',lw=1.5)
+
+            ax1.set_yscale('log')
+            ymin        =   10**(-1.2)
+            ax1.set_ylim([ymin,10.**(np.log10(max(maxhistos1))+(np.log10(max(maxhistos1))-np.log10(ymin))/4.)])
+            ax1.set_xlim(ranges[panel-1])
+
+            if panel == 1:
+                if histo_color == 'colsel': ax1.legend(loc='upper left')
+
+            panel              +=  1
+        # plt.suptitle('Grid points (dashed lines) on histograms (solid lines) in diffuse gas')
+        plt.show(block=False)
+        savepath = 'plots/GMCs/grid_parameters_checkParam/'
+        if not os.path.exists(savepath):
+            os.mkdir(savepath)
+        plt.savefig('plots/GMCs/grid_parameters_checkParam/dif_histos'+ext_DIFFUSE+'_'+z1+'.pdf', format='pdf')
+
+def grid_parameters(histo_color='teal',FUV=0.1,ISM_phase='GMC',figsize=(10,7)):
+    '''
+    Purpose
+    ---------
+    Make histograms of galaxies with grid points on top
+    What this function does
+    ---------
+    1) Makes 4-panel figure with histograms of [Mgmc, G0, Z, P_ext] in GMCs
+    2) OR makes 4-panel figure with histograms of [nH, R, Z, Tk] in diffuse clouds
+    Arguments
+    ---------
+    ISM_phase: ISM phase in cloudy models, can be either 'GMC' or 'dif' - str
+    default: 'GMC'
+    histo_color: color selection for histograms - str
+    options:
+        - '<a specific color>': all histograms will have this color
+        - 'colsel': each galaxy will have a different color, using colsel from param_module.read_params
+    '''
+
+    plt.close('all')        # close all windows
+
+    # handle default values and kwargs
+    # args                    =   dict(region_size=16.8, max_regions_per_gal=30,gal_index=0,ISM_phase='GMC',line1='CII',line2='NII_205',extract_from='regions')
+    # args                    =   aux.update_dictionary(args,kwargs)
+    # for key in args: exec(key + '=args[key]')
+
+    # construct global results and galaxy
+    GR                      =   glo.global_results()
+
+    if ISM_phase == 'GMC':
+
+        print('\n Now looking at GMC grid parameters')
+        plot_these          =   ['Mgmc','FUV','Z','P_ext']
+        bins                =   80
+        grid_params         =   pd.read_pickle(d_cloud_models+ 'GMC/grids/'+ 'GMCgrid'+ext_DENSE+'_'+z1+'.param')
         grid_params['Mgmc'] =   grid_params['Mgmcs']
         grid_params['FUV']  =   grid_params['FUVs']
         grid_params['Z']    =   grid_params['Zs']
@@ -1401,31 +1619,27 @@ def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
         fig                 =   plt.figure(1,figsize = figsize)
         panel               =   1
         if z1 == 'z6': ranges              =   [[3.5,6.],[0,7],[-4,0.5],[3,13]]
-        if z1 == 'z2': ranges              =   [[3.5,6.],[2,7],[-2.2,1],[7,12.]]
-        if z1 == 'z0': ranges              =   [[3.8,6.5],[-6.,5],[-2.2,1],[-2,10.]]
+        if z1 == 'z2': ranges              =   [[3.5,6.],[-5,7],[-2.2,1],[0,12.]]
+        if z1 == 'z0': ranges              =   [[3.8,6],[-8.,5],[-1.5,1],[-2,12.]]
         for name in plot_these:
-            # print(name)
             x_max       =   np.array([])
             x_min       =   np.array([])
             ax1         =   fig.add_subplot(2,2,panel)
             # Make histograms
-            histos1     =   np.zeros([len(galnames),bins+2])
-            histos2     =   np.zeros([len(galnames),bins+3])
-            for i in range(0,len(galnames)):
-                galname1        =   galnames[i]
-                zred1           =   zreds[i]
-                dat0            =   pd.read_pickle('sigame/temp/GMC/z'+'{:.2f}'.format(zred1)+'_'+galname1+'_GMC.gas')
+            histos1     =   np.zeros([GR.N_gal,bins+2])
+            histos2     =   np.zeros([GR.N_gal,bins+3])
+            n_histos    =   0
+            for gal_index in range(0,GR.N_gal):
+                gal_ob          =   gal.galaxy(gal_index=gal_index)
+                dat0            =   aux.load_temp_file(gal_ob=gal_ob,ISM_phase=ISM_phase) #self.particle_data.get_raw_data(data='sim')['gas']
+                # dat0            =   gal_ob.particle_data.get_raw_data(data='ISM')['GMC']
                 w               =   dat0['m'].values
                 dat0['Mgmc']    =   dat0['m'].values
-                # print('total GMC mass: '+str(np.sum(dat0['m'])))
                 dat             =   dat0[name].values
                 w               =   w[dat > 0]
                 dat             =   dat[dat > 0]
                 dg              =   (grid_params[name][1]-grid_params[name][0])
                 dat             =   np.log10(dat)
-                w               =   w[(dat > min(grid_params[name])-3.*dg) & (dat < max(grid_params[name])+3.*dg)]
-                dat             =   dat[(dat > min(grid_params[name])-3.*dg) & (dat < max(grid_params[name])+3.*dg)]
-                # remove data values = 0 !!
                 i_nan           =   np.isnan(dat)
                 w               =   w[i_nan == False]
                 dat             =   dat[i_nan == False]
@@ -1445,8 +1659,11 @@ def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
                 hist1           =   np.append([0],[hist1])
                 x_min           =   np.append(x_min,min(hist2[0:len(hist1)]+wid/2))
                 x_max           =   np.append(x_max,max(hist2[0:len(hist1)]+wid/2))
-                histos1[i,:]    =   hist1
-                histos2[i,:]    =   hist2
+                histos1[n_histos,:]    =   hist1
+                histos2[n_histos,:]    =   hist2
+                n_histos        +=   1
+            histos1         =   histos1[0:n_histos,:]
+            histos2         =   histos2[0:n_histos,:]
             # Plot as background the 2 sigma distribution around the mean in each bin
             minhistos1,maxhistos1,meanhistos1       =   np.zeros(bins+2), np.zeros(bins+2), np.zeros(bins+2)
             for i in range(0,bins+2):
@@ -1454,9 +1671,8 @@ def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
                 minhistos1[i]      =   meanhistos1[i]-2.*np.std(histos1[:,i])
                 maxhistos1[i]      =   meanhistos1[i]+2.*np.std(histos1[:,i])
             # ax1.fill_between(histos2[0,0:len(hist1)], minhistos1, maxhistos1, facecolor='lightgreen', alpha=0.5, lw=0)
-
             # Now plot actual histograms
-            for i in range(0,len(galnames)):
+            for i in range(0,n_histos):
                 if histo_color == 'teal': color = 'teal'
                 if histo_color == 'colsel': color = colsel[i]
                 hist2           =   histos2[i,:]
@@ -1479,6 +1695,7 @@ def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
             ax1.set_yscale('log')
             ymin        =   10**(-1.)
             ax1.set_ylim([ymin,10.**(np.log10(max(maxhistos1))+(np.log10(max(maxhistos1))-np.log10(ymin))/4.)])
+            ax1.set_ylim([0.1,100])
             dx                  =   (max(x_max)-min(x_min))/10.
             ax1.set_xlim(ranges[panel-1])
 
@@ -1488,7 +1705,10 @@ def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
             panel              +=  1
 
         plt.show(block=False)
-        plt.savefig('plots/GMCs/grid_parameters/GMCgrid_points_on_histos'+ext_DENSE+'_'+z1+'.pdf',format='pdf') # .eps for paper!
+        savepath = 'plots/GMCs/grid_parameters/'
+        if not os.path.exists(savepath):
+            os.mkdir(savepath)
+        plt.savefig('plots/GMCs/grid_parameters/GMCgrid_points_on_histos'+ext_DENSE+'_'+z1+'.pdf',format='pdf')
 
     if ISM_phase == 'dif':
 
@@ -1496,7 +1716,7 @@ def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
         plot_these          =   ['nH','R','Z','Tk']
         bins                =   80
         ext_DIF1            =   '_'+str(FUV)+'UV'+ext_DIFFUSE
-        grid_params         =   pd.read_pickle('cloudy_models/dif/grids/difgrid'+ext_DIF1+'_'+z1+'.param')
+        grid_params         =   pd.read_pickle(d_cloudy_models+ 'dif/grids/' + 'difgrid'+ext_DIF1+'_'+z1+'.param')
         grid_params['nH']   =   grid_params['nHs']
         grid_params['R']    =   grid_params['Rs']
         grid_params['Tk']   =   grid_params['Tks']
@@ -1513,13 +1733,13 @@ def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
             x_min       =   np.array([])
             ax1         =   fig.add_subplot(2,2,panel)
             # Make histograms
-            histos1     =   np.zeros([len(galnames),bins+2])
-            histos2     =   np.zeros([len(galnames),bins+3])
-            for i in range(0,len(galnames)):
-                galname1        =   galnames[i]
-                zred1           =   zreds[i]
-                dat0            =   pd.read_pickle('sigame/temp/dif/z'+'{:.2f}'.format(zred1)+'_'+galname1+'_dif.gas')
-                w               =   dat0['m']
+            histos1     =   np.zeros([GR.N_gal,bins+2])
+            histos2     =   np.zeros([GR.N_gal,bins+3])
+            n_histos    =   0
+            for gal_index in range(0,GR.N_gal):
+                gal_ob          =   gal.galaxy(gal_index=gal_index)
+                dat0            =   aux.load_temp_file(gal_ob=gal_ob,ISM_phase=ISM_phase) #self.particle_data.get_raw_data(data='sim')['gas']
+                w               =   dat0['m'].values
                 dat             =   dat0[name].values
                 w               =   w[dat > 0]
                 dat             =   dat[dat > 0]
@@ -1542,8 +1762,11 @@ def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
                 hist1           =   np.append([0],[hist1])
                 x_min           =   np.append(x_min,min(hist2[0:len(hist1)]+wid/2))
                 x_max           =   np.append(x_max,max(hist2[0:len(hist1)]+wid/2))
-                histos1[i,:]    =   hist1
-                histos2[i,:]    =   hist2
+                histos1[n_histos,:]    =   hist1
+                histos2[n_histos,:]    =   hist2
+                n_histos        +=   1
+            histos1         =   histos1[0:n_histos,:]
+            histos2         =   histos2[0:n_histos,:]
             # Plot as background the 2 sigma distribution around the mean in each bin
             minhistos1,maxhistos1,meanhistos1       =   np.zeros(bins+2), np.zeros(bins+2), np.zeros(bins+2)
             for i in range(0,bins+2):
@@ -1552,7 +1775,7 @@ def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
                 maxhistos1[i]      =   meanhistos1[i]+2.*np.std(histos1[:,i])
 
             # Now plot actual histograms
-            for galname,i in zip(galnames,range(0,len(galnames))):
+            for i in range(0,n_histos):
                 if histo_color == 'teal': color = 'teal'
                 if histo_color == 'colsel': color = colsel[i]
                 hist2           =   histos2[i,:]
@@ -1575,22 +1798,71 @@ def grid_parameters(histo_color='teal',FUV=5,ISM_phase='GMC',figsize=(10,7)):
                 if histo_color == 'colsel': ax1.legend(loc='upper left')
 
             panel              +=  1
+        # plt.suptitle('Grid points (dashed lines) on histograms (solid lines) in diffuse gas')
         plt.show(block=False)
-        plt.savefig('plots/diffuse_gas/grid_parameters/difgrid_points_on_histos'+ext_DIFFUSE+'_'+z1+'.pdf',format='pdf') # .eps for paper!
+        savepath = 'plots/dif/grid_parameters/'
+        if not os.path.exists(savepath):
+            os.mkdir(savepath)
+        plt.savefig('plots/dif/grid_parameters/difgrid_points_on_histos'+ext_DENSE+'_'+z1+'.pdf',format='pdf')
 
-#===============================================================================
-""" Gas distribution plots """
-#-------------------------------------------------------------------------------
+        # fig.savefig('plots/dif/grids/grid_points_on_histos_paper.png', dpi=fig.dpi)
 
 #===============================================================================
 """ Auxiliary plotting functions """
 #-------------------------------------------------------------------------------
 
+def set_mpl_params():
+    mpl.rcParams['xtick.labelsize']=13
+    mpl.rcParams['ytick.labelsize']=13
+
+    mpl.rcParams['legend.loc']='best'
+    mpl.rcParams['legend.numpoints']=1
+    mpl.rcParams['legend.fontsize']=13
+
+    mpl.rcParams['lines.linewidth']=1.5
+    mpl.rcParams['lines.markersize']=5
+
+    mpl.rcParams['font.size']=13
+    # mpl.rcParams['font.weight']='bold'
+
+    mpl.rcParams['figure.figsize']=(15,15)
+    mpl.rcParams['figure.titlesize']=15
+    # mpl.rcParams['figure.titleweight']='bold'
+    mpl.rcParams['figure.subplot.wspace']=0.5
+    mpl.rcParams['figure.subplot.hspace']=0.4
+
+    mpl.rcParams['axes.titlesize']=15
+    mpl.rcParams['axes.titlepad']=10
+    # mpl.rcParams['axes.titleweight']='bold'
+    mpl.rcParams['axes.linewidth']=1.5
+    mpl.rcParams['axes.labelsize']=13
+    mpl.rcParams['axes.labelpad']=10
+    # mpl.rcParams['axes.labelweight']='bold'
+
+    mpl.rcParams['image.cmap']='seismic'
+
+def delete_old_plots():
+
+    plt.close('all')        # close all windows
+
 def axis_range(x,log=False,**kwargs):
-    '''
-    Purpose
-    ---------
-    Calculate a reasonable axis range
+    '''Calculates a reasonable axis range
+
+    Parameters
+    ----------
+
+    x : np.array()
+        Must be given, array of values
+
+    log : bool
+        If True, takes the log of the values in x, default: False
+
+    dex : float
+        Dex above and below maximum values in x, effective when log == True, default: max range in x divided by 5
+
+    fraction : float
+        Fraction of maximum range in x to go above and below on the axis, effective when log == False, default: 1/5.
+
     '''
 
     if log:
@@ -1598,357 +1870,28 @@ def axis_range(x,log=False,**kwargs):
         x       =   np.log10(x)
         xr      =   [np.min(x),np.max(x)]
         dx      =   (np.max(x)-np.min(x))/5.
-        if kwargs.has_key('dex'):
+        if 'dex' in kwargs:
             dx      =   kwargs['dex']
-        xr      =   np.array([xr[0]-dx,xr[1]+dx])
+        if type(dx) == int or type(dx) == float or type(dx) == np.float64: dx = [dx,dx]
+        xr      =   np.array([xr[0]-dx[0],xr[1]+dx[1]])
         xr      =   10.**xr
 
         if len(x) == 1:
-            xr      =   10.**np.array([x[0]-0.5,x[0]+0.5])
+            xr      =   10.**np.array([x-0.5,x+0.5])
 
     else:
 
         xr      =   [np.min(x),np.max(x)]
         frac    =   1./5
-        if kwargs.has_key('frac'): frac = kwargs['frac']
-        dx      =   (np.max(x)-np.min(x))*frac
-        xr      =   np.array([xr[0]-dx,xr[1]+dx])
+        if 'frac' in kwargs: frac = kwargs['frac']
+        if type(frac) == int or type(frac) == float or type(frac) == np.float64: frac = [frac,frac]
+        dx1     =   (np.max(x)-np.min(x))*frac[0]
+        dx2     =   (np.max(x)-np.min(x))*frac[1]
+        xr      =   np.array([xr[0]-dx1,xr[1]+dx2])
 
     return xr
 
-def save_obs(z1=z1):
-    '''
-    Purpose
-    ---------
-    Saves observations of line emission!
-    '''
-
-
-    if z1 == 'z2':
-        authors                     =   ['Malhotra+17']
-
-        # [CII] observations
-
-        malhotra17                  =   {\
-            'names':['Abell 2667a','Cosmic Horseshoe','Abell 2218b','The Clone',"8 O'clock Arc",'SMMJ14011','SDSS 090122+181432','Abell 2218','MS1512-cB58','SDSS J085137+333114','SGASJ122651+215220','SDSS134332+415503','SDSSJ120924+264052','SDSSJ091538+382658','CL 2244'],\
-            'z':np.array([1.0334,2.3811,1.032,2.003,2.728,2.5653,2.2558,2.515,2.7265,1.6926,2.9233,2.0927,1.021,1.501,2.237]),\
-            'SFR':np.array([36.9,32.8,54.7,56,477,866,1560,155,100,29,43.7,18,2.8,14.5,19]),\
-            'SFR+':np.zeros(15),\
-            'SFR-':np.zeros(15),\
-            'SFR_uplim':[0,0,0,0,0,0,0,0,0,0,0,0,1,1,1],\
-            # 'R':np.array([1.5999]),\
-            'L_FIR':1e11*np.array([1.1,1,1.7,1.7,14.7,26.7,48.11,4.8,3.1,0.9,1.3,0.5,0.08,0.45,0.6]),\
-            'L_FIR_uplim':np.array([0,0,0,0,0,0,0,0,0,0,0,0,1,1,1])}
-        F_CII                       =   1e-18*np.array([9.4,3.0,11.3,2.1,1.0,1.8,10.4,7.4,4.7,2.0,9.3,0.9,7.8,13.8,1.4]) # W m ^-2
-        D_L                         =   np.array([6881.1,19220.9,6869.6,15565.7,22665.3,21040.1,17997.2,20541.1,22650.3,12659.5,24637.0,16422.4,6779.1,10917.4,17814.6])*1e6*pc2m # m
-        mag                         =   np.array([17,24,6.1,28,12.3,3.6,8,22,30,27,40,40,58,25,20]) # magnification factor
-        malhotra17['L_CII']         =   4.*np.pi*D_L**2*F_CII/Lsun/mag # Lsun
-        # malhotra17['L_CII']         =   1e-3*malhotra17['L_FIR']*np.array([7.3,14.5,12.6,3.3,0.9,2.6,2.75,9.43,8.3,4.0,33.5,3.5,7.4,15.3,0])
-        malhotra17['L_CII+']        =   malhotra17['L_CII']*np.array([1.2/9.4,0.7/3,1.4/11.3,0.3/2.1,0.3/1,0.5/1.8,0.4/10.4,1.1/7.4,0.4/4.7,0.6/2,0.8/9.3,0.3/0.9,1.1/7.8,0.6/13.6,0.4/1.4])
-        malhotra17['L_CII-']        =   malhotra17['L_CII+']
-        malhotra17['L_CII_uplim']   =   np.zeros(15)
-
-        observations                =   pd.DataFrame({\
-            'Malhotra+17':malhotra17})
-
-        observations.to_pickle('sigame/temp/observations/CII_'+z1)
-
-        # CI observations
-
-        walter11                    =   {\
-            'names':['SMMJ14011'],\
-            'z':np.array([2.5653]),\
-            'SFR':np.array([866]),\
-            'SFR+':np.zeros(1),\
-            'SFR-':np.zeros(1),\
-            'SFR_uplim':[0]}
-        walter11['L_CI2']            =   aux.Jy2solLum(3.1, f_CI2, 2.5653, 21040.1) # Lsun
-        walter11['L_CI2+']           =   walter11['L_CI2']*0.3/3.1 # Lsun
-        walter11['L_CI2-']           =   walter11['L_CI2']*0.3/3.1 # Lsun
-
-        weiss05                     =   {\
-            'names':['SMMJ14011'],\
-            'z':np.array([2.5653]),\
-            'SFR':np.array([866]),\
-            'SFR+':np.zeros(1),\
-            'SFR-':np.zeros(1),\
-            'SFR_uplim':[0]}
-        walter11['L_CI1']            =   aux.Jy2solLum(1.8, f_CI1, 2.5653, 21040.1) # Lsun
-        walter11['L_CI1+']           =   walter11['L_CI1']*0.3/1.8 # Lsun
-        walter11['L_CI1-']           =   walter11['L_CI1']*0.3/1.8 # Lsun
-
-
-        observations                =   pd.DataFrame({\
-            'Walter+11':walter11})
-        observations.to_pickle('sigame/temp/observations/CI_'+z1)
-
-
-    if z1 == 'z6':
-
-        # List of authors (chronologically):
-        # Bradac: October, Pentericci: september, Inoue: june, Knudsen: june, Maiolino: september, Willott: july, Capak: june,
-        # Schaerer: february, Ota: september, Gonzalez: april, Ouchi: december, kanekar: july
-        # authors                 =   ['Bradac+16','Pentericci+16','Inoue+16','Knudsen+16','Maiolino+15','Willott+15','Capak+15',\
-            # 'Schaerer+15','Ota+14','González-López+14','Ouchi+13','Kanekar+13']
-
-        smit17              =   {'names':['COS-3018555981','COS-2987030247'],\
-            'z':np.array([6.8540,6.8076]),
-            'SFR':np.array([10.**(np.log10(19)+(np.log10((19+19.2)/19)/2.)),10.**(np.log10(16)+(np.log10((16+22.7)/16)/2.))]),\
-            'SFR+':np.array([19.2+19,22.7+16]),\
-            'SFR-':np.array([19.2,22.7]),\
-            'SFR_uplim':[2,2],\
-            'R':np.array([1e-3,1e-3]),\
-            'L_CII':np.array([4.7e8,3.6e8]),\
-            'L_CII+':np.array([0.5e8,0.5e8]),\
-            'L_CII-':np.array([0.5e8,0.5e8]),\
-            'L_CII_uplim':[0,0],\
-            'reason':'vallini'}
-        # SFR surface density if enough data is available:
-        smit17['SFRsd']     =   smit17['SFR']/(np.pi*smit17['R']**2)
-
-        decarli17           =   {'names':['SDSS J0842+1218 comp','CFHQ J2100-1715 comp','PSO J231-20 comp','PSO J308-21 comp'],\
-            'z':np.array([6.0656,6.0796,6.5900,6.2485]),
-            'SFR':np.array([140,800,760,77])*1.5/1.6,\
-            'SFR+':np.array([50,100,70,26])*1.5/1.6,\
-            'SFR-':np.array([50,100,70,26])*1.5/1.6,\
-            'SFR_uplim':[0,0,0,0],\
-            'R':np.array([1e-3,1e-3,1e-3,1e-3]),\
-            'L_CII':np.array([1.87e9,2.45e9,4.47e9,0.66e9]),\
-            'L_CII+':np.array([0.24e9,0.42e9,0.53e9,0.13e9]),\
-            'L_CII-':np.array([0.24e9,0.42e9,0.53e9,0.13e9]),\
-            'L_CII_uplim':[0,0,0,0],\
-            'reason':'vallini'}
-        # SFR surface density if enough data is available:
-        decarli17['SFRsd']  =   decarli17['SFR']/(np.pi*decarli17['R']**2)
-
-
-        bradac16            =   {'names':['RXJ1347:1216'],\
-            'z':np.array([6.7655]),\
-            'SFR':np.array([8.5]),\
-            'SFR+':np.array([5.8]),\
-            'SFR-':np.array([1.0]),\
-            'SFR_uplim':[0],\
-            'R':np.array([1.5999]),\
-            'L_CII':np.array([1.5e7]),\
-            'L_CII+':np.array([0.2e7]),\
-            'L_CII-':np.array([0.4e7]),\
-            'L_CII_uplim':[0],\
-            'reason':'vallini'}
-        # SFR surface density if enough data is available:
-        bradac16['SFRsd']   =   bradac16['SFR']/(np.pi*bradac16['R']**2)
-
-        pentericci16            =   {'names':['COSMOS13679','NTTDF6345','UDS16291'],\
-            'z':np.array([7.1453,6.701,6.6381]),\
-            # 'SFR':np.array([23.9+6.2,25.0+5.7,15.8+6.6]),\
-            'SFR':np.array([10.**(np.log10(23.9)+(np.log10((23.9+6.2)/23.9)/2.)),10.**(np.log10(25.)+(np.log10((25.+5.7)/25.)/2.)),10.**(np.log10(15.8)+(np.log10((15.8+6.6)/15.8)/2.))]),\
-            'SFR+':np.array([23.9+6.2,25.0+5.7,15.8+6.6]),\
-            'SFR-':np.array([23.9,25.0,15.8]),\
-            # 'SFR_uplim':[1,1,1],\
-            'SFR_uplim':[2,2,2],\
-            'R':np.array([2.32335,2.41335,2.4264]),\
-            'L_CII':10.**np.array([7.854062,8.247278,7.85406169]),\
-            'L_CII_uplim':[0,0,0],\
-            'reason':'vallini'}
-        # error bars from listed S/N
-        pentericci16['L_CII+']   =   pentericci16['L_CII']*(1.-1./np.array([4.5,6.1,4.5]))
-        pentericci16['L_CII-']   =   pentericci16['L_CII']*(1.-1./np.array([4.5,6.1,4.5]))
-        # SFR surface density if enough data is available:
-        pentericci16['SFRsd']   =   pentericci16['SFR']/(np.pi*pentericci16['R']**2)
-
-        inoue16            =   {'names':['SXDF-NB1006-2'],\
-            'z':np.array([7.2120]),\
-            'SFR':10.**np.array([2.54]),\
-            'SFR+':10.**np.array([2.54+0.17])-10.**np.array([2.54]),\
-            'SFR-':10.**np.array([2.54])-10.**np.array([2.54-0.71]),\
-            'SFR_uplim':[0],\
-            'L_CII':np.array([8.3355e7]),\
-            'L_CII+':np.array([0]),\
-            'L_CII-':np.array([0]),\
-            'L_CII_uplim':[1],\
-            'reason':'vallini'}
-        # SFR surface density if enough data is available:
-        # inoue16['SFRsd']   =   inoue16['SFR']/(np.pi*inoue16['R']**2)
-
-        knudsen16               =   {'names':['A383-5.1', 'MS0451-H', 'A1689-zD1'],\
-                'z':np.array([6.0274,6.703,7.6031]),\
-                # 'SFR':np.array([3.2+0.5,0.4+0.07,12]),\
-                'SFR':np.array([10.**(np.log10(3.2)+(np.log10((3.2+0.5)/3.2)/2.)),10.**(np.log10(0.4)+(np.log10((0.4+0.07)/0.4)/2.)),12]),\
-                'SFR+':np.array([3.2+0.5,0.4+0.07,0]),\
-                'SFR-':np.array([3.2,0.4,0]),\
-                # 'SFR_uplim':[0,0,0],\
-                'SFR_uplim':[2,2,0],\
-                'L_CII':np.array([8.3e6,3e5,1.8e7]),\
-                'L_CII+':np.array([3.1e6,0,0]),\
-                'L_CII-':np.array([3.1e6,0,0]),\
-                'L_CII_uplim':[0,1,1],\
-                'reason':'other'}
-        # SFR surface density if enough data is available:
-        knudsen16['SFRsd']     =   np.array([10,knudsen16['SFR'][1]/(np.pi*0.6**2)])
-
-        maiolino15              =   {'names':['BDF-3299','BDF-512','SDF-46975','BDF-3299-clump'],\
-                'z':np.array([7.109,7.008,6.844,7.107]),\
-                'SFR':np.array([5.7,6.0,15.4,5.7/3.5])*1.5/1.6,\
-                'SFR+':np.array([0,0,0,0]),\
-                'SFR-':np.array([0,0,0,0]),\
-                'SFR_uplim':[0,0,0,1],\
-                'R':np.array([0.57,0.57,0.64,1e-3]),\
-                'L_CII':np.array([2e7,6e7,5.7e7,5.9e7]),\
-                'L_CII+':np.array([0,0,0,0.8]),\
-                'L_CII-':np.array([0,0,0,0.8]),\
-                'L_CII_uplim':[1,1,1,0],\
-                'reason':'vallini'}
-        # SFR surface density if enough data is available:
-        maiolino15['SFRsd']     =   np.array([maiolino15['SFR']/(np.pi*maiolino15['R']**2)])
-
-        willott15                 =   {'names':['CLM1','WMH5'],\
-                'z':np.array([6.1657,6.0695]),\
-
-                'SFR':np.array([37,43]),\
-                'SFR+':np.array([0,0]),\
-                'SFR-':np.array([0,0]),\
-                'SFR_uplim':[0,0],\
-                'M_star':np.array([1.3e10,2.3e10]),\
-                'R':np.array([3.2,0.74]),\
-                'L_CII':np.array([2.4e8,6.6e8]),\
-                'L_CII+':np.array([0.32e8,0.72e8]),\
-                'L_CII-':np.array([0.32e8,0.72e8]),\
-                'L_CII_uplim':[0,0],\
-                'reason':'none'}
-        # SFR surface density if enough data is available:
-        willott15['SFRsd']     =   np.array([willott15['SFR']/(np.pi*willott15['R']**2)])
-        # End of error bars:
-        willott15['uL_CII']     =   willott15['L_CII']+willott15['L_CII+']
-        willott15['lL_CII']     =   willott15['L_CII']-willott15['L_CII-']
-
-
-        capak15                 =   {'names':['HZ1','HZ2','HZ3','HZ4','HZ5','HZ6','HZ7','HZ8','HZ9','HZ10'],\
-            'z':np.array([5.6885,5.6697,5.5416,5.5440,5.3089,5.2928,5.2532,5.1533,5.5410,5.6566]),\
-            'SFR':np.array([24,25,18,51,3,49,21,18,67,169]),\
-            'SFR+':np.array([6,5,8,54,0,44,5,5,30,32]),\
-            'SFR-':np.array([3,2,3,18,0,12,2,2,20,27]),\
-            'SFR_uplim':[0,0,0,0,1,0,0,0,0,0],\
-            'M_star':10.**np.array([10.47,10.23,10.23,9.67,0,10.17,9.86,9.77,9.86,10.39]),\
-            'M_dyn':10.**np.array([9.8,10.7,10.4,10.4,0,10.6,10.8,10.8,10.7]),\
-            'R':np.array([1.53,0.59,0.66,0.72,0.37,3.36,0.98,1.24,0.95,0]),\
-            'L_CII':10.**np.array([8.40,8.56,8.67,8.98,7.2,9.15,8.74,8.41,9.21,9.13]),\
-            'L_CII+':10.**(np.array([8.40,8.56,8.67,8.98,7.2,9.15,8.74,8.41,9.21,9.13])+np.array([0.32,0.41,0.28,0.22,0,0.17,0.24,0.18,0.09,0.13]))-10.**np.array([8.40,8.56,8.67,8.98,7.2,9.15,8.74,8.41,9.21,9.13]),\
-            'L_CII-':10.**np.array([8.40,8.56,8.67,8.98,7.2,9.15,8.74,8.41,9.21,9.13])-10.**(np.array([8.40,8.56,8.67,8.98,7.2,9.15,8.74,8.41,9.21,9.13])-np.array([0.32,0.41,0.28,0.22,0,0.17,0.24,0.18,0.09,0.13])),\
-            'L_CII_uplim':[0,0,0,0,1,0,0,0,0,0],\
-            'reason':'none'}
-        # SFR surface density if enough data is available:
-        capak15['SFRsd']        =   capak15['SFR']/(np.pi*capak15['R']**2)
-        capak15['SFRsd'][capak15['R'] == 0]        =   -1.
-        # End of error bar:
-        capak15['uL_CII']        =   capak15['L_CII']+capak15['L_CII+']
-        capak15['lL_CII']        =   capak15['L_CII']-capak15['L_CII-']
-
-        schaerer15                 =   {'names':['A1703-zD1','z8-GND-5296'],\
-                'z':np.array([6.8,7.508]),\
-                # 'SFR':np.array([9+13.8,23.4+113])*1/1.6,\
-                'SFR':np.array([10.**(np.log10(9)+np.log10((9+13.8)/9)/2.),10.**(np.log10(23.4)+(np.log10((23.4+113)/23.4)/2.))])*1/1.6,\
-                'SFR-':np.array([9,23.4])*1/1.6,\
-                'SFR+':np.array([9+13.8,23.4+113])*1/1.6,\
-                # 'SFR_uplim':[1,1],\
-                'SFR_uplim':[2,2],\
-                'R':np.array([4/2.,0.5]),\
-                'L_CII':np.array([0.2833e8,3.56e8]),\
-                'L_CII+':np.array([0,0]),\
-                'L_CII-':np.array([0,0]),\
-                'L_CII_uplim':[1,1],\
-                'reason':'other'}
-        # SFR surface density if enough data is available:
-        schaerer15['SFRsd']     =   np.array([schaerer15['SFR']/(np.pi*schaerer15['R']**2)])
-
-        ota14                   =   {'names':['IOK-1'],\
-                'z':np.array([6.96]),\
-                'SFR':np.array([10.**(np.log10(10)+np.log10((10+23.9)/10.)/2.)])*1.5/1.6,\
-                'SFR+':np.array([10+23.9])*1.5/1.6,\
-                'SFR-':np.array([10])*1.5/1.6,\
-                # 'SFR_uplim':[1],\
-                'SFR_uplim':[2],\
-                'R':np.array([0.64]),\
-                'L_CII':np.array([3.4e7]),\
-                'L_CII+':np.array([0]),\
-                'L_CII-':np.array([0]),\
-                'L_CII_uplim':[1],\
-                'reason':'other'}
-        # SFR surface density if enough data is available:
-        ota14['SFRsd']     =   np.array([ota14['SFR']/(np.pi*ota14['R']**2)])
-
-        gonzalez14              =   {'names':['SDF J132415.7','SDF J132408.3'],\
-            'z':np.array([6.541,6.554]),\
-            # 'SFR':np.array([34+177.2,15+360.9]),\
-            'SFR':np.array([10.**(np.log10(34)+(np.log10((34+177.2)/34)/2.)),10.**(np.log10(15.)+(np.log10((15.+360.9)/15.)/2.))]),\
-            'SFR+':np.array([34+177.2,15+360.9]),\
-            'SFR-':np.array([34,15]),\
-            # 'SFR_uplim':[1,1],\
-            'SFR_uplim':[2,2],\
-            'R':10.**np.array([4,3.2]),\
-            'L_CII':np.array([4.52e8,10.56e8]),\
-            'L_CII+':np.array([0,0]),\
-            'L_CII-':np.array([0,0]),\
-            'L_CII_uplim':[1,1],\
-            'reason':'none'}
-        # SFR surface density if enough data is available:
-        gonzalez14['SFRsd']     =   gonzalez14['SFR']/(np.pi*gonzalez14['R']**2)
-
-        ouchi13                 =   {'names':['Himiko'],\
-                'z':np.array([6.595]),\
-                'SFR':np.array([100.])*1/1.6,\
-                'SFR+':np.array([2.])*1/1.6,\
-                'SFR-':np.array([2.])*1/1.6,\
-                'SFR_uplim':[0],\
-                'R':np.array([17/2.]),\
-                'L_CII':np.array([0.54e8]),\
-                'L_CII+':np.array([0]),\
-                'L_CII-':np.array([0]),\
-                'L_CII_uplim':[1],\
-                'reason':'other'}
-        # SFR surface density if enough data is available:
-        ouchi13['SFRsd']     =   np.array([ouchi13['SFR']/(np.pi*ouchi13['R']**2)])
-
-        kanekar13                 =   {'names':['HCM 6A'],\
-                'z':np.array([6.56]),\
-                'SFR':np.array([10])*1/1.6,\
-                'SFR+':np.array([0]),\
-                'SFR-':np.array([0]),\
-                'SFR_uplim':[0],\
-                'L_CII':np.array([0.64e8]),\
-                'L_CII+':np.array([0]),\
-                'L_CII-':np.array([0]),\
-                'L_CII_uplim':[1],\
-                'reason':'none'}
-
-        # maiolino05              =   {'names':['SDSS J1148+52511'],\
-        #         'z':np.array([6.42]),\
-        #         'SFR':np.array([])*1.5/1.6,\
-        #         'SFR+':np.array([0,0,0]),\
-        #         'SFR-':np.array([0,0,0]),\
-        #         'SFR_uplim':[0,0,0],\
-        #         'R':np.array([0.57,0.57,0.64]),\
-        #         'L_CII':np.array([4.4e9]),\
-        #         'L_CII+':np.array([0,0,0]),\
-        #         'L_CII-':np.array([0,0,0]),\
-        #         'L_CII_uplim':[1,1,1],\
-        #         'reason':'vallini'}
-        # SFR surface density if enough data is available:
-        # maiolino15['SFRsd']     =   np.array([maiolino15['SFR']/(np.pi*maiolino15['R']**2)])
-
-
-        # SFR surface density if enough data is available:
-        # kanekar13['SFRsd']     =   np.array([kanekar13['SFR'].values/(np.pi*kanekar13['R']**2)])
-
-        # Collect in ONE dataframe:
-        observations        =   pd.DataFrame({'Smit+17':smit17,'Decarli+17':decarli17,\
-            'Bradac+16':bradac16,'Pentericci+16':pentericci16,'Inoue+16':inoue16,\
-            'Knudsen+16+17':knudsen16,'Maiolino+15':maiolino15,\
-            'Willott+15':willott15,'Capak+15':capak15,'Schaerer+15':schaerer15,\
-            'Ota+14':ota14,'Gonzalez-Lopez+14':gonzalez14,'Ouchi+13':ouchi13,\
-            'Kanekar+13':kanekar13})
-
-        observations.to_pickle('sigame/temp/observations/observations_'+z1)
-
-def add_observations_to_plot(slope_models,intercept_models,mark_reasons=False,mark_uplim=False,mark_det=False,z1='z6',MW=True,ms_scaling=1,alpha=1,line='[CII]'):
+def add_CII_observations_to_plot1(slope_models,intercept_models,mark_reasons=False,mark_uplim=False,mark_det=False,z1='z6',MW=True,ms_scaling=1,alpha=1,line='[CII]'):
     ''''
     Purpose
     ---------
@@ -1962,23 +1905,23 @@ def add_observations_to_plot(slope_models,intercept_models,mark_reasons=False,ma
     # Get axis for this figure:
     ax1                 =   plt.gca()
 
-    CII_obs             =   pd.read_pickle('sigame/temp/observations/observations'+'_'+z1)
+    CII_obs             =   pd.read_pickle('sigame/temp/observations/observations_CII_'+z1)
 
     if z1 == 'z6':
-    	# List of authors (chronologically):
-    	# Bradac: October, Pentericci: september, Inoue: june, Knudsen: june, Maiolino: september, Willott: july, Capak: june,
-    	# Schaerer: february, Ota: september, Gonzalez: april, Ouchi: december, kanekar: july
-    	CII_obs             =   CII_obs[['Kanekar+13','Ouchi+13','Gonzalez-Lopez+14','Ota+14','Schaerer+15','Capak+15',\
-    	                    'Willott+15','Maiolino+15','Knudsen+16+17','Inoue+16','Pentericci+16','Bradac+16','Decarli+17','Smit+17']]
+        # List of authors (chronologically):
+        # Bradac: October, Pentericci: september, Inoue: june, Knudsen: june, Maiolino: september, Willott: july, Capak: june,
+        # Schaerer: february, Ota: september, Gonzalez: april, Ouchi: december, kanekar: july
+        CII_obs             =   CII_obs[['Kanekar+13','Ouchi+13','Gonzalez-Lopez+14','Ota+14','Schaerer+15','Capak+15',\
+                            'Willott+15','Maiolino+15','Knudsen+16+17','Inoue+16','Pentericci+16','Bradac+16','Decarli+17','Smit+17']]
 
-    	# And let's decide which author gets which symbol:
-    	obs_col             =   'darkgrey'
-    	markers             =   {'Kanekar+13':'d','Ouchi+13':'*','Gonzalez-Lopez+14':'>','Ota+14':'^','Schaerer+15':'v','Capak+15':'D',\
-    	                    'Willott+15':'x','Maiolino+15':'s','Knudsen+16+17':'<','Inoue+16':'h','Pentericci+16':'+','Bradac+16':'p','Decarli+17':'h','Smit+17':'s'}
-    	ms                  =   {'Kanekar+13':7,'Ouchi+13':9,'Gonzalez-Lopez+14':8,'Ota+14':8,'Schaerer+15':8,'Capak+15':7,\
-    	                    'Willott+15':7,'Maiolino+15':7,'Knudsen+16+17':8,'Inoue+16':5,'Pentericci+16':9,'Bradac+16':9,'Decarli+17':9,'Smit+17':5}
-    	mews                =   {'Kanekar+13':1.5,'Ouchi+13':1.5,'Gonzalez-Lopez+14':1.5,'Ota+14':1.5,'Schaerer+15':1.5,'Capak+15':1.5,\
-    	                    'Willott+15':3,'Maiolino+15':1.5,'Knudsen+16+17':1.5,'Inoue+16':1.5,'Pentericci+16':3,'Bradac+16':1.5,'Decarli+17':1.5,'Smit+17':1.5}
+        # And let's decide which author gets which symbol:
+        obs_col             =   'darkgrey'
+        markers             =   {'Kanekar+13':'d','Ouchi+13':'*','Gonzalez-Lopez+14':'>','Ota+14':'^','Schaerer+15':'v','Capak+15':'D',\
+                            'Willott+15':'x','Maiolino+15':'s','Knudsen+16+17':'<','Inoue+16':'h','Pentericci+16':'+','Bradac+16':'p','Decarli+17':'h','Smit+17':'s'}
+        ms                  =   {'Kanekar+13':7,'Ouchi+13':9,'Gonzalez-Lopez+14':8,'Ota+14':8,'Schaerer+15':8,'Capak+15':7,\
+                            'Willott+15':7,'Maiolino+15':7,'Knudsen+16+17':8,'Inoue+16':5,'Pentericci+16':9,'Bradac+16':9,'Decarli+17':9,'Smit+17':5}
+        mews                =   {'Kanekar+13':1.5,'Ouchi+13':1.5,'Gonzalez-Lopez+14':1.5,'Ota+14':1.5,'Schaerer+15':1.5,'Capak+15':1.5,\
+                            'Willott+15':3,'Maiolino+15':1.5,'Knudsen+16+17':1.5,'Inoue+16':1.5,'Pentericci+16':3,'Bradac+16':1.5,'Decarli+17':1.5,'Smit+17':1.5}
 
     if z1 == 'z2':
         CII_obs             =   CII_obs[['Malhotra+17']]
@@ -1989,166 +1932,78 @@ def add_observations_to_plot(slope_models,intercept_models,mark_reasons=False,ma
         ms                  =   {'Malhotra+17':4}
         mews                =   {'Malhotra+17':1.5}
 
-    # Plot with different symbols
-    n_det               =   np.zeros(len(CII_obs.keys()))
-    n_det_above         =   np.zeros(len(CII_obs.keys()))
-    n_det_below         =   np.zeros(len(CII_obs.keys()))
-    n_nondet            =   np.zeros(len(CII_obs.keys()))
-    n_nondet_below      =   np.zeros(len(CII_obs.keys()))
-    n_tot               =   np.zeros(len(CII_obs.keys()))
-    zred_nondet         =   np.array([])
-    zred_det            =   np.array([])
-    i                   =   0
-    for author in CII_obs.keys():
-        obs                 =   CII_obs[author]
-        n_tot[i]            =   len(obs['L_CII_uplim'])
-        n_det[i]            =   len([ind for ind, uplim in enumerate(obs['L_CII_uplim']) if uplim == 0])
-        n_nondet[i]         =   len([ind for ind, uplim in enumerate(obs['L_CII_uplim']) if uplim == 1])
-        print(author)
-        # if author == 'Smit+17': pdb.set_trace()
-        if n_det[i]>0:
-            SFR_lower_limits            =   [obs['SFR'][j] for j in range(0,len(obs['SFR'])) if obs['L_CII_uplim'][j] == 0]
-            z                           =   [obs['z'][j] for j in range(0,len(obs['SFR'])) if obs['L_CII_uplim'][j] == 0]
-            zred_det                    =   np.append(zred_det,np.array(z))
-            print('Detected z: ',z)
-            L_CII_lower_limits           =   [obs['L_CII'][j]-obs['L_CII-'][j] for j in range(0,len(obs['L_CII'])) if obs['L_CII_uplim'][j] == 0]
-            L_CII_upper_limits           =   [obs['L_CII'][j]+obs['L_CII+'][j] for j in range(0,len(obs['L_CII'])) if obs['L_CII_uplim'][j] == 0]
-            L_CII_models_prediction      =   10.**(slope_models*np.log10(SFR_lower_limits)+intercept_models) # according to models
-            n_det_above[i]              =   len(np.array([L_CII_lower_limits[j] for j in range(0,len(L_CII_lower_limits)) if (L_CII_lower_limits[j] > L_CII_models_prediction[j])]))
-            n_det_below[i]              =   len(np.array([L_CII_lower_limits[j] for j in range(0,len(L_CII_lower_limits)) if (L_CII_upper_limits[j] < L_CII_models_prediction[j])]))
-        if n_nondet[i]>0:
-            SFR_lower_limits            =   [obs['SFR'][j] for j in range(0,len(obs['SFR'])) if obs['L_CII_uplim'][j] == 1]
-            z                           =   [obs['z'][j] for j in range(0,len(obs['SFR'])) if obs['L_CII_uplim'][j] == 1]
-            print('Not detected z: ',z)
-            zred_nondet                 =   np.append(zred_nondet,np.array(z))
-            # pdb.set_trace()
-            L_CII_upper_limits           =   [obs['L_CII'][j] for j in range(0,len(obs['L_CII'])) if obs['L_CII_uplim'][j] == 1]
-            L_CII_models_prediction      =   10.**(slope_models*np.log10(SFR_lower_limits)+intercept_models) # according to models
-            n_nondet_below[i]           =   len(np.array([L_CII_upper_limits[j] for j in range(0,len(L_CII_upper_limits)) if (L_CII_upper_limits[j] < L_CII_models_prediction[j])]))
-        i                   +=  1
-    print('\nTotal number of detections:')
-    print(sum(n_det))
-    print('Min and max z: '+str(min(zred_det))+' '+str(max(zred_det)))
-    print('\nTotal number of non-detections:')
-    print(sum(n_nondet))
-    print('Min and max z: '+str(min(zred_nondet))+' '+str(max(zred_nondet)))
-    print('total: '+str(sum(n_tot)))
-
-
-    print('\nTotal number detections with lower errorbars above our relation:')
-    print(sum(n_det_above))
-    print('\nTotal number detections with upper errorbars below our relation:')
-    print(sum(n_det_below))
-    print('\nTotal number non-detections with upper limits below our relation:')
-    print(sum(n_nondet_below))
-
-    print('\nAverage factor below Capak and Willot at high SFR end:')
-    SFR_capak_willott               =   np.append(CII_obs['Capak+15']['SFR'],CII_obs['Willott+15']['SFR'])
-    L_CII_capak_willott              =   np.append(CII_obs['Capak+15']['L_CII'],CII_obs['Willott+15']['L_CII'])
-    L_CII_uplim_capak_willott        =   np.append(CII_obs['Capak+15']['L_CII_uplim'],CII_obs['Willott+15']['L_CII_uplim'])
-    SFR_capak_willott               =   SFR_capak_willott[L_CII_uplim_capak_willott == 0]
-    L_CII_capak_willott              =   L_CII_capak_willott[L_CII_uplim_capak_willott == 0]
-    L_CII_models_predictions         =   10.**(slope_models*np.log10(SFR_capak_willott)+intercept_models)
-    print(np.mean(L_CII_capak_willott/L_CII_models_predictions))
-    print('min and max: '+str(min(L_CII_capak_willott/L_CII_models_predictions))+' '+str(max(L_CII_capak_willott/L_CII_models_predictions)))
-
-    i                   =   0
-    for author in CII_obs.keys():
-
-        obs                 =   CII_obs[author]
-        ms1                 =   ms_scaling*ms[author]
-
-        if mark_reasons:
-            if obs['reason'] == 'vallini': col_reason = 'green'
-            if obs['reason'] == 'littleHI': col_reason = 'blue'
-            if obs['reason'] == 'other': col_reason = 'turquoise'
-            if obs['reason'] != 'none': ax1.plot(obs['SFR'],obs['L_CII'],marker='o', fillstyle='full', mew=0, ms=20, color=col_reason, markeredgecolor = col_reason, linestyle="None",alpha=alpha,zorder=100)
-            # pdb.set_trace()
-
-        # Mark with color?
-        if mark_uplim:
-            if np.sum(obs['L_CII_uplim']) > 0:
-                index       =   [ind for ind, uplim in enumerate(obs['L_CII_uplim']) if uplim == 1]
-                ax1.plot(obs['SFR'][index],obs['L_CII'][index],marker='o', fillstyle='full', mew=0, ms=20, color='pink', markeredgecolor = 'pink', linestyle="None",alpha=alpha,zorder=100)
-        if mark_det:
-            if np.sum(obs['L_CII_uplim']) < len(obs['L_CII_uplim']):
-                index       =   [ind for ind, uplim in enumerate(obs['L_CII_uplim']) if uplim == 0]
-                ax1.plot(obs['SFR'][index],obs['L_CII'][index],marker='o', fillstyle='full', mew=0, ms=20, color='cyan', markeredgecolor = 'cyan', linestyle="None",alpha=alpha,zorder=100)
-
-        label                   =   CII_obs.keys()[i]
-        if CII_obs.keys()[i] == 'Gonzalez-Lopez+14': label = u'Gonzàlez-Lòpez+14'
-        if CII_obs.keys()[i] == 'Bradac+16': label = r'Bradac'+r'$\check{}$'+'+16' # 'Brada'+r'$\v{c}$'+'+16' #'Brada'++'+16'
-
-        # Label it, but plot far away:
-        if np.sum(obs['L_CII_uplim']) < len(obs['L_CII_uplim']):
-            ax1.plot([1e10],[1e10],marker=markers[author], fillstyle='full', mew=mews[author], ms=ms1, color=obs_col, markeredgecolor = obs_col, linestyle="None", label=label,alpha=alpha,zorder=100)
-        if np.sum(obs['L_CII_uplim']) == len(obs['L_CII_uplim']):
-            ax1.plot([1e10],[1e10],marker=markers[author], fillstyle='none', mew=mews[author], ms=ms1, color=obs_col, markeredgecolor = obs_col, linestyle="None", label=label,alpha=alpha,zorder=100)
-
-
-        # # Upper limits or range on SFR?
-        for j in range(0,len(obs['SFR_uplim'])):
-            SFR_uplim           =   obs['SFR_uplim'][j]
-            if SFR_uplim == 1:
-                ax1.errorbar(obs['SFR'][j],obs['L_CII'][j],\
-                    color=obs_col, markeredgecolor = obs_col, marker=markers[author], fillstyle='none', mew=mews[author], ms=ms1,\
-                    xerr=arrow_length(obs['SFR'][j]), xuplims=[True]*np.sum(obs['SFR_uplim'][j]),\
-                    linestyle="None",elinewidth=errwidth,capthick=capthick,alpha=alpha,zorder=100)
-            if SFR_uplim == 2:
-                ax1.plot([obs['SFR-'][j],obs['SFR+'][j]],[obs['L_CII'][j],obs['L_CII'][j]],\
-                    color=obs_col, markeredgecolor = obs_col, mew=mews[author], ms=ms1,\
-                    linestyle='-',lw=errwidth,alpha=alpha,zorder=0)
-                ax1.plot(obs['SFR'][j],obs['L_CII'][j], color=obs_col, marker=markers[author], fillstyle='none', mew=mews[author], ms=ms1,alpha=alpha,zorder=100)
-                print(author,obs['SFR'][j])
-        # Upper limits on L_CII?
-        if np.sum(obs['L_CII_uplim']) > 0:
-            index       =   [ind for ind, uplim in enumerate(obs['L_CII_uplim']) if uplim == 1]
-            ax1.errorbar(obs['SFR'][index],obs['L_CII'][index],\
-                color=obs_col, markeredgecolor = obs_col, marker=markers[author], fillstyle='none', mew=mews[author], ms=ms1,\
-                yerr=arrow_length(obs['L_CII'][index]), uplims=[True]*sum(obs['L_CII_uplim']),\
-                linestyle="None",elinewidth=errwidth,capthick=capthick,alpha=alpha,zorder=100)
-
-
-        # Plot [CII] detections with error bars
-        if np.sum(obs['L_CII_uplim']) < len(obs['L_CII_uplim']):
-            index       =   [ind for ind, uplim in enumerate(obs['L_CII_uplim']) if uplim == 0]
-            ax1.errorbar(obs['SFR'][index],obs['L_CII'][index],\
-                color=obs_col, markeredgecolor = obs_col, marker=markers[author], fillstyle='full', mew=mews[author], ms=ms1,\
-                yerr=[np.array(obs['L_CII-'][index]).tolist(),np.array(obs['L_CII+'][index]).tolist()],\
-                linestyle="None",elinewidth=errwidth,capthick=0,alpha=alpha,zorder=100)
-
-        # Add error bars on SFR
-        if np.sum(obs['SFR_uplim']) < len(obs['SFR_uplim']):
-            index       =   [ind for ind, uplim in enumerate(obs['SFR_uplim']) if uplim == 0]
-            ax1.errorbar(obs['SFR'][index],obs['L_CII'][index],\
-                color=obs_col, markeredgecolor = obs_col, marker=markers[author], fillstyle='full', mew=mews[author], ms=ms1,\
-                xerr=[np.array(obs['SFR-'][index]).tolist(),np.array(obs['SFR+'][index]).tolist()],\
-                linestyle="None",elinewidth=errwidth,capthick=0,alpha=alpha,zorder=0)
-
-        # White-filled symbols for upper limits:
-        if np.sum(obs['L_CII_uplim']) > 0:
-            index       =   [ind for ind, uplim in enumerate(obs['L_CII_uplim']) if uplim == 1]
-            ax1.errorbar(obs['SFR'][index],obs['L_CII'][index],\
-                color='white', markeredgecolor = obs_col, marker=markers[author], fillstyle='full', mew=mews[author], ms=ms1,\
-                linestyle="None",elinewidth=errwidth,capthick=capthick,alpha=alpha,zorder=100)
-            ax1.plot(obs['SFR'][index],obs['L_CII'][index], marker=markers[author], color=obs_col, fillstyle='none', mew=mews[author], ms=ms1, lw=0,alpha=alpha,zorder=100)
-
-
-        i                   +=  1
-
-    # MW
-    if line == '[CII]':
-        SFR_MW              =   1.9                     # Chomiuk+11
-        L_CII_MW            =   1e41/1e7/Lsun           # Pineda+14
-        if MW: ax1.errorbar(SFR_MW,L_CII_MW,marker='*',ms=12,label='Milky Way',c='black',linestyle="None")
-
-def getlabel(foo):
+def add_line_ratio_obs(ratio='CII_NII',zred_sample='lowz'):
     '''
     Purpose
     ---------
-    Gets label for plots
+    Plots observations of the relevant line ratio against redshift
+
+    Arguments
+    ---------
+    ratio - str
+    Options:
+        - 'CII_NII': plots the [CII]/[NII]205 line ratio
+        - 'OIII_NII': plots the [OIII]88/[NII]122 line ratio
+
+    zred_sample - str
+    Options:
+        - 'highz': adds observations at high redshift
+        - 'lowz': adds observations at low redshift
     '''
 
+    markers             =   ['o','x','D','v','s','^','*']
+    colors              =   [u'fuchsia',u'darkcyan',u'purple',u'indigo',u'blueviolet',\
+                            u'darkred',u'lightgrey']
+    if (ratio == 'CII_NII'):
+        name                =   '[CII]/[NII]205'
+        num                 =   'CII'
+        denom               =   'NII'
+        data                =   np.load('sigame/temp/observations/observations_CII_NII205_'+zred_sample+'.npy').item()
+    if (ratio == 'OIII_NII'):
+        name                =   '[OIII]88/[NII]122'
+        num                 =   'OIII'
+        denom               =   'NII'
+        data                =   np.load('sigame/temp/observations/observations_OIII88_NII122_'+zred_sample+'.npy').item()
+
+    ax                  =   plt.gca()
+    authors             =   data.keys()
+
+    # print('Now plotting the %s ratio against redshift' % (name) )
+    all_x_obs           =   []
+    for i,author in enumerate(authors):
+        color               =   colors[i]
+        marker              =   markers[i]
+        ratio_val           =   data[author][ratio]
+        zred                =   data[author]['zred']
+        # Calculate error propagation
+        uperror             =   data[author][ratio+'+']
+        loerror             =   data[author][ratio+'-']
+        error               =   np.vstack((loerror,uperror))
+        uplim               =   data[author][ratio+'_uplim']
+        lolim               =   data[author][ratio+'_lolim']
+        ax.errorbar(zred, ratio_val, yerr=error, lolims=lolim, uplims=uplim, c=color, marker=marker, lw=0.5, ls='None', capsize=4, capthick=0.5)
+        all_x_obs           =   np.append(all_x_obs,zred)
+
+    # Add labels for legend:
+    for i,author in enumerate(authors):
+        # print(author)
+        color               =   colors[i]
+        marker              =   markers[i]
+        ax.plot(1e9,1e9,\
+            c=color,marker=marker,lw=0.5,ls='None',\
+            label=author)
+
+    ax.xaxis.set_ticks_position('both'); ax.yaxis.set_ticks_position('both')
+    ax.set_xlabel('z',fontsize=11); ax.set_ylabel(name,fontsize=11)
+
+    return(all_x_obs)
+
+def getlabel(foo):
+    '''Gets axis labels for plots
+    '''
+
+
+    if foo == 'z': return 'z'
     if foo == 'x': return 'x position [kpc]'
     if foo == 'y': return 'y position [kpc]'
     if foo == 'z': return 'y position [kpc]'
@@ -2165,12 +2020,13 @@ def getlabel(foo):
     if foo == 'f_HI': return 'f$_{\mathrm{[HI]}}$'
     # if foo == 'f_HI1': return 'f$_{\mathrm{[HI]}}$ before'
     if foo == 'f_H2': return 'f$_{\mathrm{mol}}$'
-    # if foo == 'f_H21': return 'f$_{\mathrm{mol}}$ before'
+    if foo == 'f_neu': return 'f$_{\mathrm{neu}}$'
     if foo == 'Tk': return '$T_{\mathrm{k}}$ [K]'
     if foo == 'Z': return '$Z$ [Z$_{\odot}$]'
     if foo == 'lZ': return 'log($Z$ [Z$_{\odot}$])'
     if foo == 'Zmw': return r"$\langle Z'\rangle_{\mathrm{mass}}$"
     if foo == 'Zsfr': return r"$\langle Z'\rangle_{\mathrm{SFR}}$"
+    if foo == 'Zstar': return r"$\langle Z'\rangle_{\mathrm{stars}}$"
     if foo == 'lZsfr': return r"log($\langle Z'\rangle_{\mathrm{SFR}}$ [$Z_{\odot}$])"
     if foo == 'SFR': return 'SFR [M$_{\odot}$yr$^{-1}$]'
     if foo == 'lSFR': return 'log(SFR [M$_{\odot}$yr$^{-1}$])'
@@ -2219,11 +2075,17 @@ def getlabel(foo):
     if foo == 'lL_OI': return 'log(L$_{\mathrm{[OI]}\,63\mu\mathrm{m}}$ [L$_{\odot}$])'
     if foo == 'L_OIII': return 'L$_{\mathrm{[OIII]}\,88\mu\mathrm{m}}$ [L$_{\odot}$]'
     if foo == 'lL_OIII': return 'log(L$_{\mathrm{[OIII]}\,88\mu\mathrm{m}}$ [L$_{\odot}$])'
+    if foo == 'L_NII_122': return 'L$_{\mathrm{[NII122]}}$ [L$_{\odot}$]'
+    if foo == 'lL_NII_122': return 'log(L$_{\mathrm{[NII122]}}$ [L$_{\odot}$])'
+    if foo == 'L_NII_205': return 'L$_{\mathrm{[NII205]}}$ [L$_{\odot}$]'
+    if foo == 'lL_NII_205': return 'log(L$_{\mathrm{[NII205]}}$ [L$_{\odot}$])'
     if foo == 'S_CII': return 'S$_{\mathrm{[CII]}}$ [mJy]'
     if foo == 'x_e': return 'Electron fraction [H$^{-1}$]'
     if foo == 'f_CII': return '(mass of carbon in CII state)/(mass of carbon in CIII state) [%]'
     if foo == 'f_ion': return 'Ionized gas mass fraction [%]'
+    if foo == 'f_neu': return 'Neutral gas mass fraction [%]'
     if foo == 'f_gas': return 'Gas mass fraction M$_{\mathrm{gas}}$/(M$_{\mathrm{gas}}$+M$_{\mathrm{*}}$) [%]'
+    if foo == 'f_CII_neu': return 'f_${CII,neutral}$ [%]'
 
 def arrow_length(n):
     '''
@@ -2259,5 +2121,3 @@ def trim_df(file,skip,maxcol):
     script_out.close()
     if save == 'y': file    =   'sigame/temp/trim_df.txt'          # There were too many columns so save in trim_df.txt
     return(file)
-
-

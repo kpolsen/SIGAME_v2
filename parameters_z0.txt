@@ -1,0 +1,100 @@
+#### Parameter list for SÍGAME ####
+
+Total number of galaxies that we will be looking at [nGal]:
+1
+
+Overwrite previous results?: [ow]
+no
+
+----------------------------------------------------
+
+About simulations
+
+Look in these files [halos]:
+[352,401]
+
+Pre-selected sample of galaxies, snapshot numbers [snaps]:
+[132,133,134,135]
+
+Redshift to use in cloudy models [z1]:
+0
+
+Hubble parameter used in simulations [hubble]:
+0.7
+
+Omega matter [omega_m]:
+0.3
+
+Omega Lambda [omega_lambda]:
+0.7
+
+Omega radiation [omega_r]:
+0
+
+Simulation type [simtype]
+mufasa
+
+----------------------------------------------------
+
+For cloudy models
+
+Lines to be calculated [lines]
+['CII','OI','OIII','NII_122','NII_205','CI_609','CI_369','CO32','CO21','CO10']
+
+Type of dense gas model grid ('_ism' or '_Z1' or '_Z0p05' or '_Zx10' or '_Zx3' or '_DTM' or '_abun') [ext_DENSE]
+_abun
+
+Type of diffuse gas model grid ('_ism' or '_Z1' or '_Z0p05' or '_Zx10' or '_Zx3' or '_DTM' or '_abun' or '_turb10') [ext_DIFFUSE]
+_abun
+
+----------------------------------------------------
+
+For datacubes
+
+Targets: what do you want datacubes of? [target]
+['CII']
+
+Velocity resolution in km/s [v_res]
+20
+
+Maximum velocity in km/s (+/- this value will be used for the velocity axis) [v_max]
+600
+
+Spatial resolution in pc [x_res_pc]
+100
+
+Maximum distance from center of galaxy in x direction in pc (same will be used for y) [x_max_pc]
+30000
+
+Inclination of galaxy datacube around y axis from face-on [inc_dc]:
+0
+
+----------------------------------------------------
+
+Other settings for SÍGAME
+
+Fraction of smoothing length within which GMCs are placed [frac_h]
+0.5
+
+Fraction of the total stellar mass in the vicinity of the galaxy, setting the radius within which global properties are derived [f_R_gal]
+0.9
+
+Should SIGAME write A LOT (+1) or just a little (-1)? [verbose]
+-1
+
+Number of cores available [N_cores]
+4
+
+----------------------------------------------------
+
+Select which tasks to execute by changing a '-1' to a +1':
+
+BACKEND TASKS
+-1 extract_galaxy
++1 subgrid
++1 interpolate
++1 datacubes
+FRONTEND TASKS
+-1 regions
+-1 PCR_analysis
+
