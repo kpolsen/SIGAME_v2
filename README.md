@@ -10,7 +10,7 @@ This is a code to simulate the emission lines of the ISM in galaxies from hydrod
 ### Obtaining the SÍGAME code
 Clone this repository to an empty folder on your computer by giving the following command in the terminal:
 ``` 
-git clone https://github.com/kpolsen/SIGAME_dev.git
+git clone https://github.com/kpolsen/SIGAME.git
 ```
 
 OBS: For Linux users! If you're using the terminal, here the commands we found useful so far:
@@ -58,7 +58,7 @@ which will call the program run() in the sigame/backend.py module. What will be 
 will only extract, center and cut out the selected model galaxies.
 
 ### Making changes to SÍGAME modules
-If you make changes to a module, say to the function histos() in the sigame/plot.py module, then load in those changes with:
+If you make changes to a module, say to the function histos() in the sigame/plot.py module, then you can try to load in those changes with:
 ```
 import sigame.plot as siplot
 reload(siplot)
@@ -67,7 +67,7 @@ Now you're ready to run e.g. plot.histos() with the changes implemented.
 ```
 siplot.histos()
 ```
-This will not always work though, so instead of loading submodules and reloading, I recommend changing the ipython configuration to reload by default everytime you type a python command. This is done by adding the two following lines to~/.ipython/profile_default/ipython_config.py (create this file if it doesn't exit):
+This will not always work though, so instead of loading submodules and reloading or exiting and re-entering python, I recommend changing the ipython configuration to reload by default everytime you type a python command. This is done by adding the two following lines to~/.ipython/profile_default/ipython_config.py (create this file if it doesn't exit):
 ```
 c.InteractiveShellApp.extensions = ['autoreload']
 c.InteractiveShellApp.exec_lines = ['%autoreload 2']
@@ -83,8 +83,9 @@ SÍGAME is a module under construction that may in the future be prepared for th
 
 ### Collaborators (active in developing the code)
 Karen Pardos Olsen, kpolsen (at) asu.edu
+Daisy Leung, 
+Thomas Greve, 
 Lily Whitler, lwhitler (at) asu.edu
-Jacob Cluff, jacluff1 (at) asu.edu
 
 ### References
   - 2018: Olsen, K. P., Greve, T. R., Narayanan, D., Thompson, R., Davé, Niebla Rios, L., Stawinsi, S.: "Erratum: SIGAME Simulations of the [CII], [OI], and [OIII] Line Emission from Star-forming Galaxies at z~6 (2018)", ApJ 857 2, [ADS link](http://adsabs.harvard.edu/abs/2018ApJ...857..148O)
