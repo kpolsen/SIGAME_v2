@@ -36,7 +36,7 @@ print(''+'\n'+\
 ################ Some instructions ######################
 
 # Remember to select and edit a parameter file:
-z           =   input('At which redshift? (default: 0, other options: [0,test])')
+z           =   input('At which redshift? (default: 0)')
 if z == '': z = '0'
 if re.match("^\d+$",z) != None: z = 'z'+z # if z is a number, then add 'z' as a description
 params_file =   'parameters_'+z+'.txt'

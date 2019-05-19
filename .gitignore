@@ -3,6 +3,8 @@ $ git status
 sigame/temp/GMC/emission/*.gas
 sigame/temp/dif/emission/*.gas
 
+sigame/temp/z0_data_files/datacubes/*
+
 sigame/temp/params.npy
 
 .DS_store

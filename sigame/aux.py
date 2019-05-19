@@ -397,6 +397,59 @@ def GMC_generator(index_range,Mneu,h,Mmin,Mmax,b,tol,nn,n_cores):
 
         return index_range, f1,newm_gmc,newx,newy,newz
 
+def get_FUV_grid_results(z1):
+    """
+    Loads results from starburst99 as a 2D grid of FUV luminosities
+    for selected stellar Zs and ages.
+    """
+
+    # Read grid parameters for FUV grid of 1e4 Msun stellar populations
+    FUVgrid                 =   pd.read_pickle(d_t+'FUV/FUV_'+z1+'_noneb')
+    # Read corresponding [age,Z,L_FUV] values
+    # FUV                     =   pd.read_pickle(d_t+'FUV/FUV_'+z1+'_noneb')
+    # l_FUV                   =   FUV['L_FUV'].values
+    # l_FUV                   =   l_FUV.reshape((len(grid['Ages']),len(grid['Zs'])))
+
+    return(FUVgrid['Z'],FUVgrid['Age'],FUVgrid['L_FUV'])
+
+def FUVfunc(i,simstar,simgas,L_FUV):
+    """
+    Sums up total FUV flux from all nearby stars within 1 h
+    """
+    dist        =   rad((simstar[pos]-simgas.loc[i][pos]).astype(np.float64),pos).values
+    dist[dist == 0]     =   1000
+    return i, sum(L_FUV[dist < simgas['h'][i]]/(4*np.pi*dist[dist < simgas['h'][i]]**2))
+
+def Pfunc(i,simgas1,simgas,simstar,m_gas,m_star):
+    # Distance to other gas particles in disk plane:
+    dist1       =   rad((simgas1[posxy]-simgas.loc[i][posxy]).astype(np.float64),posxy).values
+    m_gas1      =   m_gas[dist1 < simgas['h'][i]]
+    p,surf_gas,surf_star,sigma_gas,sigma_star,vel_disp_gas = [0 for j in range(0,6)]
+    if len(m_gas1) >= 1:
+        surf_gas    =   sum(m_gas1)/(np.pi*simgas['h'][i]**2.)
+        sigma_gas   =   np.std(simgas1.loc[dist1 < simgas['h'][i]]['vz'])
+        # Distance to other star particles in disk plane:
+        dist2       =   rad((simstar[posxy]-simgas.loc[i][posxy]).astype(np.float64),posxy).values
+        m_star1     =   m_star[dist2 < simgas['h'][i]]
+        if len(m_star1) >= 1:
+            surf_star   =   sum(m_star1)/(np.pi*simgas['h'][i]**2.)
+            sigma_star  =   np.std(simstar.loc[dist2 < simgas['h'][i]]['vz'])
+        # Total velocity dispersion of gas
+        vel_disp_gas   =   np.std(np.sqrt((simgas1.loc[dist1 < simgas['h'][i]]['vx'].values)**2+\
+                            (simgas1.loc[dist1 < simgas['h'][i]]['vy'].values)**2+\
+                            (simgas1.loc[dist1 < simgas['h'][i]]['vz'].values)**2))
+        if len(simstar.loc[dist2 < simgas['h'][i]]) == 0: sigma_star = 0
+        if sigma_star != 0: p = np.pi/2.*G_grav*surf_gas*(surf_gas+(sigma_gas/sigma_star)*surf_star)/1.65
+        if sigma_star == 0: p = np.pi/2.*G_grav*surf_gas*(surf_gas)/1.65
+
+    else:
+        if simgas['SFR'][i] > 0:
+            surf_gas    =   simgas['m'][i]/(np.pi*simgas['h'][i]**2.)
+            m_star1     =   m_star[dist2 < simgas['h'][i]]
+            if len(m_star1) >= 1:
+                surf_star   =   sum(m_star1)/(np.pi*simgas['h'][i]**2.)
+
+    return i, p,surf_gas,surf_star,sigma_gas,sigma_star,vel_disp_gas
 
 #===========================================================================
 """ For interpolation step"""
@@ -974,7 +1027,7 @@ def load_clouds(dataframe,target,ISM_dc_phase):
         clouds1['R']        =   dataframe['Rgmc'].values
 
     # TEST
-    # clouds1             =   clouds1[0:550]
+    # clouds1             =   clouds1[0:30000]
 
 
     clouds1['x']        =   dataframe['x'] # kpc
