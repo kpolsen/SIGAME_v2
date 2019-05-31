@@ -427,6 +427,19 @@ $pattern-background-size: 25em;
 		}
 	}
 
+
+/* Clickable icon */
+
+	.ClickableIcon {
+		@include icon;
+		position: relative;
+		cursor: pointer;
+		display: block;
+		margin: 0 0 1.5em 0;
+		opacity: 0.35;
+		text-align: center;
+
+
 /* Icon */
 
 	.icon {
