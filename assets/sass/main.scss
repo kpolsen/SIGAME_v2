@@ -709,6 +709,7 @@ $pattern-background-size: 25em;
 		padding: 5em;
 
 		&.style1 {
+            background: none;
 			padding: 0;
 		}
 
@@ -748,6 +749,7 @@ $pattern-background-size: 25em;
 		}
 
 		&.style4 {
+            background: none;
 			padding: 4em;
 		}
 	}
