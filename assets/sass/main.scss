@@ -1372,6 +1372,7 @@ $pattern-background-size: 25em;
 				li {
 					display: block;
 					padding: 1em 0 0 0;
+					background: _palette(one, bg);
 					
 					&:hover {
 						background: lighten(_palette(one, bg), 5) !important;
