@@ -407,16 +407,6 @@ $pattern-background-size: 25em;
 		border: 0;
 		position: relative;
 
-		&:before {
-			background: url('images/overlay.png');
-			content: '';
-			height: 100%;
-			left: 0;
-			position: absolute;
-			top: 0;
-			width: 100%;
-		}
-
 		&.fit {
 			display: block;
 
