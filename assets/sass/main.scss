@@ -614,7 +614,6 @@ $pattern-background-size: 25em;
 	ul.buttons {
 		cursor: default;
 		list-style: none;
-		opacity: 0.35;
 		padding-left: 0;
 		display: block;
 		margin: 0 0 1.5em 0;
@@ -1373,6 +1372,12 @@ $pattern-background-size: 25em;
 				li {
 					display: block;
 					padding: 1em 0 0 0;
+					
+					&:hover {
+						background: lighten(_palette(one, bg), 5) !important;
+						border-color: lighten(_palette(one, bg), 5) !important;
+					}
+
 				}
 			}
 
