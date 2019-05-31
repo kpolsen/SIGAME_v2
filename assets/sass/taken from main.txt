@@ -1,3 +1,5 @@
+from .image
+
         &:before {
             background: url('images/overlay.png');
             content: '';
@@ -7,3 +9,9 @@
             top: 0;
             width: 100%;
         }
+
+
+from style4 in .wrapper
+
+            background: _palette(two, bg);
+            color: _palette(two, fg);
