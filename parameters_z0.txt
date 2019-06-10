@@ -91,8 +91,8 @@ Select which tasks to execute by changing a '-1' to a +1':
 
 BACKEND TASKS
 -1 extract_galaxy
-+1 subgrid
--1 interpolate
+-1 subgrid
++1 interpolate
 -1 datacubes
 FRONTEND TASKS
 -1 regions

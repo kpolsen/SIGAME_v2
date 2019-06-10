@@ -474,6 +474,12 @@ def interpolate_in_GMC_models(GMCgas,cloudy_grid_param,cloudy_grid):
     # Values used for interpolation in cloudy models:
     GMCs                        =   np.column_stack((GMCgas1['m'].values,GMCgas1['FUV'].values,GMCgas1['Z'].values,GMCgas1['P_ext'].values))
 
+    print(np.min(GMCgas1['m']),np.min(GMCgas1['FUV']),np.min(GMCgas1['Z']),np.min(GMCgas1['P_ext']))
+    print(np.max(GMCgas1['m']),np.max(GMCgas1['FUV']),np.max(GMCgas1['Z']),np.max(GMCgas1['P_ext']))
+    print(cloudy_grid.shape)
+    
+    pdb.set_trace()
+
     # List of target items that we are interpolating for:
     target_list                 =   ['Mgmc_fit','FUV_fit','Z_fit','P_ext_fit',\
                                     'f_H2','f_HI','m_dust','m_H','m_H2','m_HI','m_HII',\

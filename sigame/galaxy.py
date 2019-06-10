@@ -1472,6 +1472,11 @@ class interpolate_clouds(galaxy):
         cloudy_grid_param['ms'] = cloudy_grid_param['Mgmcs']
         cloudy_grid         =   pd.read_pickle(d_cloudy_models + 'GMCgrid'+ext_DENSE+'_'+z1+'_em.models')
 
+
+        # print(cloudy_grid_param['Mgmcs'])
+        # print(cloudy_grid.shape)
+
+
         GMCgas_new          =   aux.interpolate_in_GMC_models(GMCgas,cloudy_grid_param,cloudy_grid)
 
         aux.save_temp_file(GMCgas_new,gal_ob=self.gal_ob,ISM_phase='GMC')
