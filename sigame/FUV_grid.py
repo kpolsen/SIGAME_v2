@@ -1,5 +1,9 @@
 ###     Module: FUV_grid.py of SIGAME         		###
 
+# Import other SIGAME modules
+import sigame.aux as aux
+import sigame.global_results as glo
+
 import numpy as np
 import pandas as pd
 import pickle
@@ -9,15 +13,14 @@ from scipy.interpolate import InterpolatedUnivariateSpline,interp1d,interp2d
 import time
 import multiprocessing as mp
 import subprocess as sub
-import aux as aux
 import matplotlib.pyplot as plt
 
-# From SIGAME submodules:
-# import sigame.plot as plot
+#===============================================================================
+"""  Load parameters """
+#-------------------------------------------------------------------------------
 
-params                      =   np.load('sigame/temp/params.npy').item()
-for key,val in params.items():
-    exec(key + '=val')
+params                      =   aux.load_parameters()
+for key,val in params.items(): exec(key + '=val')
 
 def grid_radiation():
     print('** Get FUV flux from stellar population **')
@@ -25,7 +28,7 @@ def grid_radiation():
     # Ages [Myr]
     if z1 == 'z6': Ages        =   10.**np.array([-0.5,0,0.5,1,1.5,2,2.5,3])
     if z1 == 'z2': Ages        =   10.**np.array([1.8,2.0,2.2,2.4,2.6,2.8,3,3.2])
-    if z1 == 'z0': Ages        =   10.**np.array([0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0])
+    if z1 == 'z0': Ages        =   10.**np.array([0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0]) # max 10 Gyr, we think
     
     # Metallicities
     if z1 == 'z6': Zs          =   10.**np.array([-1.4,-1.0,-0.6,-0.2])
@@ -45,13 +48,13 @@ def grid_radiation():
     Zs          =   np.array([0.0001,0.002,0.008,0.014,0.040])/0.0134 # 0.0134 from R. Dave
 
     nmodels     =   len(Ages)*1.*len(Zs)
-    # pdb.set_trace()
+    print('%s models' % int(nmodels))
 
     # Save grid axes
     FUVgrid     =   {'Ages':Ages,'Zs':Zs}
     pickle.dump(FUVgrid,open(d_t+'FUV/FUVgrid_'+z1+'_noneb','wb'))
 
-    foo         =   raw_input('Run starburst99? [default: n] ... ')
+    foo         =   input('Run starburst99? [default: n] ... ')
     if foo == '': foo =   'n'
     if foo == 'y':
         i           =   0
@@ -61,8 +64,8 @@ def grid_radiation():
                 name                    =   'sb_'+str(i)
                 print(name)
                 # Add line in the beginning of script and change age, mass and metallicity
-                script_in               =   open(d_sb+'template.input','r')     # template file
-                script_out              =   open(d_sb+name+'.input','w')
+                script_in               =   open(d_sb+'templates/template.input','r')     # template file
+                script_out              =   open(d_sb+'runs/'+name+'.input','w')
                 nextline                =   -1
                 for line in script_in:
 
@@ -84,8 +87,8 @@ def grid_radiation():
                 script_out.close()
                 # Edit run file for starburst99 scripts and run them
                 name                    =   'sb_'+str(i)
-                go_in                   =   open(d_sb+'go_galaxy_template','r')
-                go_out                  =   open(d_sb+'go_galaxy_1','w')
+                go_in                   =   open(d_sb+'templates/go_galaxy_template','r')
+                go_out                  =   open(d_sb+'runs/go_galaxy_1','w')
                 for line in go_in:
 
                     if line.find('<name>') >= 0:
@@ -96,14 +99,14 @@ def grid_radiation():
                 go_in.close()
                 go_out.close()
                 # And run!!
-                pro                     =   sub.Popen(['./go_galaxy_1'],cwd=d_sb,stdout=sub.PIPE)
+                pro                     =   sub.Popen(['./go_galaxy_1'],cwd=d_sb+'runs/',stdout=sub.PIPE)
                 text                    =   u'Done with stellar population # '+str(i1)
                 stdout,stderr           =   pro.communicate()   # wait until starburst is done
                 i                       +=  1
 
     i           =  0
 
-    foo         =   raw_input('Save FUV grid? [default: n] ... ')
+    foo         =   input('Save FUV grid? [default: n] ... ')
     if foo == '': foo =   'n'
     if foo == 'y':
         # Make a dataframe with results
@@ -119,7 +122,7 @@ def grid_radiation():
                 FUV['Z'][i]             =   Z
                 # Calculate luminosity of this population:
                 columns                 =   ['time','wavelength','ltot','lstellar','lnebular']
-                spec                    =   pd.read_table(d_sb+name+'.spectrum1',names=columns,skiprows=6,sep='\s*',engine='python')
+                spec                    =   pd.read_csv(d_sb+'runs/output/'+name+'.spectrum1',names=columns,skiprows=6,sep='\s*',engine='python')
                 x                       =   spec['wavelength'][spec['time']==spec['time'].max()].values  # AA
                 y                       =   spec['lstellar'][spec['time']==spec['time'].max()].values       # ergs/s/AA
                 int_range               =   clight*hplanck/np.array([6,13.6])*1e10            # eV -> AA
@@ -137,7 +140,7 @@ def grid_radiation():
         np.savetxt(d_t+r'FUV/FUVtable_'+z1+'_noneb'+'.txt',FUV.values,fmt='%-14.4f\t%-14.4f\t%-14.4e',\
             header='Age [Myr]\tZ \t\tL_FUV [ergs/s]')
         FUV.to_pickle(d_t+'FUV/FUV_'+z1+'_noneb')
-    pdb.set_trace()
+        print('Done saving!')
 
 def amb_FUV(plotting=True):
     print('Calculate background FUV spectrum from simulation')

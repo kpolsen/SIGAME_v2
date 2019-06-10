@@ -242,7 +242,6 @@ def h5store(df, dc_name, filename, **kwargs):
     # Let's try this, not metadata
     df.to_hdf(filename,dc_name)
 
-
 #===========================================================================
 """ For subgrid step"""
 #---------------------------------------------------------------------------
@@ -410,7 +409,7 @@ def get_FUV_grid_results(z1):
     # l_FUV                   =   FUV['L_FUV'].values
     # l_FUV                   =   l_FUV.reshape((len(grid['Ages']),len(grid['Zs'])))
 
-    return(FUVgrid['Z'],FUVgrid['Age'],FUVgrid['L_FUV'])
+    return(FUVgrid['Z'].values,FUVgrid['Age'].values,FUVgrid['L_FUV'].values)
 
 def FUVfunc(i,simstar,simgas,L_FUV):
     """
@@ -461,7 +460,7 @@ def interpolate_in_GMC_models(GMCgas,cloudy_grid_param,cloudy_grid):
     int_parameters      =   ['m','FUV','Z','P_ext']
 
     # Looking at GMC properties in log space
-    # GMCgas              =   GMCgas[0:5000]
+    # GMCgas              =   GMCgas[0:144]
     N_GMCs              =   len(GMCgas)
     GMCgas1             =   np.log10(GMCgas[int_parameters])
     # print('Interpolating for %s GMCs' % N_GMCs)
@@ -473,12 +472,6 @@ def interpolate_in_GMC_models(GMCgas,cloudy_grid_param,cloudy_grid):
 
     # Values used for interpolation in cloudy models:
     GMCs                        =   np.column_stack((GMCgas1['m'].values,GMCgas1['FUV'].values,GMCgas1['Z'].values,GMCgas1['P_ext'].values))
-
-    print(np.min(GMCgas1['m']),np.min(GMCgas1['FUV']),np.min(GMCgas1['Z']),np.min(GMCgas1['P_ext']))
-    print(np.max(GMCgas1['m']),np.max(GMCgas1['FUV']),np.max(GMCgas1['Z']),np.max(GMCgas1['P_ext']))
-    print(cloudy_grid.shape)
-    
-    pdb.set_trace()
 
     # List of target items that we are interpolating for:
     target_list                 =   ['Mgmc_fit','FUV_fit','Z_fit','P_ext_fit',\
@@ -509,7 +502,9 @@ def interpolate_in_GMC_models(GMCgas,cloudy_grid_param,cloudy_grid):
         # And interpolate:
         GMCgas[target]              =   interp(GMCs)
 
-    GMCgas['f_HII']             =   1.-(GMCgas['f_H2']+GMCgas['f_HI'])
+    GMCgas['f_H2']              =   GMCgas['m_H2']/GMCgas['m_H']
+    GMCgas['f_HI']              =   GMCgas['m_HI']/GMCgas['m_H']
+    GMCgas['f_HII']             =   GMCgas['m_HII'] / GMCgas['m_H']
 
     # Find index of closest models!
     model_numbers               =   np.zeros([len(cloudy_grid_param['Mgmcs']),len(cloudy_grid_param['FUVs']),len(cloudy_grid_param['Zs']),len(cloudy_grid_param['P_exts'])])
@@ -541,15 +536,15 @@ def interpolate_in_GMC_models(GMCgas,cloudy_grid_param,cloudy_grid):
     print('Sum of L_[CII] using interpolation: %s Lsun' % np.sum(GMCgas['L_CII']))
 
 
-    print('Integrating entire radial profiles:')
-    print(str.format("{0:.2f}",sum(GMCgas['f_H2']*GMCgas['m'])/sum(GMCgas['m'])*100.)+' % of gas mass is molecular')
-    print(str.format("{0:.2f}",sum(GMCgas['f_HI']*GMCgas['m'])/sum(GMCgas['m'])*100.)+' % of gas mass is atomic')
-    print(str.format("{0:.2f}",sum(GMCgas['f_HII']*GMCgas['m'])/sum(GMCgas['m'])*100.)+' % of gas mass is ionized')
-    print('Using boundaries:')
-    print(str.format("{0:.2f}",sum(GMCgas['m_H2'])/sum(GMCgas['m_H'])*100.)+' % of gas mass is molecular')
-    print(str.format("{0:.2f}",sum(GMCgas['m_HI'])/sum(GMCgas['m_H'])*100.)+' % of gas mass is atomic')
-    print(str.format("{0:.2f}",sum(GMCgas['m_HII'])/sum(GMCgas['m_H'])*100.)+' % of gas mass is ionized')
+    print(str.format("{0:.2f}",sum(GMCgas['f_H2']*GMCgas['m_H'])/sum(GMCgas['m_H'])*100.)+' % of Hydrogen is molecular Hydrogen (excluding H in other H-bond molecules)')
+    print(str.format("{0:.2f}",sum(GMCgas['f_HI']*GMCgas['m_H'])/sum(GMCgas['m_H'])*100.)+' % of Hydrogen is atomic Hydrogen (excluding H in other H-bond molecules)')
+    print(str.format("{0:.2f}",sum(GMCgas['f_HII']*GMCgas['m_H'])/sum(GMCgas['m_H'])*100.)+' % of Hydrogen is ionized Hydrogen (excluding H in other H-bond molecules)')
 
+    print(str.format("{0:.2f}",sum(GMCgas['m_H2'])/sum(GMCgas['m_H'])*100.)+' % of Hydrogen is molecular hydrogen (excluding H in other H-bond molecules)')
+    print(str.format("{0:.2f}",sum(GMCgas['m_HI'])/sum(GMCgas['m_H'])*100.)+' % of Hydrogen is atomic hydrogen (excluding H in other H-bond molecules)')
+    print(str.format("{0:.2f}",sum(GMCgas['m_HII'])/sum(GMCgas['m_H'])*100.)+' % of Hydrogen is ionized hydrogen (excluding H in other H-bond molecules)')
+
+    print('Line emission: (Some might be nan if not enough line emission was found for this phase)')
     for line in lines:
         print('Total L_'+line+': %.2e L_sun' % (sum(GMCgas['L_'+line])))
 
@@ -666,6 +661,7 @@ def interpolate_in_dif_models(difgas,cloudy_grid_param,cloudy_grid):
                                 'm_dust','Tk_DNG','Tk_DIG','closest_model_i']].copy()
 
     # Store line emission from ionized vs neutral diffuse gas
+    print('Line emission: (Some might be nan if not enough line emission was found for this phase)')
     for line in lines:
         difgas1['L_'+line]              =   difgas['L_'+line]
         difgas1['L_'+line+'_int']       =   difgas['L_'+line+'_int']

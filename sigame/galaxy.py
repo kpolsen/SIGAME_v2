@@ -1156,16 +1156,28 @@ class subgrid_galaxy(galaxy):
         # Get FUV grid results from starburst99
         Zs,ages,L_FUV_grid  =   aux.get_FUV_grid_results(z1)
 
+        # Get stellar metallicity and FUV from simulation
+        Zsim                =   simstar.copy()['Z']
+        agesim              =   simstar.copy()['age']
+        agesim[agesim > 1e4] = 1e4 # since sb99 cannot handle anything older than 10Gyr
+
         # Calculate FUV luminosity of each stellar particle [ergs/s]
         part                    =   0.1
         L_FUV                   =   np.zeros(len(simstar))
         for i in range(0,len(simstar)):
-            f                       =   interp2d(Zs,ages,L_FUV_grid)
-            L_FUV[i]                =   simstar.loc[i]['m']/1e5*f(simstar.loc[i]['Z'],simstar.loc[i]['age'])
+            f                       =   interp2d(np.log10(Zs),np.log10(ages),np.log10(L_FUV_grid))
+            L_FUV[i]                =   simstar.loc[i]['m']/1e5*10.**f(np.log10(Zsim[i]),np.log10(agesim[i]))
+            if np.isnan(L_FUV[i]) > 0: pdb.set_trace()
             if 1.*i/len(simstar) > part:
                 print(int(part*100),' % done!')
                 part                    =   part+0.1
         simstar['L_FUV']        =   L_FUV
+
+        print('Minimum FUV luminosity: %s Lsun' % (np.min(L_FUV)))
+        print('Maximum FUV luminosity: %s Lsun' % (np.max(L_FUV)))
+        if np.min(L_FUV) < 0: 
+            print('SB99 grid not sufficient: Some FUV stellar luminosity is negative')
+            pdb.set_trac()
 
         # Find FUV flux at gas particle positions
         F_FUV                   =   np.zeros(len(simgas))
@@ -1186,6 +1198,9 @@ class subgrid_galaxy(galaxy):
 
         # Store CR intensity in local CR intensity units
         simgas['CR']            =   F_FUV_norm*CR_ISM
+
+        print('Minimum FUV flux: %s x ISM value' % (np.min(F_FUV_norm)))
+        print('Maximum FUV flux: %s x ISM value' % (np.max(F_FUV_norm)))
 
         # Store new simgas and simstar files
         aux.save_temp_file(simgas, gal_ob=self.gal_ob, sim_type='gas', subgrid=True)
@@ -1270,11 +1285,12 @@ class subgrid_galaxy(galaxy):
         Mneu                =   simgas['m'].values*simgas['f_H21'].values
 
         print('Number of particles with enough dense mass: %s' % (len(simgas.loc[Mneu > 1e4]['m'])))
+        print('Out of: %s' % (len(simgas)))
         print('Dense gas mass fraction out of total ISM mass: %s %%' % (np.sum(Mneu)/np.sum(simgas['m'])*100.))
 
         if len(Mneu[Mneu > 1e4]) == 0:
             print(" No dense gas w/ mass > 10^4 Msun. Skipping subgrid for this galaxy.")
-            import pdb;set_trace()
+            pdb.set_trace()
 
         print('Min and max particle dense gas mass: %s Msun' % (np.min(Mneu[Mneu>0]))+' '+str(np.max(Mneu)))
         print('Throwing away this much gas mass: %s Msun' % (np.sum(Mneu[Mneu < 1e4])))
@@ -1326,7 +1342,7 @@ class subgrid_galaxy(galaxy):
                 GMCgas['m']         =   Mgmc
             except:
                 print(Mgmc)
-                import pdb; pdb.set_trace()
+                pdb.set_trace()
 
         if N_cores > 1:
 

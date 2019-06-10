@@ -110,6 +110,7 @@ def read_params(params_file,params):
     # Where diffuse and dense gas emission results are stores (still in use?)
     # params['dif_path']      =   d_XL_data+'sigame/temp/dif/emission/'+params['ext_DIFFUSE']+'/'
     # params['GMC_path']      =   d_XL_data+'sigame/temp/GMC/emission/'+params['ext_DENSE']+'/'
+    params['d_sb']              =   '../sb99/'
 
     # do we need this one?
     params['galaxy_sample_root']    =   params['d_temp'] + 'galaxy_samples/'
