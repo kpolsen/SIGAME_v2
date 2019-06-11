@@ -4,7 +4,7 @@ sigame/temp/GMC/emission/*.gas
 sigame/temp/dif/emission/*.gas
 
 sigame/temp/z0_data_files/datacubes/*
-sigame/temp/z0_data_files/ISM_data/**
+sigame/temp/z0_data_files/particle_data/ISM_data/*
 
 sigame/temp/params.npy
 
