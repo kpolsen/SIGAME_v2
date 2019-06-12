@@ -79,6 +79,11 @@ params['d_temp']            =   params['parent'] + 'sigame/temp/'
 print('\n--------------------------------------------------------------')
 
 # Import main SIGAME modules
+import sigame.backend as backend
+import sigame.frontend as frontend
+import sigame.global_results as glo
+import sigame.aux as aux
+import sigame.plot as plot
 from sigame.main import *
 
 # Check that modules are of the right version

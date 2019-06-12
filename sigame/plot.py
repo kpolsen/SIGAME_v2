@@ -19,7 +19,6 @@ import pandas as pd
 import numpy as np
 import pdb as pdb
 from scipy.interpolate import RegularGridInterpolator
-from matplotlib.mlab import griddata
 import matplotlib.ticker as ticker
 import scipy as scipy
 from matplotlib.colors import ListedColormap
@@ -792,7 +791,7 @@ def histos(**kwargs):
             histos2[igal,:]  =   hist2
 
             if not one_color:
-                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps',color=col[igal],label='G'+str(int(igal+1)))
+                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='-',ds='steps',color=col[igal],label='G'+str(int(igal+1)))
 
             igal             +=  1
             Ngal             +=  1
@@ -816,10 +815,10 @@ def histos(**kwargs):
                 # pdb.set_trace()
                 hist2           =   histos2[i,:]
                 hist1           =   histos1[i,:]
-                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps',color='teal',label='G'+str(int(indices[i]+1)),alpha=0.7,lw=1)
+                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='-',ds='steps',color='teal',label='G'+str(int(indices[i]+1)),alpha=0.7,lw=1)
 
             # Now plot mean of histograms
-            if Ngal > 1: ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='steps',color='blue',lw=1)
+            if Ngal > 1: ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='-',ds='steps',color='blue',lw=1)
         # if logx == 'y':     ax1.set_xscale('log')
 
         # labels and ranges
@@ -1460,7 +1459,7 @@ def grid_parameters_checkParam(histo_color='teal', FUV=0.002, ISM_phase='GMC',fi
                 if histo_color == 'colsel': color = colsel[i]
                 hist2           =   histos2[i,:]
                 hist1           =   histos1[i,:]
-                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps',color=color,label='G'+str(int(i+1)),alpha=0.7,lw=1)
+                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='-',ds='steps',color=color,label='G'+str(int(i+1)),alpha=0.7,lw=1)
             ax1.set_xlabel('log('+getlabel(name)+')')
             if name == 'Mgmc':
                 ax1.set_ylabel('Number fraction [%]')
@@ -1468,7 +1467,7 @@ def grid_parameters_checkParam(histo_color='teal', FUV=0.002, ISM_phase='GMC',fi
                 ax1.set_ylabel('Mass fraction [%]')
 
             # Now plot mean of histograms
-            ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='steps',color='blue',lw=1.5)
+            ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='-',ds='steps',color='blue',lw=1.5)
 
             # Fix axes
             ax1.set_yscale('log')
@@ -1548,12 +1547,12 @@ def grid_parameters_checkParam(histo_color='teal', FUV=0.002, ISM_phase='GMC',fi
                 if histo_color == 'colsel': color = colsel[i]
                 hist2           =   histos2[i,:]
                 hist1           =   histos1[i,:]
-                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps',color=color,label='G'+str(int(i+1)),alpha=0.7,lw=1)
+                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='-',ds='steps',color=color,label='G'+str(int(i+1)),alpha=0.7,lw=1)
             ax1.set_xlabel('log('+getlabel(name)+')')
             ax1.set_ylabel('Mass fraction [%]')
 
             # Now plot mean of histograms
-            ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='steps',color='blue',lw=1.5)
+            ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='-',ds='steps',color='blue',lw=1.5)
 
             ax1.set_yscale('log')
             ymin        =   10**(-1.2)
@@ -1677,7 +1676,7 @@ def grid_parameters(histo_color='teal',FUV=0.1,ISM_phase='GMC',figsize=(10,7)):
                 if histo_color == 'colsel': color = colsel[i]
                 hist2           =   histos2[i,:]
                 hist1           =   histos1[i,:]
-                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps',color=color,label='G'+str(int(i+1)),alpha=0.7,lw=1)
+                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='-',ds='steps',color=color,label='G'+str(int(i+1)),alpha=0.7,lw=1)
             ax1.set_xlabel('log('+getlabel(name)+')')
             if name == 'Mgmc':
                 ax1.set_ylabel('Number fraction [%]')
@@ -1689,7 +1688,7 @@ def grid_parameters(histo_color='teal',FUV=0.1,ISM_phase='GMC',figsize=(10,7)):
                 ax1.plot([grid_point,grid_point],[1e-3,1e3],'k--')
 
             # Now plot mean of histograms
-            ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='steps',color='blue',lw=1.5)
+            ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='-',ds='steps',color='blue',lw=1.5)
 
             # Fix axes
             ax1.set_yscale('log')
@@ -1780,14 +1779,14 @@ def grid_parameters(histo_color='teal',FUV=0.1,ISM_phase='GMC',figsize=(10,7)):
                 if histo_color == 'colsel': color = colsel[i]
                 hist2           =   histos2[i,:]
                 hist1           =   histos1[i,:]
-                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='steps',color=color,label='G'+str(int(i+1)),alpha=0.7,lw=1)
+                ax1.plot(hist2[0:len(hist1)]+wid/2,hist1,ls='-',ds='steps',color=color,label='G'+str(int(i+1)),alpha=0.7,lw=1)
             ax1.set_xlabel('log('+getlabel(name)+')')
             ax1.set_ylabel('Mass fraction [%]')
             for grid_point in grid_params[name]:
                 ax1.plot([grid_point,grid_point],[1e-3,1e3],'k--')
 
             # Now plot mean of histograms
-            ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='steps',color='blue',lw=1.5)
+            ax1.plot(hist2[0:len(hist1)]+wid/2,meanhistos1,ls='-',ds='steps',color='blue',lw=1.5)
 
             ax1.set_yscale('log')
             ymin        =   10**(-1.2)
