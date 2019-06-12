@@ -34,14 +34,21 @@ class global_results:
 
     def __init__(self,**kwargs):
 
-        # get global results DataFrame
+        # get global results as dictionary
         GR                      =   self.__get_file()
-        GR['lum_dist']          =   GR['lum_dist']*0.+10. # TEST, putting all galaxies at 10 kpc
-        GR['R_gal']             =   GR['R_gal']*0.+30. # TEST, putting all galaxies at 10 kpc
+        GR['lum_dist']          =   GR['lum_dist']*0.+10. # putting all z=0 galaxies at 10 kpc
 
-        # add DF entries to global_results instance
+        for attr in ['lum_dist','M_dense','M_GMC','M_dif','Zmw']:
+            if attr not in GR.__dict__: GR = self.__set_attr(GR,attr)
+        for line in lines:
+            if attr not in GR.__dict__: GR = self.__set_attr(GR,'L_'+line)
+
+        # save global_results dictionary
+        filename    =   self.__get_file_location()
+        GR.to_pickle(filename)
+
+        # add all dictionary entries as parameters to global_results instance
         for key in GR: setattr(self,key,GR[key].values)
-
         setattr(self,'N_gal',len(GR['galnames']))
 
     def __get_file(self,**kwargs):
@@ -53,7 +60,6 @@ class global_results:
         if not os.path.isfile(filename):
             print("\ncould not find file at %s \n... creating Global Results file!" % filename)
             self.__create_file(**kwargs)
-
 
         return pd.read_pickle(filename)
 
@@ -91,10 +97,8 @@ class global_results:
             simgas  =   aux.load_temp_file(gal_ob=gal_ob, sim_type='gas', gal_ob_present=True)
             simstar =   aux.load_temp_file(gal_ob=gal_ob, sim_type='star', gal_ob_present=True)
             simdm   =   aux.load_temp_file(gal_ob=gal_ob, sim_type='dm', gal_ob_present=True)
-            print(galname,zred)
             # check if f_H21 is there, if not, make a copy so the rest of the code works (temporary fix):
             if 'f_H21' not in simgas.keys():
-                print('hey')
                 simgas['f_H21'] = simgas['f_H2'].values
                 gal_ob = dict( galname=galname, zred=zred, gal_index=i+1) # dummy gal object
                 aux.save_temp_file(simgas,gal_ob=gal_ob,sim_type='gas',gal_ob_present=True)
@@ -198,13 +202,33 @@ class global_results:
             if 'L_' in attr:
                 if gal_index == 0:
                     L                       =   np.zeros(GR_int['N_gal'][0])
+                    L_DNG                   =   np.zeros(GR_int['N_gal'][0])
+                    L_DIG                   =   np.zeros(GR_int['N_gal'][0])
+
+                # from GMCs
                 GMCgas                  =   aux.load_temp_file(gal_ob=gal_ob, verbose=False, ISM_phase='GMC')
                 if type(GMCgas) != int:
                     try:
                         L[gal_index]   = np.sum(GMCgas[attr].values)
                     except:
                         L[gal_index] = 0
-                GR_int[attr]                =    L
+                GR_int[attr+'_GMC']                =    L
+
+                # from dif
+                difgas                  =   aux.load_temp_file(gal_ob=gal_ob, verbose=False, ISM_phase='dif')
+
+
+                if type(difgas) != int:
+                    try:
+                        L_DNG[gal_index]    =   np.sum(difgas[attr + '_DNG'].values)
+                        L_DIG[gal_index]    =   np.sum(difgas[attr + '_DIG'].values)
+                    except:
+                        L_DNG[gal_index]    =  0
+                        L_DIG[gal_index]    =  0
+                GR_int[attr+'_DNG']                =    L_DNG
+                GR_int[attr+'_DIG']                =    L_DIG
+
+                GR_int[attr]                       =    L + L_DNG + L_DIG
 
         return(GR_int)
 

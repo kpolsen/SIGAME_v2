@@ -1420,9 +1420,9 @@ class subgrid_galaxy(galaxy):
         # Start new dataframe with only the diffuse gas
         difgas              =   simgas.copy()
         difgas['m']         =   simgas['m'].values*(1.-simgas['f_H21'].values)
-        print('Total gas mass in galaxy: %s Msun' % (sum(simgas['m'])))
-        print('Diffuse gas mass in galaxy: %s Msun' % (sum(difgas['m'])))
-        print('in percent: %s %%' % (sum(difgas['m'])/sum(simgas['m'])*100.))
+        print('Total gas mass in galaxy: %.2e Msun' % (sum(simgas['m'])))
+        print('Diffuse gas mass in galaxy: %.2e Msun' % (sum(difgas['m'])))
+        print('in percent: %.2f %%' % (sum(difgas['m'])/sum(simgas['m'])*100.))
 
         # Set radius of diffuse gas clouds
         difgas['R']                     =   difgas['h']

@@ -265,7 +265,7 @@ def simple_plot(**kwargs):
         if 'fig' in kwargs: fig = kwargs['fig']
         figsize             =   (8,6)                                   # slightly smaller figure size than default
         if 'figsize' in kwargs: figsize = kwargs['figsize']
-        fig                 =   plt.figure(fig)
+        fig                 =   plt.figure(fig,figsize=figsize)
         ax1                 =   fig.add_subplot(1,1,1)
     # if kwargs.has_key('aspect'): ax1.set_aspect(kwargs['aspect'])
 
@@ -989,31 +989,15 @@ def line_SFR(**kwargs):
     # handle default values and kwargs
     args                    =   dict(line='CII',colorbar='SFRsd',extract_from='regions',save=True,plot_DeLooze14=True,one_symbol_only=False)
     args                    =   aux.update_dictionary(args,kwargs)
-    for key in args: exec(key + '=args[key]')
+    for key,val in args.items():
+        exec('globals()["' + key + '"]' + '=val')
 
     # construct global results and galaxy
     GR                      =   glo.global_results()
-
-    load                    =   input('Restore previous saved result? (y/n)')
-    if load == '': load = 'y'
-    if load == 'n':
-        SFRs                    =   np.array([])
-        SFRsds                  =   np.array([])
-        line_lums               =   np.array([])
-        for gal_index in range(0,25):#len(models)):
-            if GR.zreds[gal_index] < 0.03:
-                gal_ob             =   gal.galaxy(gal_index=gal_index)
-                line_lum            =   gal_ob.datacube.get_total_sum(target='L_'+line,all_phases=True)
-                line_lums           =   np.append(line_lums,line_lum)
-                SFRs                =   np.append(SFRs,gal_ob.SFR)
-                SFRsds              =   np.append(SFRsds,gal_ob.SFRsd)
-        results                 =   pd.DataFrame(dict(SFRs=SFRs,line_lums=line_lums,SFRsds=SFRsds))
-        results.to_pickle(d_t+'model_L_'+line+'_SFRs')
-        print('Found %s model galaxies' % (len(SFRs)))
-    if load == 'y':
-        results = pd.read_pickle(d_t+'model_L_'+line+'_SFRs')
-
-    for key in results: exec(key + '=results[key].values')
+    zreds                   =   getattr(GR,'zreds')
+    SFRs                    =   getattr(GR,'SFR')
+    SFRsds                  =   getattr(GR,'SFRsd')
+    line_lums               =   getattr(GR,'L_'+line)
 
     # Start figure
     simple_plot(fignum=0,xlab=getlabel('SFR'),ylab='L$_{\mathrm{%s}}$ [L$_{\odot}$]' % aux.line_name(line))
@@ -1025,13 +1009,6 @@ def line_SFR(**kwargs):
     ax1.set_xscale('log')
     ax1.set_yscale('log')
 
-    # Add observations to figure
-    if line == 'CII': add_CII_observations_to_plot(plot='line_SFR',one_symbol_only=one_symbol_only,plot_DeLooze14=plot_DeLooze14,fillstyle='none')
-
-    # Add models from literature to figure
-    # Vallini+15 model results for the mean mass-weighted metallicity of our galaxies:
-    if line == 'CII' and z1 == 'z6': Zmw_mean = add_Vallini_2015(xr,zreds,galnames,color='purple')
-
     # Add MW?
     if z1 == 'z0' and line == 'CII':
         SFR_MW              =   1.9 # Chomiuk and Povich 2011
@@ -1039,27 +1016,36 @@ def line_SFR(**kwargs):
         simple_plot(add='y',\
             x1=SFR_MW,y1=L_tot_MW,col1='k',fill1='y',ma1='x',ms1=10,lw=2,lab1='MW [Pineda+14]')
 
-    # Add our 2015 results for z = 2 ?
-    # if redshift == 2 and line == 'CII':
-    #     # Powerlaw fit to model galaxies at z=2 [Olsen+15]
-    #     Lcii_model_z2       =   0.78e7*np.array(xr)**1.27
-    #     simple_plot(add='y',\
-    #         x1=xr,y1=Lcii_model_z2,col1='grey',ls1='--',lab1=u'$z=2$ models [Olsen+15] $_{}$')
+    # Plot [CII]-SFR relation by de Looze et al 2014
+    if plot_DeLooze14:
+        logLcii_range       =   np.log10([1e-3,1e10])
+        logSFR_range        =   np.log10([1e-3,1e4])
+        # z=0 data (de Looze 2014)
+        # Powerlaw fit to z=0 metalpoor dwarfs
+        logSFR_dwarf        =  -5.73+0.80*logLcii_range
+        # Powerlaw fit to z=0 starburst galaxies
+        logSFR_SB           =  -7.06+1.00*logLcii_range
+        simple_plot(add='y',\
+            x2=10.**logSFR_dwarf,y2=[10.**(logLcii_range-0.37),10.**(logLcii_range+0.37)], hatchstyle2='',col2='lightgrey',alpha2=0.5,zorder2=0,\
+            x3=10.**logSFR_SB,y3=[10.**(logLcii_range-0.27),10.**(logLcii_range+0.27)], hatchstyle3='',col3='lightgrey',alpha3=0.5,zorder3=0,\
+            x4=10.**logSFR_dwarf,y4=10.**logLcii_range,col4='grey',ls4='--',lab4='$z=0$ metal-poor dwarfs [de Looze 14]',zorder4=0,\
+            x5=10.**logSFR_SB,y5=10.**logLcii_range,col5='grey',ls5='--',dashes5=(1,4),lab5='$z=0$ starburst galaxies [de Looze 14]',zorder5=0)
 
-    # Add our most recent models to figure with a power law fit
-    if colorbar == 'SFRsd':
+    # Add power law fit if possible
+    if len(zreds) > 1:
         slope,intercept,slope_dev,inter_dev = aux.lin_reg_boot(np.log10(SFRs),np.log10(line_lums))
         fit                 =   10.**(slope*np.log10(xr)+intercept)
         simple_plot(add='y',\
-            x1=xr,y1=fit,col1=redshift_colors[int(z2)],ls1='--',lw1=2,lab1='Power law fit',zorder1=10,\
-            x2=SFRs,y2=line_lums,scatter_color2=np.log10(SFRsds),ecol2='k',lw2=2,ma2='o',ms2=64,lab2=r'S$\mathrm{\'I}$GAME at z$\sim$'+z2+' (this work)',zorder2=200,\
+            x1=xr,y1=fit,col1=redshift_colors[int(z2)],ls1='--',lw1=2,lab1='Power law fit',zorder1=10)
+
+    # Color-code galaxies 
+    if colorbar == 'SFRsd':
+        simple_plot(add='y',\
+            x1=SFRs,y1=line_lums,scatter_color1=np.log10(SFRsds),ecol1='k',lw1=2,ma1='o',ms1=64,lab1=r'S$\mathrm{\'I}$GAME at z$\sim$'+z2+' (this work)',zorder1=200,\
             lab_colorbar=getlabel('lSFRsd'))
     if colorbar == 'none':
-        slope,intercept,slope_dev,inter_dev = aux.lin_reg_boot(np.log10(SFRs),np.log10(line_lums))
-        fit                 =   10.**(slope*np.log10(xr)+intercept)
         simple_plot(add='y',\
-            x1=xr,y1=fit,col1=redshift_colors[int(z2)],ls1='--',lw1=2,lab1='Power law fit',zorder1=10,\
-            x2=SFRs,y2=line_lums,fill2='y',col2=redshift_colors[int(z2)],alpha2=0.7,lw2=2,ma2='o',ms2=8,lab2=r'S$\mathrm{\'I}$GAME at z$\sim$'+z2+' (this work)',zorder2=200)
+            x1=SFRs,y1=line_lums,fill1='y',col1=redshift_colors[int(z2)],alpha1=0.7,lw1=2,ma1='o',ms1=8,lab1=r'S$\mathrm{\'I}$GAME at z$\sim$'+z2+' (this work)',zorder1=200)
 
     # Add legend
     ax1                 =   plt.gca()
@@ -1336,12 +1322,12 @@ def map_line(**kwargs):
     pix_sr          =   aux.arcsec2_to_sr(pix_arcsec**2)
     if Iunits == 'Wm2_sr':   mom0        =   aux.Jykm_s_to_W_m2(line,self.gal_ob.zred,mom0)/pix_sr # W/m^2/sr
 
-    simple_plot(figsize=(8, 8),plot_margin=0.15,xr=[-R_max,R_max],yr=[-R_max,R_max],\
+    simple_plot(plot_margin=0.15,xr=[-R_max,R_max],yr=[-R_max,R_max],\
         x1=aux.get_x_axis_kpc(),y1=aux.get_x_axis_kpc(),col1=np.log10(mom0),\
         colorbar1=True,lab_colorbar1=lab,\
         aspect='equal',\
         contour_type1='plain',nlev1=100,xlab='x [kpc]',ylab='y [kpc]',title='G%s' % (gal_ob.gal_index+1),\
-        textfs=9,textcol='white')
+        textfs=9,textcol='white',**kwargs)
 
     if convolve:
         FWHM_arcsec         =   aux.get_Herschel_FWHM(line)
