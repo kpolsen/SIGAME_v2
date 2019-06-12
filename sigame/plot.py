@@ -118,7 +118,10 @@ def simple_plot(**kwargs):
         If defined, markers will be used ('y' for filled markers, 'n' for open markers), default: 'y'
 
     ls1 : str
-        Linestyle, default: 'None' (does markers by default)
+        Linestyle, default: 'None' (markers by default)
+
+    ds1 : str
+        Drawstyle, default: 'None' (solid line by default)
 
     ma1 : str
         Marker type, default: 'x'
@@ -275,6 +278,7 @@ def simple_plot(**kwargs):
 
     # Default line and marker settings
     ls0                 =   'None'              # do markers by default
+    ds0                 =   'None'              # do solid line by default
     lw0                 =   2                   # linewidth
     ma0                 =   'x'                 # marker type
     ms0                 =   5                   # marker size
@@ -316,6 +320,7 @@ def simple_plot(**kwargs):
             # If no x values, make them up
             if not 'x'+str(i) in kwargs: x = np.arange(len(y))+1
             ls              =   ls0
+            ds              =   ds0
             lw              =   lw0
             mew             =   mew0
             ma              =   ma0
@@ -331,9 +336,6 @@ def simple_plot(**kwargs):
             bins            =   bins0
             zorder          =   zorder0
             fillstyle       =   fillstyle0
-            if 'ls'+str(i) in kwargs:
-                if kwargs['ls'+str(i)] != 'None': ls = kwargs['ls'+str(i)]
-                if kwargs['ls'+str(i)] == 'None': ls = 'None'
             if 'lw'+str(i) in kwargs: lw = kwargs['lw'+str(i)]
             if 'lw' in kwargs: lw = kwargs['lw'] # or there is a general keyword for ALL lines...
             if 'mew'+str(i) in kwargs: mew = kwargs['mew'+str(i)]
@@ -346,6 +348,7 @@ def simple_plot(**kwargs):
             legend          =   False
             if 'legend' in kwargs: legend = kwargs['legend']
             if 'ls'+str(i) in kwargs: ls = kwargs['ls'+str(i)]
+            if 'ds'+str(i) in kwargs: ds = kwargs['ds'+str(i)]
             if 'alpha'+str(i) in kwargs: alpha = kwargs['alpha'+str(i)]
             if 'cmap'+str(i) in kwargs: cmap = kwargs['cmap'+str(i)]
             if 'zorder'+str(i) in kwargs: zorder = kwargs['zorder'+str(i)]
@@ -392,12 +395,12 @@ def simple_plot(**kwargs):
                 if type(kwargs['y'+str(i)]) == str: y = ax1.get_ylim()
                 if 'dashes'+str(i) in kwargs:
                     # print('>> Line plot!')
-                    ax1.plot(x,y,linestyle=ls,color=col,lw=lw,label=lab,dashes=kwargs['dashes'+str(i)],zorder=zorder)
+                    ax1.plot(x,y,ls=ls,color=col,lw=lw,label=lab,dashes=kwargs['dashes'+str(i)],zorder=zorder)
                     continue
                 else:
                     if 'ls'+str(i) in kwargs:
                         # print('>> Line plot!')
-                        ax1.plot(x,y,linestyle=ls,color=col,lw=lw,label=lab,zorder=zorder)
+                        ax1.plot(x,y,ls=ls,ds=ds,color=col,lw=lw,label=lab,zorder=zorder)
                         continue
 
             # ----------------------------------------------
@@ -1341,6 +1344,44 @@ def map_line(**kwargs):
         os.mkdir('plots/maps/')
     plt.savefig(('plots/maps/%s_%s_%s_%s.png' % (z1, line, gal_ob.name, ISM_dc_phase)),format='png',dpi=300)
     plt.show(block=False)
+
+def line_prof(**kwargs):
+    '''Plots line luminosity against SFR (together with observations)
+
+    Parameters
+    ----------
+    line: str
+        Line to look at, default: 'CII'
+
+    '''
+
+    plt.close('all')
+
+    set_mpl_params()
+
+    # Redshift sample that we're at:
+    z2                      =   z1.replace('z','')
+
+    # handle default values and kwargs
+    args                    =   dict(line='CII',save=True,)
+    args                    =   aux.update_dictionary(args,kwargs)
+    for key,val in args.items():
+        exec('globals()["' + key + '"]' + '=val')
+
+    # Initialize galaxy object and plot moment0 map
+    gal_ob                  =   gal.galaxy(gal_index=gal_index)
+    vel,line_prof           =   gal_ob.datacube.get_line_prof(**kwargs)
+    simple_plot(xlab='Velocity [km/s]',ylab='S [Jy]',\
+        x1=vel,y1=line_prof,ls1='-',ds1='steps',zorder1=10,**kwargs)
+    ax1 = plt.gca()
+    ax1.fill_between(vel,0,line_prof,color='yellow',step="pre", alpha=0.8,zorder=0)
+    ax1.grid()
+
+    if not os.path.exists('plots/line_prof/'):
+        os.mkdir('plots/line_prof/')
+    plt.savefig(('plots/line_prof/%s_%s_%s_%s.png' % (z1, line, gal_ob.name, ISM_dc_phase)),format='png',dpi=300)
+    plt.show(block=False)
+
 
 #===============================================================================
 """ Plot cloudy models """

@@ -290,7 +290,6 @@ class particle_data:
             contour_type1='mesh',nlev1=100,xlab='x [kpc]',ylab='y [kpc]',title='G%s' % (self.gal_ob.gal_index+1),\
             textfs=9,textcol='white')
 
-
     def get_map(self,**kwargs):
         ''' Creates map of surface densities (or sum) of some parameters in sim or ISM data.
 
@@ -367,180 +366,6 @@ class particle_data:
             print('Z map not stored for this particle data object, creating it. ')
             Z_map    =   self.get_Z_map(**kwargs)
             setattr(self, 'Z_map',Z_map)
-
-    # def get_Z_map(self,**kwargs):
-        """Creates metallicity map and stores in sigame/temp/maps/metallicity/.
-        """
-
-        # simgas          =   self.get_data(particle_name='gas',**kwargs)
-
-        # # Get same axes as used for datacube object
-        # x_axis_kpc      =   aux.get_x_axis_kpc()
-
-        # # Use smoothing kernel to get metallicities from sim data
-        # Z_map           =   aux.get_SPH_values_on_grid(x_axis_kpc,x_axis_kpc,simgas,quantity='Z')
-
-        # Z_map           =   Z_map.T # is this already mean?
-
-        # # Store as dataframe
-        # Z_map_df        =   pd.DataFrame({'data':[Z_map]})
-        # aux.save_temp_file(self.gal_ob,Z_map_df,map_type='Z')
-        # # Z_map = aux.load_temp_file(self.gal_ob,map_type='Z')
-
-        # Z_map[Z_map == 0] = min(Z_map[Z_map > 0])
-        # plt.close('all')
-        # plot.simple_plot(x1=x_axis_kpc,y1=x_axis_kpc,col1=Z_map,xr=[-15,15],yr=[-15,15],contour_type1='mesh',colorbar1=True,lab_colorbar1=plot.getlabel('Z'))
-        # plt.show(block=False)
-        # pdb.set_trace()
-
-        # return Z_map
-
-    #---------------------------------------------------------------------------
-    # Plotting
-    #---------------------------------------------------------------------------
-
-    # KPO: needs docstring, and test?
-    def gas_quiver_plot(self,**kwargs):
-
-        # get default plot params
-        plot.set_mpl_params()
-
-        # make figure
-        fig =   plt.figure(figsize=(8,6))
-        ax  =   fig.add_subplot(111)
-
-        # get gas data
-        sim_data    =   self.get_data() # default is already data='sim'
-        sim_gas     =   sim_data[ sim_data.type == 'gas' ]
-
-        # make plot object and add it to ax
-        results     =   dict(plot_style='quiver', data=sim_gas)
-        results     =   aux.update_dictionary(results, kwargs)
-        ob          =   plot_it(results)
-        ob.add_to_axis(ax,**kwargs)
-
-    # KPO: needs docstring, and test?
-    def positions_plot(self,**kwargs):
-
-        # handle default values and kwargs
-        args    =   dict(dm=False, gas=True, star=True, GMC=False, dif=False)
-        args    =   aux.update_dictionary(args,kwargs)
-        for key in args: exec(key + '=args[key]')
-
-        # pull particle data
-        if any([dm, gas, star]): sim_data = self.get_data()
-        if any([GMC, dif]): ISM_data = self.get_data(data='ISM')
-
-        # run default plot params
-        plot.set_mpl_params()
-
-        # make figure
-        fig =   plt.figure()
-        ax  =   fig.add_subplot(111,projection='3d')
-
-        # choose different plotting parameters for different sim types
-        for sim_type in sim_types:
-            if sim_type == 'dm':
-                if not dm: continue
-                alpha   =   .1
-                size    =   .5
-                data    =   sim_data[ sim_data.type=='dm' ]
-            elif sim_type == 'star':
-                if not star: continue
-                alpha   =   1
-                size    =   20
-                data    =   sim_data[ sim_data.type=='star' ]
-            else:
-                if not gas: continue
-                alpha   =   .5
-                size    =   1
-                data    =   sim_data[ sim_data.type=='gas' ]
-
-            # gather sim results
-            sim_results =   dict(plot_style='scatter', dim3=True, data=data, alpha=alpha, size=size, color=sim_colors[sim_type], label=sim_labels[sim_type])
-            sim_results =   aux.update_dictionary(sim_results,kwargs)
-
-            # turn sim results into plot_it instance
-            sim_ob  =   plot_it(sim_results)
-
-            # add sim_ob onto ax
-            sim_ob.add_to_axis(ax,**kwargs)
-
-        # choose different plotting parameters for different ISM phases
-        for phase in ISM_phases:
-            if phase == 'GMC':
-                if not GMC: continue
-                alpha   =   .5
-                size    =   1
-                data    =   ISM_data[ ISM_data.type=='GMC' ]
-            elif phase == 'dif':
-                if not dif: continue
-                alpha   =   .4
-                size    =   1
-                data    =   ISM_data[ ISM_data.type=='dif' ]
-
-            # gather ISM results
-            ISM_results =   dict(plot_style='scatter', dim3=True, data=data, alpha=alpha, size=size, color=sim_colors[sim_type], label=sim_labels[sim_type])
-            ISM_results =   aux.update_dictionary(ISM_results, kwargs)
-
-            # turn sim results into plot_it instance
-            ISM_ob  =   plot_it(sim_results)
-
-            # add sim_ob onto ax
-            ISM_ob.add_to_axis(ax,**kwargs)
-
-        pad =   20
-        ax.set_xlabel(self.xlabel, labelpad=pad)
-        ax.set_ylabel(self.xlabel, labelpad=pad)
-        ax.set_zlabel(self.xlabel, labelpad=pad)
-        ax.set_aspect(1)
-        ax.legend()
-
-        plt.show()
-
-    def plot_map(self,**kwargs):
-
-        # handle default values and kwargs
-        args    =   dict(ISM_phase='', sim_type='', R_max=15, N_contour_levels=100,log=True,title='',colorbar=True,lab_colorbar='[M$_{\odot}$ kpc$^{-2}$]')
-        args    =   aux.update_dictionary(args,kwargs)
-        for key in args: exec(key + '=args[key]')
-
-        # Get the mass map
-        m_map = self.get_map(**args)
-
-        # Option to plot log of mass surface density
-        if log: values = np.log10(m_map['Z'])
-        if not log: values = m_map['Z']
-
-        # Plot in new figure
-        plot.simple_plot(figsize=(8, 8),plot_margin=0.15,xr=[-R_max,R_max],yr=[-R_max,R_max],
-            xlab=self.xlabel,ylab=self.ylabel,title=title,cmap='viridis',\
-            x1=m_map['X'],y1=m_map['Y'],col1=values,\
-            colorbar1=True,lab_colorbar1=lab_colorbar,\
-            aspect='equal',\
-            contour_type1='plain',nlev1=N_contour_levels,\
-            textfs=9,textcol='white')
-
-    #---------------------------------------------------------------------------
-
-    # KPO: needs docstring, and test?
-    def classify_galaxy(self,**kwargs):
-
-        # show positional plot
-        self.positions_plot(**kwargs)
-
-        # add classification attribute to galaxy object
-        spherical   =   input("Is %s spherical/elliptical? ['y'/'n']" % self.galaxy.name)
-        if spherical == 'y':
-            setattr(self.galaxy, 'classification', 'spherical')
-            return
-        disk    =   input("Is %s a disk? ['y'/'n']" % self.galaxy.name)
-        if disk == 'y':
-            setattr(self.galaxy, 'classification', 'disk')
-            return
-        else:
-            setattr(self.galaxy, 'classification', 'unknown')
-            print("set %s classification to 'unknown'." % self.galaxy.name)
 
 class datacube:
     """An object referring to the datacube constructed for a galaxy (in one of the ISM phases)
@@ -747,7 +572,6 @@ class datacube:
 
         return summed
 
-    # went back to "line" instead of "target" as argument
     def get_moment0_map(self,**kwargs):
         """Returns moment 0 map in Jy*km/s per pixel as numpy array.
 
@@ -782,269 +606,31 @@ class datacube:
             kernel              =   convol.Gaussian2DKernel(aux.FWHM_to_stddev(self.FWHM_kpc))
             mom0                =   convol.convolve(mom0, kernel)
 
-        # TEST
-        # x_mesh_kpc,y_mesh_kpc       =   np.meshgrid(aux.get_x_axis_kpc(),aux.get_x_axis_kpc())
-        # x_index             =   aux.find_nearest(aux.get_x_axis_kpc(),-2.,find='index')
-        # y_index             =   aux.find_nearest(aux.get_x_axis_kpc(),2.,find='index')
-        # mom0                =   mom0*0.
-        # mom0[x_index,y_index] = 1000.
-        # print(x_index,y_index)
         mom0                    =   mom0.T # in order to compare with particle data when plotting
 
         return mom0
 
-    # Changed to return mass and not surface density (we can have another method that does this)...
-    def get_m_map(self,**kwargs):
-        """Returns mass map in Msun per pixel as numpy array.
+    def get_line_prof(self,**kwargs):
+        """Returns line profile in pixel-integrated Jy as numpy array.
 
         Parameters
         ----------
-        ISM_dc_phase : str
-            ISM datacube phase to use for moment 0 map, default: 'tot' (all ISM phases)
+        line : str
+            Line to use for map, default: 'CII'
+
         """
 
-        # handle default args and kwargs
-        args    =   dict(ISM_dc_phase='tot',target='m')
-        args    =   aux.update_dictionary(args,kwargs)
-        for key in args: exec(key + '=args[key]')
+        for key,val in kwargs.items():
+            exec('globals()["' + key + '"]' + '=val')
 
-        # get datacube
-        dc      =   self.get_dc(**args)
+        if ISM_dc_phase == 'tot': dc_summed       =   self.__get_dc_summed(target=line)
+        if ISM_dc_phase != 'tot': dc_summed       =   self.__get_dc_phase(target=line, ISM_dc_phase=ISM_dc_phase)
 
-        # get the mass map
-        m_map   =   dc.sum(axis=0)
-        m_map   =   np.nan_to_num(m_map).T
-        return m_map
+        line_prof           =   dc_summed.sum(axis=2).sum(axis=1) # Jy per velocity bin
 
-    def get_Z_map(self,**kwargs):
+        vel                 =   aux.get_v_axis() # km/s
 
-        # handle default args and kwargs
-        args    =   dict(ISM_dc_phase='tot')
-        args    =   aux.update_dictionary(args,kwargs)
-        for key in args: exec(key + '=args[key]')
-
-        # get Z datacube
-        dc      =   self.get_dc(ISM_dc_phase=ISM_dc_phase,target='Z')
-        Z_map   =   dc.sum(axis=0)
-        Z_map   =   np.nan_to_num(Z_map).T
-
-        # get mass datacube
-        self.add_m_map(**args)
-        m_map    =   getattr(self, 'm_map_%s' % (ISM_dc_phase))
-
-        # Z*m map
-        Z_map   =   Z_map
-        # Z_map[m_map < 1000.] = 0. # cut, because we get weird values further out with little gas mass surface density
-
-        return Z_map
-
-    def get_lw_v_map(self,**kwargs):
-        """Returns luminosity-weigthed velocity from datacube for certain line and ISM phase.
-        """
-
-        # handle default args and kwargs
-        args    =   dict(ISM_dc_phase='GMC',line='CII')
-        args    =   aux.update_dictionary(args,kwargs)
-        for key in args: exec(key + '=args[key]')
-
-        # get luminosity datacube
-        args['target'] = 'L_'+line
-        dc      =   self.get_dc(**args)
-
-        # get velocity array
-        v_axis  =   aux.get_v_axis()
-
-        # get the weighted values
-        Z       =   -1. * np.tensordot(v_axis,dc,1) / dc.sum(axis=0)
-        Z       =   np.nan_to_num(Z)
-        return Z.T
-
-    def get_mw_v_map(self,**kwargs):
-        """Returns mass-weigthed velocity from datacube for certain line and ISM phase.
-        """
-
-        # handle default args and kwargs
-        args    =   dict(ISM_dc_phase='GMC')
-        args    =   aux.update_dictionary(args,kwargs)
-        for key in args: exec(key + '=args[key]')
-
-        # get mass datacube
-        args['target'] = 'm'
-        dc      =   self.get_dc(**args)
-
-        # get velocity array
-        v_axis  =   aux.get_v_axis()
-
-        # get the weighted values
-        Z       =   -1. * np.tensordot(v_axis,dc,1) / dc.sum(axis=0)
-        Z       =   np.nan_to_num(Z)
-        return Z.T
-
-
-    def get_vw_disp_map(self,map,**kwargs):
-
-        # handle default args and kwargs
-        args    =   dict(ISM_dc_phase='GMC')
-        args    =   aux.update_dictionary(args,kwargs)
-        for key in args: exec(key + '=args[key]')
-
-        # get datacube
-        dc      =   self.get_dc(ISM_dc_phase,**kwargs)
-
-        # get velocity array
-        v_axis  =   aux.get_v_axis()
-
-        # make a copy of the datacube for manipulation
-        dc1     =   np.array(dc, copy=True)
-
-        # multiply spacial values by their coresponding velocity values
-        for i,v in enumerate(v_axis):
-            dc1[i,:,:]   *=  v
-
-        # divide result by the original datacube summed over velocity axis
-        dc1  /=  dc.sum(axis=0)
-
-        # get the standard deviation of the weighted datacube along velocity axis
-        Z       =   np.std(dc1,axis=0)
-        return Z.T
-
-    def get_mom0_map(self,**kwargs):
-
-        self.add_moment0_map(**kwargs)
-        return getattr(self, 'mom0_%s_%s' % (line,ISM_dc_phase))
-
-    #---------------------------------------------------------------------------
-    # Plotting
-    #---------------------------------------------------------------------------
-
-    def plot_Z_map(self,**kwargs):
-        """Plot metallicity map
-        """
-
-        # handle default values and kwargs
-        args    =   dict(R_max=15,min_fraction=1./1e6,max_fraction=1.0,ISM_dc_phase='tot')
-        args    =   aux.update_dictionary(args,kwargs)
-        for key in args: exec(key + '=args[key]')
-        # Get mass-weighted Z map
-        self.add_Z_map(**kwargs)
-        Z_map    =   getattr(self, 'Z_map_%s' % (ISM_dc_phase))
-        min_value                   =   np.max(Z_map)*min_fraction
-        Z_map[Z_map < min_value]    =   min_value
-        # Z_map                       =   np.log10(Z_map)
-        max_value                   =   np.max(Z_map)*max_fraction
-        Z_map[Z_map > max_value]    =   max_value
-
-        lab = 'Mass-weighted metallicity [Z$_{\odot}$]'
-
-        plot.simple_plot(figsize=(8, 8),plot_margin=0.15,xr=[-R_max,R_max],yr=[-R_max,R_max],\
-            x1=aux.get_x_axis_kpc(),y1=aux.get_x_axis_kpc(),col1=Z_map,\
-            colorbar1=True,lab_colorbar1=lab,\
-            aspect='equal',\
-            contour_type1='plain',nlev1=100,xlab='x [kpc]',ylab='y [kpc]',title='G%s' % (self.gal_ob.gal_index+1),\
-            textfs=9,textcol='white')
-
-    def plot_line_ratio(self,**kwargs):
-        """Plot line ratio map
-        """
-
-        # handle default values and kwargs
-        num_dict            =   dict(gal_index=1, units='Jykms', min_fraction=1./1e3, convolve=True, R_max=15, line='CII', ISM_dc_phase='tot')
-        denom_dict          =   dict(gal_index=1, units='Jykms', min_fraction=1./1e3, convolve=True, R_max=15, line='NII_205', ISM_dc_phase='tot')
-        num_dict, denom_dict=   aux.update_dictionary(num_dict,kwargs), aux.update_dictionary(denom_dict,kwargs)
-        num, denom          =   'CII', 'NII_205'
-
-        if 'num' in kwargs:
-            num_dict['line']    =   kwargs['num']
-            num                 =   kwargs['num']
-        if 'denom' in kwargs:
-            denom_dict['line']  =   kwargs['denom']
-            denom               =   kwargs['denom']
-
-        for key1, key2 in zip(num_dict, denom_dict):
-            exec(key1 + '=num_dict[key1]')
-            exec(key2 + '=denom_dict[key2]')
-
-        # Add moment0 maps for both lines as attributes if not there already.
-        self.add_moment0_map(**num_dict); self.add_moment0_map(**denom_dict)
-        num_mom0            =   getattr(self, 'mom0_%s_%s' % (num,ISM_dc_phase))
-        denom_mom0          =   getattr(self, 'mom0_%s_%s' % (denom,ISM_dc_phase))
-
-        # Size of pixels in steradians
-        pix_arcsec          =   np.tan(x_res_pc/1000./self.gal_ob.ang_dist_kpc)*60*60*360./(2*np.pi)
-        pix_sr              =   aux.arcsec2_to_sr(pix_arcsec**2)
-        if units == 'Wm2_sr':
-            num_mom0            =   aux.Jykm_s_to_W_m2(num,self.gal_ob.zred,num_mom0)/pix_sr # W/m^2/sr
-            denom_mom0          =   aux.Jykm_s_to_W_m2(denom,self.gal_ob.zred,denom_mom0)/pix_sr # W/m^2/sr
-
-        # Calculate line ratio
-        ratio   =   num_mom0/denom_mom0
-
-        min_value               =   np.nanmax(ratio)*min_fraction
-        ratio[ratio < min_value]=   min_value
-        lab = 'log(' + aux.line_name(num) + '/' + aux.line_name(denom) + ')'
-
-        plot.simple_plot(figsize=(8, 8),plot_margin=0.15,xr=[-R_max,R_max],yr=[-R_max,R_max],\
-            x1=aux.get_x_axis_kpc(),y1=aux.get_x_axis_kpc(),col1=np.log10(ratio),\
-            colorbar1=True,lab_colorbar1=lab,\
-            aspect='equal',\
-            contour_type1='plain',nlev1=100,xlab='x [kpc]',ylab='y [kpc]',title='G%s' % (self.gal_ob.gal_index+1),\
-            textfs=9,textcol='white')
-
-        if convolve:
-            patches             =   [Wedge((R_max*0.8,-0.8*R_max), self.FWHM_kpc/2., 0, 360, width=0.05)]
-
-    def preview(self,**kwargs):
-
-        # handle default values and kwargs
-        args    =   dict(phase='GMC', lw_velocity=True, lw_dispersion=True, l_summed=True, mw_velocity=True, mw_dispersion=True, m_summed=True)
-        args    =   aux.update_dictionary(args,kwargs)
-        for key in args: exec(key + '=args[key]')
-
-        # get spacial array
-        X       =   aux.get_x_axis_kpc()
-
-        # make empty container for map objects
-        maps    =   {}
-
-        # add maps
-        NotImplemented
-
-        # convert maps to Series
-        maps    =   pd.Series(maps)
-
-        # find convenient number of rows and columns
-        size    =   maps.size
-        n_rows  =   int( divmod( size, np.sqrt(size) )[0] )
-        n_cols  =   int( divmod( size, n_rows )[0] )
-
-        # organize panel display
-        panels  =   np.empty(n_rows*n_cols, dtype='O')
-        for i,m in enumerate(maps):
-            panels[i]   =   m
-
-        # set up default plot parameters
-        plot.set_mpl_params()
-
-        # make figure
-        if n_rows > 3:
-            figsize =   (15,15)
-        else:
-            figsize =   (15,5)
-        fig,ax  =   plt.subplots(n_rows,n_cols,figsize=figsize, sharex=True, sharey=True)
-        if n_rows == 1:
-            panels  =   panels[None,:]
-            ax      =   ax[None,:]
-        panels  =   panels.reshape([n_rows,n_cols])
-
-        for i in range(n_rows):
-            for j in range(n_cols):
-                ob  =   panels[i,j]
-                if ob == None: continue
-                ob.plot_data(fig,ax[i,j],**kwargs)
-
-        fig.text(0.5, 0.04, self.xlabel, ha='center')
-        fig.text(0.04, 0.5, self.ylabel, va='center', rotation='vertical')
-        plt.show(block=False)
+        return vel,line_prof
 
     #---------------------------------------------------------------------------
     # Backend

@@ -38,10 +38,10 @@ class global_results:
         GR                      =   self.__get_file()
         GR['lum_dist']          =   GR['lum_dist']*0.+10. # putting all z=0 galaxies at 10 kpc
 
-        for attr in ['lum_dist','M_dense','M_GMC','M_dif','Zmw']:
-            if attr not in GR.__dict__: GR = self.__set_attr(GR,attr)
+        for attr in ['M_dense','M_GMC','M_dif','Zmw']:
+            if attr not in GR.keys(): GR = self.__set_attr(GR,attr)
         for line in lines:
-            if attr not in GR.__dict__: GR = self.__set_attr(GR,'L_'+line)
+            if attr not in GR.keys(): GR = self.__set_attr(GR,'L_'+line)
 
         # save global_results dictionary
         filename    =   self.__get_file_location()
