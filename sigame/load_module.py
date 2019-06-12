@@ -28,13 +28,13 @@ import math
 import plot as plot
 import aux as aux
 
-params                      =   np.load('sigame/temp/params.npy').item()
+params                      =   np.load('sigame/temp/params.npy', allow_pickle=True).item()
 for key,val in params.items():
     exec(key + '=val')
 
 def extract_galaxy(verbose=True):
 
-    params                      =   np.load('sigame/temp/params.npy').item()
+    params                      =   np.load('sigame/temp/params.npy', allow_pickle=True).item()
     for key,val in params.items():
         exec(key + '=val')
 
@@ -142,7 +142,7 @@ def get_rotating_disk(N,R_gal,max,plotting=False):
     vz                  =   coord_rot[2,:]*1./length*speed
 
     if plotting:
-        
+
         # position check plot
         plot.simple_plot(x1=x,y1=y,ma1='x',fill1='n')
         plt.show(block=False)
@@ -215,10 +215,10 @@ def load_mufasa(snaps,halos,member_search=True,verbose=True):
 
             if snap < 100: obj             =   caesar.load(snap_dir+'/Groups/caesar_00'+str(int(snap))+'_z'+zred+'.hdf5') # caesar member file
             if snap > 100: obj             =   caesar.load(snap_dir+'/Groups/caesar_0'+str(int(snap))+'_z'+zred+'.hdf5') # caesar member file
-            print 'Total number of galaxies found: '+str(obj.ngalaxies)            
+            print 'Total number of galaxies found: '+str(obj.ngalaxies)
             Ngal            =   obj.ngalaxies
             print('Info for this snapshot:')
-            for key in ds.parameters.keys(): 
+            for key in ds.parameters.keys():
                 print('%s = %s' % (key,ds.parameters[key]))
             omega_baryon    =   obj.simulation.omega_baryon
             omega_matter    =   obj.simulation.omega_matter
@@ -285,7 +285,7 @@ def load_mufasa(snaps,halos,member_search=True,verbose=True):
         # if snap > 100: contamination_check(snap_dir+'/Groups/caesar_0'+str(int(snap))+'_z'+zreds[str(int(snap))]+'.hdf5',\
         #     snap_dir+'/'+snap_name+str(int(snap))+'.hdf5',haloID)
 
-        # if snap > min(snaps): 
+        # if snap > min(snaps):
         #     print('Snapshot is not the first: Find progenitor ID for this halo to use at higher redshift:')
         #     progen_ID           =   halo_now.progen_index
         #     print(progen_ID)
@@ -306,25 +306,25 @@ def load_mufasa(snaps,halos,member_search=True,verbose=True):
         gas_pos             =   gas_pos-loc
         gas_pos             =   caesar.utils.rotator(gas_pos, galaxy.rotation_angles['ALPHA'], galaxy.rotation_angles['BETA'])
         gas_posx,gas_posy,gas_posz = gas_pos[:,0].d,gas_pos[:,1].d,gas_pos[:,2].d
-        gas_densities       =   sphere['PartType0','Density'].in_cgs() 
+        gas_densities       =   sphere['PartType0','Density'].in_cgs()
         gas_vel             =   sphere['PartType0','Velocities'].in_cgs()/1e5
         gas_f_H21           =   sphere['PartType0','FractionH2']
         gas_f_neu           =   sphere['PartType0','NeutralHydrogenAbundance']
         gas_vel             =   caesar.utils.rotator(gas_vel, galaxy.rotation_angles['ALPHA'], galaxy.rotation_angles['BETA'])
         gas_velx,gas_vely,gas_velz = gas_vel[:,0].d,gas_vel[:,1].d,gas_vel[:,2].d
         gas_m               =   sphere['PartType0','Masses'].in_units('Msun')               # Msun
-        gas_x_e             =   sphere['PartType0','ElectronAbundance']                     # electrons per Hydrogen atom (max: 1.15)    
+        gas_x_e             =   sphere['PartType0','ElectronAbundance']                     # electrons per Hydrogen atom (max: 1.15)
         gas_f_ion           =   gas_x_e/max(gas_x_e)                                    # ionized gas mass fraction (because we don't trust NeutralHydrogenAbundance)
-        gas_f_HI1           =   1-gas_f_ion                                   
+        gas_f_HI1           =   1-gas_f_ion
         gas_f_HI,gas_f_H2   =   hydrogen_mass_calc(obj,sphere)
         print('Molecular gas mass fraction is %s %% (KMT)' % (np.sum(gas_f_H2*gas_m)/np.sum(gas_m)*100.))
         print('Molecular gas mass fraction is %s %% (simulation)' % (np.sum(gas_f_H21*gas_m)/np.sum(gas_m)*100.))
         gas_Tk              =   sphere['PartType0','Temperature']                           # Tk
         gas_h               =   sphere['PartType0','SmoothingLength'].in_units('kpc')       # Tk
         gas_SFR             =   sphere['PartType0','StarFormationRate']                     # Msun/yr
-        gas_Z               =   sphere['PartType0','Metallicity_00'].d/0.0134               # from RD    
-        gas_a_He            =   sphere['PartType0','Metallicity_01'].d     
-        gas_a_C             =   sphere['PartType0','Metallicity_02'].d     
+        gas_Z               =   sphere['PartType0','Metallicity_00'].d/0.0134               # from RD
+        gas_a_He            =   sphere['PartType0','Metallicity_01'].d
+        gas_a_C             =   sphere['PartType0','Metallicity_02'].d
         gas_a_N             =   sphere['PartType0','Metallicity_03'].d
         gas_a_O             =   sphere['PartType0','Metallicity_04'].d
         gas_a_Ne            =   sphere['PartType0','Metallicity_05'].d
@@ -347,11 +347,11 @@ def load_mufasa(snaps,halos,member_search=True,verbose=True):
         star_vel            =   caesar.utils.rotator(star_vel, galaxy.rotation_angles['ALPHA'], galaxy.rotation_angles['BETA'])
         star_velx,star_vely,star_velz = star_vel[:,0].d,star_vel[:,1].d,star_vel[:,2].d
         star_m              =   sphere['PartType4','Masses'].in_units('Msun')
-        star_a_C            =   sphere['PartType4','Metallicity_02'].d     
-        star_a_O            =   sphere['PartType4','Metallicity_04'].d     
+        star_a_C            =   sphere['PartType4','Metallicity_02'].d
+        star_a_O            =   sphere['PartType4','Metallicity_04'].d
         star_a_Si           =   sphere['PartType4','Metallicity_07'].d
         star_a_Fe           =   sphere['PartType4','Metallicity_10'].d
-        star_Z              =   sphere['PartType4','Metallicity_00'].d/0.0134               # from RD    
+        star_Z              =   sphere['PartType4','Metallicity_00'].d/0.0134               # from RD
         current_time        =   ds.current_time.in_units('yr')/1e6 # Myr
         star_formation_a    =   sphere['PartType4','StellarFormationTime'].d               # in scale factors, do as with Illustris
         star_formation_z    =   1./star_formation_a-1
@@ -414,7 +414,7 @@ def load_mufasa(snaps,halos,member_search=True,verbose=True):
     # Check contamination at first snapshot, then compare following progen index to that snapshot number:
     # print('Progren index:')
     # haloID              =   obj.galaxies[GAL].parent_halo_index
-    # print(obj.halo[haloID].progen_index) 
+    # print(obj.halo[haloID].progen_index)
     # contamination_check(MEMBER,SNAPSHOT,0) # insert halo ID for this galaxy
 
     # halo_list           =   obj.galaxies[GAL].halo.glist
@@ -468,7 +468,7 @@ def time_machine():
         sphere                  =   ds.sphere(loc,R_gal)
         print('Extracting all gas particle properties...')
         # gas_m                   =   sphere['PartType0','Masses'].in_units('Msun')               # Msun
-        gas_SFR                 =   sphere['PartType0','StarFormationRate']   
+        gas_SFR                 =   sphere['PartType0','StarFormationRate']
         SFRs[i]                 =   np.sum(gas_SFR)
         star_m                  =   sphere['PartType4','Masses'].in_units('Msun')
         M_stars[i]              =   np.sum(star_m)
@@ -501,12 +501,12 @@ def time_machine():
         p.set_ylabel('y [kpc]')
         p._setup_plots()
         galname                 =   'h'+str(int(halo))+'_s'+str(int(snap))+'_G'+str(int(GAL))
-        plt.savefig('plots/sim/time_machine/'+galname+'_z'+zred+'.png') 
+        plt.savefig('plots/sim/time_machine/'+galname+'_z'+zred+'.png')
         i                       +=  1
     history             =   {'M_stars':M_stars,'SFRs':SFRs,'times_for_snap':times_for_snap}
     np.save('sigame/temp/history/history_h'+str(int(halo))+'.npy',history)
 
-def hydrogen_mass_calc(obj,dd): 
+def hydrogen_mass_calc(obj,dd):
     print('Calculate HI & H2 mass for each valid gas particle')
 
     redshift    = obj.simulation.redshift
@@ -515,7 +515,7 @@ def hydrogen_mass_calc(obj,dd):
     uvb = UVB['FG11']
 
     # sim = obj.simulation
-    
+
     if np.log10(redshift + 1.0) > uvb['logz'][len(uvb['logz'])-1]:
         gamma_HI = 0.0
     else:
@@ -529,7 +529,7 @@ def hydrogen_mass_calc(obj,dd):
     XH              =   obj.simulation.XH
     proton_mass     =   1.67262178e-24 # g
     FSHIELD         =   0.99
-    
+
     # ## Leroy et al 2008, Fig17 (THINGS) Table 6 ##
     P0BLITZ         =   1.7e4
     ALPHA0BLITZ     =   0.8
@@ -543,7 +543,7 @@ def hydrogen_mass_calc(obj,dd):
     sigHI           =   3.27e-18 * (1.0+redshift)**(-0.2)
     fbaryon         =   obj.simulation.omega_baryon / obj.simulation.omega_matter
     nHss_part       =   6.73e-3 * (sigHI/2.49e-18)**(-2./3.) * (fbaryon / 0.17)**(-1./3.)
-    
+
     ## global lists
     halo_glist      =   np.array(obj.global_particle_lists.halo_glist,dtype=np.int32)
     galaxy_glist    =   np.array(obj.global_particle_lists.galaxy_glist,dtype=np.int32)
@@ -566,7 +566,7 @@ def hydrogen_mass_calc(obj,dd):
     nhalos          =   len(obj.halos)
     ngalaxies       =   len(obj.galaxies)
     ngas            =   len(gmass)
-        
+
     # H2_data_present = 0
     # if has_property(obj, 'gas', 'fH2'):
     #     gfH2  = get_property(obj, 'fH2', 'gas').d
@@ -579,7 +579,7 @@ def hydrogen_mass_calc(obj,dd):
 
     f_HI            =   np.zeros(ngas)
     f_H2            =   np.zeros(ngas)
-    
+
     print('and do the calculation!')
     part            =   0.1
     for i in range(0,ngas):
@@ -599,11 +599,11 @@ def hydrogen_mass_calc(obj,dd):
                             (1.0 + np.sqrt(gtemp[i]/T0))**(1.0-b) *
                             (1.0 + np.sqrt(gtemp[i]/T1))**(1.0+b))   # cm^3/s
             #gamma_HI = (1.0-xi)*(1.0-xi) * grhoH[i] * beta / xi   # 1/s
-            
+
             ## Rahmati+13 equations 2, 1
             nHss      = nHss_part * (gtemp[i] * 1.0e-4)**0.17 * (gamma_HI * 1.0e12)**(2./3.)
             fgamma_HI = 0.98 * (1.0 + (grhoH[i] / nHss)**(1.64))**(-2.28) + 0.02 * (1.0 + grhoH[i] / nHss)**(-0.84)
-            
+
             ## Popping+09 equations 6, 5
             C = grhoH[i] * beta / (gamma_HI * fgamma_HI)
             fHI = (2.0 * C + 1.0 - np.sqrt((2.0*C+1.0)*(2.0*C+1.0) - 4.0 * C * C)) / (2.0*C)
@@ -615,13 +615,13 @@ def hydrogen_mass_calc(obj,dd):
             Rmol = (grhoH[i] * gtemp[i] / P0BLITZ)**ALPHA0BLITZ
             fHI  = FSHIELD * cold_phase_massfrac / (1.0 + Rmol)
             fH2  = FSHIELD - fHI
-        
+
 
         ## high density gas when H2 data is present
         else:
             fH2 = gfH2[i]
-            fHI = 1.0 - fH2            
-            
+            fHI = 1.0 - fH2
+
             if fHI < 0.0:
                 fHI = 0.0
 
@@ -661,7 +661,7 @@ def load_gadget(GAL,snap,member_search=False,verbose=True):
             obj.member_search()
             obj.save(d_sph+'gadget-3/members/members.'+str(int(i))+'.hdf5')
             i           +=  1
-    
+
     # load the current member file
     obj         =   caesar.load(MEMBER)
 
@@ -695,11 +695,11 @@ def load_gadget(GAL,snap,member_search=False,verbose=True):
     gas_vel             =   dd['PartType0','Velocities'].in_cgs()/1e5
     gas_vel             =   caesar.utils.rotator(gas_vel, gal.rotation_angles['ALPHA'], gal.rotation_angles['BETA'])
     gas_velx,gas_vely,gas_velz            =   gas_vel[:,0].d[radius < R_gal],gas_vel[:,1].d[radius < R_gal],gas_vel[:,2].d[radius < R_gal]
-    gas_densities       =   dd['PartType0','Density'].in_cgs() 
+    gas_densities       =   dd['PartType0','Density'].in_cgs()
     gas_densities       =   gas_densities[radius < R_gal]
     gas_m               =   dd['PartType0','Masses'].in_units('Msun')             # Msun
     gas_m               =   gas_m.d[radius < R_gal]
-    gas_x_e             =   dd['PartType0','ElectronAbundance']                 # electrons per Hydrogen atom (max: 1.15)    
+    gas_x_e             =   dd['PartType0','ElectronAbundance']                 # electrons per Hydrogen atom (max: 1.15)
     gas_x_e             =   gas_x_e.d[radius < R_gal]
     gas_f_ion           =   gas_x_e/max(gas_x_e)                                                # ionized gas mass fraction (because we don't trust NeutralHydrogenAbundance)
     gas_f_HI            =   1.-gas_x_e/max(gas_x_e)
@@ -709,14 +709,14 @@ def load_gadget(GAL,snap,member_search=False,verbose=True):
     gas_h               =   gas_h.d[radius < R_gal]
     gas_SFR             =   dd['PartType0','StarFormationRate']                   # Msun/yr
     gas_SFR             =   gas_SFR.d[radius < R_gal]
-    gas_a_C             =   dd['PartType0','Metallicity_00'].d     
-    gas_a_O             =   dd['PartType0','Metallicity_01'].d     
+    gas_a_C             =   dd['PartType0','Metallicity_00'].d
+    gas_a_O             =   dd['PartType0','Metallicity_01'].d
     gas_a_Si            =   dd['PartType0','Metallicity_02'].d
     gas_a_Fe            =   dd['PartType0','Metallicity_03'].d
     gas_Z               =   (gas_a_C+gas_a_O+gas_a_Si+gas_a_Fe) * 0.0189/0.0147 / 0.02          # from RT
     gas_Z               =   gas_Z[radius < R_gal]
     gas_posx,gas_posy,gas_posz            =   gas_pos[:,0].d[radius < R_gal],gas_pos[:,1].d[radius < R_gal],gas_pos[:,2].d[radius < R_gal]
-    
+
     if verbose: print('Loading all star particle properties...')
     star_pos            =   star_pos-obj.galaxies[GAL].pos.in_units('kpc')
     radius              =   np.sqrt(star_pos[:,0].d**2.+star_pos[:,1].d**2.+star_pos[:,2].d**2.)
@@ -726,8 +726,8 @@ def load_gadget(GAL,snap,member_search=False,verbose=True):
     star_velx,star_vely,star_velz            =   star_vel[:,0].d[radius < R_gal],star_vel[:,1].d[radius < R_gal],star_vel[:,2].d[radius < R_gal]
     star_m              =   dd['PartType4','Masses'].in_units('Msun')
     star_m              =   star_m.d[radius < R_gal]
-    star_a_C            =   dd['PartType4','Metallicity_00'].d     
-    star_a_O            =   dd['PartType4','Metallicity_01'].d     
+    star_a_C            =   dd['PartType4','Metallicity_00'].d
+    star_a_O            =   dd['PartType4','Metallicity_01'].d
     star_a_Si           =   dd['PartType4','Metallicity_02'].d
     star_a_Fe           =   dd['PartType4','Metallicity_03'].d
     star_Z              =   (star_a_C+star_a_O+star_a_Si+star_a_Fe) * 0.0189/0.0147 / 0.02       # from RT
@@ -744,7 +744,7 @@ def load_gadget(GAL,snap,member_search=False,verbose=True):
 
     # dd                  =   ds.all_data()     # to get abundances and ages out...
     # gas_f_HI            =   dd['PartType0','NeutralHydrogenAbundance'][galaxy_glist].d        # fraction of Hydrogen atoms that are NOT ionized
-    # gas_x_e             =   dd['PartType0','ElectronAbundance'][galaxy_glist].d                 # electrons per Hydrogen atom (max: 1.15)    
+    # gas_x_e             =   dd['PartType0','ElectronAbundance'][galaxy_glist].d                 # electrons per Hydrogen atom (max: 1.15)
     # gas_f_ion           =   gas_x_e/max(gas_x_e)                                                # ionized gas mass fraction (because we don't trust NeutralHydrogenAbundance)
     # gas_f_HI            =   1.-gas_x_e/max(gas_x_e)                                             # assuming that only H is ionized?
     # gas_f_HI            =   dd['PartType0','NeutralHydrogenAbundance'][galaxy_glist].d
@@ -755,25 +755,25 @@ def load_gadget(GAL,snap,member_search=False,verbose=True):
     # gas_Tk              =   dd['PartType0','Temperature'][galaxy_glist].d                       # Tk
     # gas_h               =   dd['PartType0','SmoothingLength'][galaxy_glist].in_units('kpc')     # Tk
     # gas_SFR             =   dd['PartType0','StarFormationRate'][galaxy_glist].d                 # Msun/yr
-    # gas_a_C             =   dd['PartType0','Metallicity_00'][galaxy_glist].d     
-    # gas_a_O             =   dd['PartType0','Metallicity_01'][galaxy_glist].d     
+    # gas_a_C             =   dd['PartType0','Metallicity_00'][galaxy_glist].d
+    # gas_a_O             =   dd['PartType0','Metallicity_01'][galaxy_glist].d
     # gas_a_Si            =   dd['PartType0','Metallicity_02'][galaxy_glist].d
     # gas_a_Fe            =   dd['PartType0','Metallicity_03'][galaxy_glist].d
     # gas_Z               =   (gas_a_C+gas_a_O+gas_a_Si+gas_a_Fe) * 0.0189/0.0147 / 0.02          # from RT
-    
+
     # if verbose: print('Loading all star particle properties...')
     # position, velocity, mass, metallicity
     # star_pos            =   dd['PartType4','Coordinates'][galaxy_slist].in_units('kpc')
     # star_vel            =   dd['PartType4','Velocities'][galaxy_slist].in_cgs()/1e5
     # star_m              =   dd['PartType4','Masses'][galaxy_slist].in_units('Msun')
-    # star_a_C            =   dd['PartType4','Metallicity_00'][galaxy_slist].d     
-    # star_a_O            =   dd['PartType4','Metallicity_01'][galaxy_slist].d     
+    # star_a_C            =   dd['PartType4','Metallicity_00'][galaxy_slist].d
+    # star_a_O            =   dd['PartType4','Metallicity_01'][galaxy_slist].d
     # star_a_Si           =   dd['PartType4','Metallicity_02'][galaxy_slist].d
     # star_a_Fe           =   dd['PartType4','Metallicity_03'][galaxy_slist].d
     # star_Z              =   (star_a_C+star_a_O+star_a_Si+star_a_Fe) * 0.0189/0.0147 / 0.02       # from RT
     # current_time        =   ds.current_time.in_units('yr')
     # star_age            =   (current_time.d-dd['PartType4','StellarFormationTime'][galaxy_slist].d)/1e6
-            
+
     # if verbose: print('Loading all DM particle properties...')
     # DM_pos              =   dd['PartType1','Coordinates'][galaxy_slist].in_units('kpc')
     # DM_vel              =   dd['PartType1','Velocities'][galaxy_slist].in_cgs()/1e5
@@ -798,7 +798,7 @@ def load_gadget(GAL,snap,member_search=False,verbose=True):
     # if index == 2: kernel_type = 'simple'
     # print('Kernel seems to be '+kernel_type)
     # if verbose: print('Actual mass of particle 0: ',gas_m[0].d)
-    # if verbose: print('Integrated mass of particle 0: ',kernel_test[index]) 
+    # if verbose: print('Integrated mass of particle 0: ',kernel_test[index])
 
     gas_data   =   pd.DataFrame({'x':gas_posx,'y':gas_posy,'z':gas_posz,\
         'vx':gas_velx,'vy':gas_vely,'vz':gas_velz,\
@@ -836,7 +836,7 @@ def load_gadget_caesar(GAL,snap,member_search=False,verbose=True):
             obj.member_search()
             obj.save(d_sph+'gadget-3/members/members.'+str(int(i))+'.hdf5')
             i           +=  1
-    
+
     # load the current member file
     obj         =   caesar.load(MEMBER)
 
@@ -859,7 +859,7 @@ def load_gadget_caesar(GAL,snap,member_search=False,verbose=True):
 
     dd                  =   ds.all_data()     # to get abundances and ages out...
     # gas_f_HI            =   dd['PartType0','NeutralHydrogenAbundance'][galaxy_glist].d          # fraction of Hydrogen atoms that are NOT ionized
-    gas_x_e             =   dd['PartType0','ElectronAbundance'][galaxy_glist].d                 # electrons per Hydrogen atom (max: 1.15)    
+    gas_x_e             =   dd['PartType0','ElectronAbundance'][galaxy_glist].d                 # electrons per Hydrogen atom (max: 1.15)
     gas_f_ion           =   gas_x_e/max(gas_x_e)                                                # ionized gas mass fraction
     gas_f_HI            =   1.-gas_x_e/max(gas_x_e)                                             # because we don't trust NeutralHydrogenAbundance
     # gas_f_HI            =   dd['PartType0','NeutralHydrogenAbundance'][galaxy_glist].d
@@ -868,12 +868,12 @@ def load_gadget_caesar(GAL,snap,member_search=False,verbose=True):
     gas_densities       =   dd['PartType0','Density'][galaxy_glist].in_cgs()/(mH*1.e3)          # cm^-3
     gas_m               =   dd['PartType0','Masses'][galaxy_glist].in_units('Msun')             # Msun
     pdb.set_trace()
-    
+
     gas_Tk              =   dd['PartType0','Temperature'][galaxy_glist].d                       # Tk
     gas_h               =   dd['PartType0','SmoothingLength'][galaxy_glist].in_units('kpc')     # Tk
     gas_SFR             =   dd['PartType0','StarFormationRate'][galaxy_glist].d                 # Msun/yr
-    gas_a_C             =   dd['PartType0','Metallicity_00'][galaxy_glist].d     
-    gas_a_O             =   dd['PartType0','Metallicity_01'][galaxy_glist].d     
+    gas_a_C             =   dd['PartType0','Metallicity_00'][galaxy_glist].d
+    gas_a_O             =   dd['PartType0','Metallicity_01'][galaxy_glist].d
     gas_a_Si            =   dd['PartType0','Metallicity_02'][galaxy_glist].d
     gas_a_Fe            =   dd['PartType0','Metallicity_03'][galaxy_glist].d
     gas_Z               =   (gas_a_C+gas_a_O+gas_a_Si+gas_a_Fe) * 0.0189/0.0147 / 0.02          # from RT
@@ -883,14 +883,14 @@ def load_gadget_caesar(GAL,snap,member_search=False,verbose=True):
     star_pos            =   dd['PartType4','Coordinates'][galaxy_slist].in_units('kpc')
     star_vel            =   dd['PartType4','Velocities'][galaxy_slist].in_cgs()/1e5
     star_m              =   dd['PartType4','Masses'][galaxy_slist].in_units('Msun')
-    star_a_C            =   dd['PartType4','Metallicity_00'][galaxy_slist].d     
-    star_a_O            =   dd['PartType4','Metallicity_01'][galaxy_slist].d     
+    star_a_C            =   dd['PartType4','Metallicity_00'][galaxy_slist].d
+    star_a_O            =   dd['PartType4','Metallicity_01'][galaxy_slist].d
     star_a_Si           =   dd['PartType4','Metallicity_02'][galaxy_slist].d
     star_a_Fe           =   dd['PartType4','Metallicity_03'][galaxy_slist].d
     star_Z              =   (star_a_C+star_a_O+star_a_Si+star_a_Fe) * 0.0189/0.0147 / 0.02       # from RT
     current_time        =   ds.current_time.in_units('yr')
     star_age            =   (current_time.d-dd['PartType4','StellarFormationTime'][galaxy_slist].d)/1e6
-            
+
     # if verbose: print('Loading all DM particle properties...')
     # DM_pos              =   dd['PartType1','Coordinates'][galaxy_slist].in_units('kpc')
     # DM_vel              =   dd['PartType1','Velocities'][galaxy_slist].in_cgs()/1e5
@@ -964,7 +964,7 @@ def load_gizmo(GAL,snap,verbose=True):
     gas_xe              =   obj.particle_data['gne'][galaxy_glist]
     gas_h               =   obj.particle_data['ghsml'][galaxy_glist].in_units('kpc')
     # atomic and molecular gas mass (FIRE simulations don't have H2 fractions, but Robert added a function to calculate it for them)
-    all_gas_mHI,all_gas_mH2 =   obj.get_hydrogen_masses() 
+    all_gas_mHI,all_gas_mH2 =   obj.get_hydrogen_masses()
     gas_mHI,gas_mH2         =   all_gas_mHI[galaxy_glist],all_gas_mH2[galaxy_glist]
     # metallicity
     a_He                =   dd['PartType0','Metallicity_01'][galaxy_glist].d     # He
@@ -1022,7 +1022,7 @@ def load_gizmo(GAL,snap,verbose=True):
     if index == 2: kernel_type = 'simple'
     print('Kernel seems to be '+kernel_type)
     print('Actual mass of particle 0: ',gas_m[0].d)
-    print('Integrated mass of particle 0: ',kernel_test[index]) 
+    print('Integrated mass of particle 0: ',kernel_test[index])
 
     gas_data    =   pd.DataFrame({'x':gas_pos[:,[0]].d.T[0],'y':gas_pos[:,[1]].d.T[0],'z':gas_pos[:,[2]].d.T[0],\
         'vx':gas_vel[:,[0]].d.T[0],'vy':gas_vel[:,[1]].d.T[0],'vz':gas_vel[:,[2]].d.T[0],\
@@ -1048,7 +1048,7 @@ def load_JSL(GAL,snap,member_search=True,verbose=True):
     star                =   pd.read_table(d_sph+'JSL/NC'+str(snap)+'_2.stars',names=columns,sep='\s*',engine='python')
     columns             =   ['x','y','z','vx','vy','vz','m']
     # DM                  =   pd.read_table(d_sph+'JSL/NC'+str(snap)+'_2.DM',names=columns,sep='\s*',engine='python')
-    gas['f_HI']         =   10.**gas['logfHI']  
+    gas['f_HI']         =   10.**gas['logfHI']
     gas['f_ion']        =   1.-gas['f_HI']
     gas['nH']           =   10.**gas['lognH']
     gas['Tk']           =   10.**gas['logTk']
@@ -1081,7 +1081,7 @@ def load_JSL(GAL,snap,member_search=True,verbose=True):
     if index == 1: kernel_type = 'cubic'
     print('Kernel seems to be '+kernel_type)
     print('Actual mass of particle 0: ',gas_data['m'][0])
-    print('Integrated mass of particle 0: ',kernel_test[index]) 
+    print('Integrated mass of particle 0: ',kernel_test[index])
     # quick check of rotation
     fig                 =   plt.figure(0)
     ax1                 =   fig.add_axes([0.15,0.1,0.75,0.8])
@@ -1114,7 +1114,7 @@ def load_gadget_txt(GAL,snap,galname,verbose=True):
     gas['f_ion']        =   gas['Ne1']/max(gas['Ne1'])
     columns             =   ['aC','aO','aSi','aFe']
     gasZ                =   pd.read_table(d_sph+'gadget-3/'+galname+'_SPH.gasZ',names=columns,sep='\s*',engine='python',skiprows=2)
-    
+
     gas_Z               =   (gasZ['aC']+gasZ['aO']+gasZ['aSi']+gasZ['aFe']) * 0.0189/0.0147 / 0.02          # from RT
 
     columns             =   ['x','y','z','vx','vy','vz','m','age']
@@ -1128,7 +1128,7 @@ def load_gadget_txt(GAL,snap,galname,verbose=True):
     radius              =   np.sqrt(gas['x'].values**2.+gas['y'].values**2.+gas['z'].values**2.)
     gas                 =   gas[radius < 10.] # making a rough cutout as in Olsen+15
     gas_data            =   gas[['x','y','z','vx','vy','vz','nH','Tk','h','Z','SFR','m','f_ion','f_HI']]
-    gas_data.columns    =   ['x','y','z','vx','vy','vz','nH','Tk','h','Z','SFR','m','f_ion','f_HI']      
+    gas_data.columns    =   ['x','y','z','vx','vy','vz','nH','Tk','h','Z','SFR','m','f_ion','f_HI']
     star['Z']           =   (starZ['a_C']+starZ['a_O']+starZ['a_Si']+starZ['a_Fe'])*0.0189/0.0147 # mail from Robert
     if zred == 2: star['age']         =   3.223e3-star['age']/1e6                # [Myr] star['age'] = age of Universe [yr] when star particle was spawned, age @ z=2: 3.223e3 Myr with cosm. parameters used (h = 0.7, Omega_m = 0.3?)
     star_data           =   star[['x','y','z','vx','vy','vz','m','age','Z']]
@@ -1255,9 +1255,9 @@ def center_cut_galaxy(simgas,simstar,simdm,plot=False):
     m_binned_y1       =   lowess(m_binned_y,r_bin[0:len(r_bin)-1],frac=0.1,is_sorted=True,it=0)
     m_binned_z1       =   lowess(m_binned_z,r_bin[0:len(r_bin)-1],frac=0.1,is_sorted=True,it=0)
     # find max of distribution:
-    xpos            =   r_bin[np.argmax(m_binned_x1[:,1])]  
-    ypos            =   r_bin[np.argmax(m_binned_y1[:,1])]  
-    zpos            =   r_bin[np.argmax(m_binned_z1[:,1])]  
+    xpos            =   r_bin[np.argmax(m_binned_x1[:,1])]
+    ypos            =   r_bin[np.argmax(m_binned_y1[:,1])]
+    zpos            =   r_bin[np.argmax(m_binned_z1[:,1])]
     print('corrections: ',xpos,ypos,zpos)
     # move original coordinates
     simgas[pos]     =   simgas[pos]-[xpos,ypos,zpos]
@@ -1355,10 +1355,10 @@ def center_cut_galaxy(simgas,simstar,simdm,plot=False):
     M_star          =   sum(simstar['m'])
     M_gas           =   sum(simgas['m'])
     M_dm            =   sum(simdm['m'])
-    SFR             =   sum(simstar['m'].values[simstar['age'].values < 100])/100e6           # Msun/yr  
+    SFR             =   sum(simstar['m'].values[simstar['age'].values < 100])/100e6           # Msun/yr
     SFRsd           =   SFR/(np.pi*R_gal**2.)
     # For JSL galaxies: Force SFR to that derived by JSL (including stars that went back to gas stage)
-    # if galname == 's6_G0': SFR = 11.3 
+    # if galname == 's6_G0': SFR = 11.3
     # if galname == 's7_G0': SFR = 5.23
     # Zmw             =   sum(simgas['Z']*simgas['m'])/sum(simgas['m'])
     Zsfr            =   sum(simgas['Z']*simgas['SFR'])/sum(simgas['SFR'])
@@ -1387,16 +1387,16 @@ def kernel(q,type):
         rho[q>1]    =   0
     # if type == 'cubic':
     #     rho         =   ((2-q)**3.-(1-q)**3)/(4.*np.pi)
-    #     rho[q>1]    =   (2-q[q>1])**3./(4.*np.pi)  
-    #     rho[q>2]    =   0. 
+    #     rho[q>1]    =   (2-q[q>1])**3./(4.*np.pi)
+    #     rho[q>2]    =   0.
     if type == 'cubic':
         rho         =   (1-(3/2.)*q**2.+(3/4.)*q**3.)/np.pi
         rho[q>1]    =   (1/4.)*(2-q[q>1])**3./np.pi
-        rho[q>2]    =   0. 
+        rho[q>2]    =   0.
     if type == 'quintic':
-        rho         =   ((3-q)**5.-6.*(2-q)**5+15.*(1-q)**5)/(120.*np.pi) 
-        rho[q>1]    =   ((3-q[q>1])**5.-6.*(2-q[q>1])**5)/(120.*np.pi) 
-        rho[q>2]    =   (3-q[q>2])**5./(120.*np.pi) 
+        rho         =   ((3-q)**5.-6.*(2-q)**5+15.*(1-q)**5)/(120.*np.pi)
+        rho[q>1]    =   ((3-q[q>1])**5.-6.*(2-q[q>1])**5)/(120.*np.pi)
+        rho[q>2]    =   (3-q[q>2])**5./(120.*np.pi)
         rho[q>3]    =   0.
     return rho
 
@@ -1404,16 +1404,16 @@ def contamination_check(caesarfile,snapshot,halonum):
 
     obj = caesar.load(caesarfile)
     ds = yt.load(snapshot)
-    
+
     ad = ds.all_data()
-    
+
     halo_center = obj.halos[halonum].pos.in_units('code_length')
     halo_radius = obj.halos[halonum].radii['virial'].in_units('code_length')
     #get lowres particle positions
     lowres_posx = []
     lowres_posy = []
     lowres_posz = []
-    
+
     print '----------------------------------------'
     print 'assigning the low resolution particles'
     if ('PartType2', 'particle_position_x') in ds.derived_field_list:
@@ -1421,7 +1421,7 @@ def contamination_check(caesarfile,snapshot,halonum):
         lowres_posx.append(ad[('PartType2', 'particle_position_x')].in_units('code_length'))
         lowres_posy.append(ad[('PartType2', 'particle_position_y')].in_units('code_length'))
         lowres_posz.append(ad[('PartType2', 'particle_position_z')].in_units('code_length'))
-        
+
     if ('PartType3', 'particle_position_x') in ds.derived_field_list:
         print 'Found Part Type 3 particles in your dataset'
         lowres_posx.append(ad[('PartType3', 'particle_position_x')].in_units('code_length'))
@@ -1434,11 +1434,11 @@ def contamination_check(caesarfile,snapshot,halonum):
         lowres_posy.append(ad[('PartType5', 'particle_position_y')].in_units('code_length'))
         lowres_posz.append(ad[('PartType5', 'particle_position_z')].in_units('code_length'))
 
-        
+
 
     #get the number of lowres particle types
     n_lowres_particle_types = len(lowres_posx)
-    
+
     #find number of contaminating partlces
     contaminating_particles =  []
     contaminating_particles_3virialradii = []
@@ -1447,11 +1447,11 @@ def contamination_check(caesarfile,snapshot,halonum):
         particles_x = lowres_posx[i]
         particles_y = lowres_posy[i]
         particles_z = lowres_posz[i]
-        
+
         contaminating_particles.append(np.where( (particles_x < halo_center[0]+halo_radius) & (particles_x > halo_center[0]-halo_radius) & \
                                                      (particles_y < halo_center[1]+halo_radius) & (particles_y > halo_center[1]-halo_radius) & \
                                                      (particles_z < halo_center[2]+halo_radius) & (particles_z > halo_center[2]-halo_radius)))
-        
+
         contaminating_particles_3virialradii.append(np.where( (particles_x < halo_center[0]+(3.*halo_radius)) & (particles_x > halo_center[0]-(3.*halo_radius)) & \
                                                                   (particles_y < halo_center[1]+(3.*halo_radius)) & (particles_y > halo_center[1]-(3.*halo_radius)) & \
                                                                   (particles_z < halo_center[2]+(3.*halo_radius)) & (particles_z > halo_center[2]-(3.*halo_radius))))
@@ -1469,8 +1469,7 @@ def contamination_check(caesarfile,snapshot,halonum):
     if len(contaminating_particles_3virialradii) > 1:
         fraction_of_contaminating_particles_3virialradii = len(contaminating_particles_3virialradii)/len(obj.halos[halonum].glist)
         print 'fraction of contaminating particles within 3x the virial radius of the main halo is: %e'%fraction_of_contaminating_particles_3virialradii
-        
-        
-    print '----------------------------------------'
-    print '----------------------------------------'
 
+
+    print '----------------------------------------'
+    print '----------------------------------------'

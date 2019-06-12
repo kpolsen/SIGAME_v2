@@ -283,7 +283,7 @@ def read_params(params_file,params):
 
 def update_params_file(new_params,verbose=False):
 
-    params                      =   np.load('temp_params.npy').item()
+    params                      =   np.load('temp_params.npy', allow_pickle=True).item()
 
     for key in new_params:
         params[key]               =   new_params[key]
