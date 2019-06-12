@@ -1958,12 +1958,12 @@ def add_line_ratio_obs(ratio='CII_NII',zred_sample='lowz'):
         name                =   '[CII]/[NII]205'
         num                 =   'CII'
         denom               =   'NII'
-        data                =   np.load('sigame/temp/observations/observations_CII_NII205_'+zred_sample+'.npy').item()
+        data                =   np.load('sigame/temp/observations/observations_CII_NII205_'+zred_sample+'.npy', allow_pickle=True).item()
     if (ratio == 'OIII_NII'):
         name                =   '[OIII]88/[NII]122'
         num                 =   'OIII'
         denom               =   'NII'
-        data                =   np.load('sigame/temp/observations/observations_OIII88_NII122_'+zred_sample+'.npy').item()
+        data                =   np.load('sigame/temp/observations/observations_OIII88_NII122_'+zred_sample+'.npy', allow_pickle=True).item()
 
     ax                  =   plt.gca()
     authors             =   data.keys()

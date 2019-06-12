@@ -30,7 +30,7 @@ import astropy as astropy
 #-------------------------------------------------------------------------------
 
 def load_parameters():
-    params                      =   np.load('temp_params.npy').item() # insert external parent here
+    params                      =   np.load('temp_params.npy', allow_pickle=True).item() # insert external parent here
     return(params)
 
 params = load_parameters()
@@ -753,7 +753,7 @@ def mk_datacube(gal_ob,dataframe,ISM_dc_phase='GMC'):
     print('Total number of clouds to be drizzled: %s' % len(clouds))
 
     print('3) Check how many models are available')
-    model_rad_profs         =   np.load(rad_prof_path)
+    model_rad_profs         =   np.load(rad_prof_path, allow_pickle=True)
     models_r_pc             =   model_rad_profs[1,:,:]  # pc
     model_index             =   clouds['closest_model_i'].values
     clouds_r_pc             =   [models_r_pc[int(i)] for i in model_index]
@@ -840,7 +840,7 @@ def drizzle(start_end,v_axis,x_axis_kpc,rad_prof_path,ISM_dc_phase,target,FUV,zr
         if ISM_dc_phase in ['DNG','DIG']:  interpolation_result    =   clouds1[target+'_'+ISM_dc_phase].values
 
     # LOADING
-    model_rad_profs         =   np.load(rad_prof_path)
+    model_rad_profs         =   np.load(rad_prof_path, allow_pickle=True)
     all_inner_r_pc = model_rad_profs[0,:,0]
     # print('%s models did not finish ' % len(all_inner_r_pc[all_inner_r_pc == 0]))
 
@@ -1463,6 +1463,3 @@ def check_version(module,version_required):
             break
         if i == len(version.split('.'))-1:
             print('\nNo version problems for %s module expected!' % module.__name__)
-
-
-

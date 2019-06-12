@@ -66,7 +66,7 @@ file_in     =    open(params['parent']+'sigame/aux.py','r')
 file_out    =    open(params['parent']+'sigame/aux_temp.py','w')
 for line in file_in:
     if 'insert external parent here' in line:
-        line = "    params                      =   np.load('"+params['parent']+"temp_params.npy').item() # insert external parent here\n"
+        line = "    params                      =   np.load('"+params['parent']+"temp_params.npy', allow_pickle=True).item() # insert external parent here\n"
     file_out.write(line)
 file_in.close()
 file_out.close()
