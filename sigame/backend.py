@@ -69,7 +69,7 @@ def datacubes(GR):
             if do_DNG_dc: print('- Create datacube for DNG')
             if do_DIG_dc: print('- Create datacube for DIG')
             if do_GMC_dc + do_DNG_dc + do_DIG_dc == 0: print('Nothing!')
-        # if do_GMC_dc:gal_ob.datacube.create_dc(ISM_dc_phase='GMC') 
+        if do_GMC_dc:gal_ob.datacube.create_dc(ISM_dc_phase='GMC') 
         if do_DNG_dc:gal_ob.datacube.create_dc(ISM_dc_phase='DNG') 
         if do_DIG_dc:gal_ob.datacube.create_dc(ISM_dc_phase='DIG') 
     print('\n--------------------------------------------------------------\n')
