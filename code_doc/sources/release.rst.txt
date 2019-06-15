@@ -1,0 +1,10 @@
+Getting the code
+================
+
+
+Find the most recent release on GitHub
+--------------------------------------
+The most recent release is v2.0.0 which can be downloaded in zip format here:
+`https://github.com/kpolsen/SIGAME_dev/releases/tag/v2.0.0 <https://github.com/kpolsen/SIGAME_dev/releases/tag/v2.0.0>`_
+
+Unzip the file and proceed to `the Quickstart page <https://kpolsen.github.io/SIGAME_dev/quickstart.html>`_.
