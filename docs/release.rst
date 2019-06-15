@@ -7,4 +7,4 @@ Find the most recent release on GitHub
 The most recent release is v2.0.0 which can be downloaded in zip format here:
 `https://github.com/kpolsen/SIGAME/releases/tag/v2.0.0 <https://github.com/kpolsen/SIGAME/releases/tag/v2.0.0>`_
 
-Unzip the file and proceed to `the Quickstart page <https://kpolsen.github.io/SIGAME/code_doc/quickstart.html>`_.
+Unzip the file and proceed to `the Quickstart page <https://kpolsen.github.io/SIGAME_docs/quickstart.html>`_.
