@@ -12,23 +12,23 @@ import subprocess as sub
 
 
 print(''+'\n'+\
- '   ======================================================='+'\n'+\
- '   '+'\n'+\
- '   .oOOOo.  ooOoOOo  .oOOOo.     Oo    Oo      oO o.OOoOoo'+'\n'+\
- '   o     o     O    .O     o    o  O   O O    o o  O      '+'\n'+\
- '   O.          o    o          O    o  o  o  O  O  o      '+'\n'+\
- '    `OOoo.     O    O         oOooOoOo O   Oo   O  ooOO   '+'\n'+\
- '         `O    o    O   .oOOo o      O O        o  O      '+'\n'+\
- '          o    O    o.      O O      o o        O  o      '+'\n'+\
- '   O.    .O    O     O.    oO o      O o        O  O      '+'\n'+\
- "    `oooO'  ooOOoOo   `OooO'  O.     O O        o ooOooOoO"+'\n'+\
- '   '+'\n'+\
- '   ======================================================='+'\n'+\
- '    SImulator of GAlaxy Millimeter/submillimeter Emission'+'\n'+\
- '-- A code to simulate the far-IR emission lines of the ISM  --'+'\n'+\
- '----------- in galaxies from hydrodynamical codes ------------'+'\n'+\
- '--- for the interpretation and prediction of observations. ---'+'\n'+\
- '-- Contact: Karen Pardos Olsen, kpolsen (at) asu.edu (2018) --'+'\n'+\
+ '   =============================================================='+'\n'+\
+ '      '+'\n'+\
+ '      .oOOOo.  ooOoOOo  .oOOOo.     Oo    Oo      oO o.OOoOoo'+'\n'+\
+ '      o     o     O    .O     o    o  O   O O    o o  O      '+'\n'+\
+ '      O.          o    o          O    o  o  o  O  O  o      '+'\n'+\
+ '       `OOoo.     O    O         oOooOoOo O   Oo   O  ooOO   '+'\n'+\
+ '            `O    o    O   .oOOo o      O O        o  O      '+'\n'+\
+ '             o    O    o.      O O      o o        O  o      '+'\n'+\
+ '      O.    .O    O     O.    oO o      O o        O  O      '+'\n'+\
+ "       `oooO'  ooOOoOo   `OooO'  O.     O O        o ooOooOoO"+'\n'+\
+ '      '+'\n'+\
+ '   =============================================================='+'\n'+\
+ '       SImulator of GAlaxy Millimeter/submillimeter Emission'+'\n'+\
+ '-----  A code to simulate the far-IR emission lines of the ISM  -----'+'\n'+\
+ '--------------  in galaxies from hydrodynamical codes ---------------'+'\n'+\
+ '------  for the interpretation and prediction of observations. ------'+'\n'+\
+ '-- Contact: Karen Pardos Olsen, kpolsen (at) protonmail.com (2019) --'+'\n'+\
  ''+'\n')
  # style from http://www.kammerl.de/ascii/AsciiSignature.php
  # (alternatives: epic, roman, blocks, varsity, pepples, soft, standard, starwars)
