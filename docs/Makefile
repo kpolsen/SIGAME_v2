@@ -6,7 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = /home/karen/code/anaconda3/bin/sphinx-build
 SPHINXPROJ    = sigame_docs
 SOURCEDIR     = .
-BUILDDIR      = /home/karen/code/astro/sigame_website/html/code_doc
+BUILDDIR      = /home/karen/code/astro/sigame_docs/
 
 # Put it first so that "make" without argument is like "make help".
 help:
