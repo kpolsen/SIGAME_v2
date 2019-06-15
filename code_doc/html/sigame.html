@@ -1,0 +1,946 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>SÍGAME main module &mdash; SIGAME v2.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting the code" href="release.html" />
+    <link rel="prev" title="What the code does" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> SIGAME
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                v2.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SÍGAME module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-sigame.galaxy">sigame.galaxy submodule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sigame.global_results">sigame.global_results submodule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sigame.plot">sigame.plot submodule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sigame.param">sigame.param submodule</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="release.html">Getting the code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SIGAME</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>SÍGAME main module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/sigame.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="sigame-main-module">
+<h1>SÍGAME main module<a class="headerlink" href="#sigame-main-module" title="Permalink to this headline">¶</a></h1>
+<p>The SÍGAME package features a folder that is imported in python as the main module and
+contains a number of submodules. The most important submodules are listed below with
+a short description of the classes and functions that they each contain.</p>
+<div class="section" id="module-sigame.galaxy">
+<span id="sigame-galaxy-submodule"></span><h2>sigame.galaxy submodule<a class="headerlink" href="#module-sigame.galaxy" title="Permalink to this headline">¶</a></h2>
+<p>Module with classes to set up the main galaxy object, create and load related data products from the
+simulation itself (particle_data class) and processed outputs (datacube class).</p>
+<dl class="class">
+<dt id="sigame.galaxy.datacube">
+<em class="property">class </em><code class="sig-prename descclassname">sigame.galaxy.</code><code class="sig-name descname">datacube</code><span class="sig-paren">(</span><em class="sig-param">gal_ob</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An object referring to the datacube constructed for a galaxy (in one of the ISM phases)</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Must be added as an attribute to a galaxy object.</p>
+</div>
+<dl class="method">
+<dt id="sigame.galaxy.datacube.add_Z_map">
+<code class="sig-name descname">add_Z_map</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.add_Z_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds metallicity map as numpy array to datacube object, if not there already.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.add_m_map">
+<code class="sig-name descname">add_m_map</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.add_m_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds mass map as numpy array to datacube object, if not there already.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.add_moment0_map">
+<code class="sig-name descname">add_moment0_map</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.add_moment0_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds moment 0 map as numpy array to datacube object, if not there already.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.add_shape">
+<code class="sig-name descname">add_shape</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.add_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds tuple of datacube dimensions (v length, x length, y length) as an attribute to datacube object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.add_vw_disp_map">
+<code class="sig-name descname">add_vw_disp_map</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.add_vw_disp_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.add_vw_map">
+<code class="sig-name descname">add_vw_map</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.add_vw_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.create_dc">
+<code class="sig-name descname">create_dc</code><span class="sig-paren">(</span><em class="sig-param">ISM_dc_phase</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.create_dc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the datacube of a specific ISM_phase</p>
+<dl class="simple">
+<dt>ISM_dc_phase: str</dt><dd><p>The datacube ISM phase</p>
+</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gal_ob</span><span class="o">.</span><span class="n">datacube</span><span class="o">.</span><span class="n">create_dc</span><span class="p">(</span><span class="s1">&#39;GMC&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.get_dc">
+<code class="sig-name descname">get_dc</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.get_dc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns one datacube as numpy array.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.get_kpc_per_arcsec">
+<code class="sig-name descname">get_kpc_per_arcsec</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.get_kpc_per_arcsec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns physical scale for this galaxy in kpc per arcsec.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.get_line_prof">
+<code class="sig-name descname">get_line_prof</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.get_line_prof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns line profile in pixel-integrated Jy as numpy array.</p>
+<dl class="simple">
+<dt>line<span class="classifier">str</span></dt><dd><p>Line to use for map, default: ‘CII’</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.get_moment0_map">
+<code class="sig-name descname">get_moment0_map</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.get_moment0_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns moment 0 map in Jy*km/s per pixel as numpy array.</p>
+<dl class="simple">
+<dt>line<span class="classifier">str</span></dt><dd><p>Line to use for map, default: ‘CII’</p>
+</dd>
+<dt>convolve<span class="classifier">bool</span></dt><dd><p>if True: convolve with beam of FWHM also supplied, default: False</p>
+</dd>
+<dt>FWHM<span class="classifier">float</span></dt><dd><p>FWHM of beam to convolve with, default: None</p>
+</dd>
+<dt>ISM_dc_phase<span class="classifier">str</span></dt><dd><p>ISM datacube phase to use for moment 0 map, default: ‘tot’ (all ISM phases)</p>
+</dd>
+<dt>units<span class="classifier">str</span></dt><dd><p>units for moment0 map, default: ‘Jykms’ for Jy*km/s (other options: ‘Wm2’ for W/m^2)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.get_total_sum">
+<code class="sig-name descname">get_total_sum</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.get_total_sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns total value of datacube for all datacube ISM phases in dictionary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.datacube.get_x_axis_arcsec">
+<code class="sig-name descname">get_x_axis_arcsec</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.datacube.get_x_axis_arcsec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns positional axis (x or y) in arcsec.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sigame.galaxy.dict_to_attr">
+<em class="property">class </em><code class="sig-prename descclassname">sigame.galaxy.</code><code class="sig-name descname">dict_to_attr</code><span class="sig-paren">(</span><em class="sig-param">dictionary</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.dict_to_attr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Essentially turns dictionary into a attributes of an object.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="sigame.galaxy.galaxy">
+<em class="property">class </em><code class="sig-prename descclassname">sigame.galaxy.</code><code class="sig-name descname">galaxy</code><span class="sig-paren">(</span><em class="sig-param">gal_index</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.galaxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An object referring to one particular galaxy.</p>
+<dl class="simple">
+<dt>gal_index: int</dt><dd><p>Galaxy index, default: 0</p>
+</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">galaxy</span> <span class="k">as</span> <span class="nn">gal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gal_ob</span> <span class="o">=</span> <span class="n">gal</span><span class="o">.</span><span class="n">galaxy</span><span class="p">(</span><span class="n">gal_index</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="sigame.galaxy.galaxy.add_attr">
+<code class="sig-name descname">add_attr</code><span class="sig-paren">(</span><em class="sig-param">attr_name</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.galaxy.add_attr" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates desired attribute and adds it to galaxy.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.galaxy.check_classification">
+<code class="sig-name descname">check_classification</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.galaxy.check_classification" title="Permalink to this definition">¶</a></dt>
+<dd><p>checks if galaxy classification is correct (all galaxies are
+initialized with a ‘spherical’ classification.)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.galaxy.check_for_attr">
+<code class="sig-name descname">check_for_attr</code><span class="sig-paren">(</span><em class="sig-param">attr_name</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.galaxy.check_for_attr" title="Permalink to this definition">¶</a></dt>
+<dd><p>checks if galaxy has a specific attribute, if not then adds
+it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.galaxy.get_radial_axis">
+<code class="sig-name descname">get_radial_axis</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.galaxy.get_radial_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns 1D radius array for galaxy</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sigame.galaxy.interpolate_clouds">
+<em class="property">class </em><code class="sig-prename descclassname">sigame.galaxy.</code><code class="sig-name descname">interpolate_clouds</code><span class="sig-paren">(</span><em class="sig-param">gal_index</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.interpolate_clouds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sigame.galaxy.galaxy" title="sigame.galaxy.galaxy"><code class="xref py py-class docutils literal notranslate"><span class="pre">sigame.galaxy.galaxy</span></code></a></p>
+<p>An object that will interpolate in cloud models of info such as line luminosity for one galaxy.</p>
+<p>Child class that inherits from parent class ‘galaxy’.</p>
+<dl class="method">
+<dt id="sigame.galaxy.interpolate_clouds.interpolate_GMCs">
+<code class="sig-name descname">interpolate_GMCs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.interpolate_clouds.interpolate_GMCs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds info from cloud model runs to GMCs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.interpolate_clouds.interpolate_dif">
+<code class="sig-name descname">interpolate_dif</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.interpolate_clouds.interpolate_dif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds info from cloud model runs to diffuse gas clouds</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.interpolate_clouds.setup_tasks">
+<code class="sig-name descname">setup_tasks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.interpolate_clouds.setup_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Controls tasks to be executed, based on existing files and the overwrite [ow] parameter</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sigame.galaxy.particle_data">
+<em class="property">class </em><code class="sig-prename descclassname">sigame.galaxy.</code><code class="sig-name descname">particle_data</code><span class="sig-paren">(</span><em class="sig-param">gal_ob</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.particle_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An object referring to the particle data (sim or ISM)</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Must be added as an attribute to a galaxy object.</p>
+</div>
+<dl class="simple">
+<dt>gal_ob<span class="classifier">object</span></dt><dd><p>Instance of galaxy class.</p>
+</dd>
+<dt>silent<span class="classifier">bool</span></dt><dd><p>Parameter telling the code to do (or not) print statements.</p>
+</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">galaxy</span> <span class="k">as</span> <span class="nn">gal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gal_ob</span> <span class="o">=</span> <span class="n">gal</span><span class="o">.</span><span class="n">galaxy</span><span class="p">(</span><span class="n">gal_index</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">simgas</span> <span class="o">=</span> <span class="n">gal_ob</span><span class="o">.</span><span class="n">particle_data</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="s1">&#39;sim&#39;</span><span class="p">)[</span><span class="s1">&#39;gas&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="sigame.galaxy.particle_data.add_Z_map">
+<code class="sig-name descname">add_Z_map</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.particle_data.add_Z_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds metallicity map as numpy array to particle data object, if not stored already in sigame/temp/maps/metallicity/.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.particle_data.add_names">
+<code class="sig-name descname">add_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.particle_data.add_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add file location for particle data file (sim_type or ISM_phase)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.particle_data.get_data">
+<code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.particle_data.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns <strong>rotated</strong> particle data as dataframe.</p>
+<dl class="simple">
+<dt>particle_name<span class="classifier">str</span></dt><dd><p>Name of particles, can be [‘gas’,’star’,’dm’,’GMC’,’dif’], default: ‘GMC’</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.particle_data.get_map">
+<code class="sig-name descname">get_map</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.particle_data.get_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates map of surface densities (or sum) of some parameters in sim or ISM data.</p>
+<dl class="simple">
+<dt>quan<span class="classifier">str</span></dt><dd><p>What gets mapped, default: ‘m’</p>
+</dd>
+<dt>ISM_phase<span class="classifier">str</span></dt><dd><p>If set, ISM data will be used, default: ‘’</p>
+</dd>
+<dt>sim_type<span class="classifier">str</span></dt><dd><p>If set, sim data will be used, default: ‘’</p>
+</dd>
+<dt>get_sum<span class="classifier">bool</span></dt><dd><p>If True, return map of summed values not divided by area, default: False</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.particle_data.get_raw_data">
+<code class="sig-name descname">get_raw_data</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.particle_data.get_raw_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns raw <strong>not rotated</strong> particle data in dictionary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.particle_data.plot_map">
+<code class="sig-name descname">plot_map</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.particle_data.plot_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates map of surface densities (or sum) of some parameters in sim or ISM data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sigame.galaxy.subgrid_galaxy">
+<em class="property">class </em><code class="sig-prename descclassname">sigame.galaxy.</code><code class="sig-name descname">subgrid_galaxy</code><span class="sig-paren">(</span><em class="sig-param">gal_index</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.subgrid_galaxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sigame.galaxy.galaxy" title="sigame.galaxy.galaxy"><code class="xref py py-class docutils literal notranslate"><span class="pre">sigame.galaxy.galaxy</span></code></a></p>
+<p>An object that will contain the subgrid information for one galaxy.
+Child class that inherits from parent class ‘galaxy’.</p>
+<dl class="method">
+<dt id="sigame.galaxy.subgrid_galaxy.add_FUV">
+<code class="sig-name descname">add_FUV</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.subgrid_galaxy.add_FUV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds FUV radiation field to galaxy and stores gas/star sim particle data files again with the new information.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.subgrid_galaxy.add_GMCs">
+<code class="sig-name descname">add_GMCs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.subgrid_galaxy.add_GMCs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates GMCs and creates new GMC particle data file for a galaxy.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.subgrid_galaxy.add_P_ext">
+<code class="sig-name descname">add_P_ext</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.subgrid_galaxy.add_P_ext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds external pressure to galaxy and stores gas/star sim particle data files again with the new information.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.subgrid_galaxy.add_dif">
+<code class="sig-name descname">add_dif</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.subgrid_galaxy.add_dif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates diffuse gas clouds and creates new dif particle data file for a galaxy.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sigame.galaxy.subgrid_galaxy.setup_tasks">
+<code class="sig-name descname">setup_tasks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.subgrid_galaxy.setup_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Controls tasks to be executed, based on existing files and the overwrite [ow] parameter</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="sigame.galaxy.var">
+<em class="property">class </em><code class="sig-prename descclassname">sigame.galaxy.</code><code class="sig-name descname">var</code><span class="sig-paren">(</span><em class="sig-param">val</em>, <em class="sig-param">err</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.galaxy.var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>takes a value and its err and returns strings of printable values with
+appropriate significant figures for presenting data.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sigame.global_results">
+<span id="sigame-global-results-submodule"></span><h2>sigame.global_results submodule<a class="headerlink" href="#module-sigame.global_results" title="Permalink to this headline">¶</a></h2>
+<p>Module: global_results</p>
+<dl class="class">
+<dt id="sigame.global_results.global_results">
+<em class="property">class </em><code class="sig-prename descclassname">sigame.global_results.</code><code class="sig-name descname">global_results</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.global_results.global_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An object referring to the global results of a selection of galaxies, containing global properties of as attributes.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">global_results</span> <span class="k">as</span> <span class="nn">glo</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">GR</span> <span class="o">=</span> <span class="n">glo</span><span class="o">.</span><span class="n">global_results</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">GR</span><span class="o">.</span><span class="n">print_results</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="sigame.global_results.global_results.print_galaxy_properties">
+<code class="sig-name descname">print_galaxy_properties</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.global_results.global_results.print_galaxy_properties" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sigame.global_results.global_results.print_results">
+<code class="sig-name descname">print_results</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.global_results.global_results.print_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-sigame.plot">
+<span id="sigame-plot-submodule"></span><h2>sigame.plot submodule<a class="headerlink" href="#module-sigame.plot" title="Permalink to this headline">¶</a></h2>
+<p>Module: plot</p>
+<dl class="function">
+<dt id="sigame.plot.OI_OIII_SFR">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">OI_OIII_SFR</code><span class="sig-paren">(</span><em class="sig-param">plotmodels=True</em>, <em class="sig-param">twopanel=True</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.OI_OIII_SFR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inspect [OI]63micron AND [OIII]88micron emission (called by line_SFR() in analysis.py)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.SFR_Mstar">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">SFR_Mstar</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.SFR_Mstar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot of SFR vs stellar mass for one or more redshift groups</p>
+<dl class="simple">
+<dt>color<span class="classifier">str</span></dt><dd><p>What to color-code the galaxies by, default: age</p>
+</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sigame</span> <span class="k">as</span> <span class="nn">si</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">si</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">SFR_Mstar</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;age&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.add_CII_observations_to_plot1">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">add_CII_observations_to_plot1</code><span class="sig-paren">(</span><em class="sig-param">slope_models</em>, <em class="sig-param">intercept_models</em>, <em class="sig-param">mark_reasons=False</em>, <em class="sig-param">mark_uplim=False</em>, <em class="sig-param">mark_det=False</em>, <em class="sig-param">z1='z6'</em>, <em class="sig-param">MW=True</em>, <em class="sig-param">ms_scaling=1</em>, <em class="sig-param">alpha=1</em>, <em class="sig-param">line='[CII]'</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.add_CII_observations_to_plot1" title="Permalink to this definition">¶</a></dt>
+<dd><p>‘
+Purpose
+———
+Adds observatinos to plot</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.add_line_ratio_obs">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">add_line_ratio_obs</code><span class="sig-paren">(</span><em class="sig-param">ratio='CII_NII'</em>, <em class="sig-param">zred_sample='lowz'</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.add_line_ratio_obs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots observations of the relevant line ratio against redshift</p>
+<dl class="simple">
+<dt>ratio - str</dt><dd><p>Options:
+- ‘CII_NII’: plots the [CII]/[NII]205 line ratio
+- ‘OIII_NII’: plots the [OIII]88/[NII]122 line ratio</p>
+</dd>
+<dt>zred_sample - str</dt><dd><p>Options:
+- ‘highz’: adds observations at high redshift
+- ‘lowz’: adds observations at low redshift</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.arrow_length">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">arrow_length</code><span class="sig-paren">(</span><em class="sig-param">n</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.arrow_length" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.axis_range">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">axis_range</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">log=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.axis_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates a reasonable axis range</p>
+<dl class="simple">
+<dt>x<span class="classifier">np.array()</span></dt><dd><p>Must be given, array of values</p>
+</dd>
+<dt>log<span class="classifier">bool</span></dt><dd><p>If True, takes the log of the values in x, default: False</p>
+</dd>
+<dt>dex<span class="classifier">float</span></dt><dd><p>Dex above and below maximum values in x, effective when log == True, default: max range in x divided by 5</p>
+</dd>
+<dt>fraction<span class="classifier">float</span></dt><dd><p>Fraction of maximum range in x to go above and below on the axis, effective when log == False, default: 1/5.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.comp_ISM_phases">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">comp_ISM_phases</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.comp_ISM_phases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plotting function for comparing fractions of mass or line luminosity vs. SFR of Z.
+Called by ISM_line_contributions and ISM_line_efficiency() and ISM_mass_contributions() in analysis.py</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.delete_old_plots">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">delete_old_plots</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.delete_old_plots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.getlabel">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">getlabel</code><span class="sig-paren">(</span><em class="sig-param">foo</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.getlabel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets axis labels for plots</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.grid_parameters">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">grid_parameters</code><span class="sig-paren">(</span><em class="sig-param">histo_color='teal'</em>, <em class="sig-param">FUV=0.1</em>, <em class="sig-param">ISM_phase='GMC'</em>, <em class="sig-param">figsize=(10</em>, <em class="sig-param">7)</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.grid_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make histograms of galaxies with grid points on top
+What this function does
+———
+1) Makes 4-panel figure with histograms of [Mgmc, G0, Z, P_ext] in GMCs
+2) OR makes 4-panel figure with histograms of [nH, R, Z, Tk] in diffuse clouds
+Arguments
+———
+ISM_phase: ISM phase in cloudy models, can be either ‘GMC’ or ‘dif’ - str
+default: ‘GMC’
+histo_color: color selection for histograms - str
+options:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>‘&lt;a specific color&gt;’: all histograms will have this color</p></li>
+<li><p>‘colsel’: each galaxy will have a different color, using colsel from param_module.read_params</p></li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.grid_parameters_checkParam">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">grid_parameters_checkParam</code><span class="sig-paren">(</span><em class="sig-param">histo_color='teal'</em>, <em class="sig-param">FUV=0.002</em>, <em class="sig-param">ISM_phase='GMC'</em>, <em class="sig-param">figsize=(10</em>, <em class="sig-param">7)</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.grid_parameters_checkParam" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make histograms of galaxies to check what parameters to be used for dif_cloud_grid.py and GMC_cloud_grid.py to make cloudy grids.</p>
+<dl>
+<dt>ISM_phase: str</dt><dd><p>if ‘GMC’: make 4-panel figure with histograms of [Mgmc, G0, Z, P_ext] in GMCs
+if ‘dif’: make 4-panel figure with histograms of [nH, R, Z, Tk] in diffuse clouds</p>
+</dd>
+<dt>histo_color: str</dt><dd><p>color selection for histograms
+options:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>‘&lt;a specific color&gt;’: all histograms will have this color</p></li>
+<li><p>‘colsel’: each galaxy will have a different color, using colsel from param_module.read_params</p></li>
+</ul>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.histos">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">histos</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.histos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes histograms of all (particles in all) galaxies in the sample on the same plot.</p>
+<dl class="simple">
+<dt>bins<span class="classifier">int/float</span></dt><dd><p>Number of bins, default: 100</p>
+</dd>
+<dt>add<span class="classifier">bool</span></dt><dd><p>If True, add to an existing plot, default: False</p>
+</dd>
+<dt>one_color<span class="classifier">bool</span></dt><dd><p>If True, use only one color for all lines, default: True</p>
+</dd>
+<dt>fs_labels<span class="classifier">int/float</span></dt><dd><p>Fontsize, default: 15</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.line_SFR">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">line_SFR</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.line_SFR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots line luminosity against SFR (together with observations)</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Line to look at, default: ‘CII’</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.line_prof">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">line_prof</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.line_prof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots line luminosity against SFR (together with observations)</p>
+<dl class="simple">
+<dt>line: str</dt><dd><p>Line to look at, default: ‘CII’</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.make_contour">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">make_contour</code><span class="sig-paren">(</span><em class="sig-param">i</em>, <em class="sig-param">fontsize</em>, <em class="sig-param">kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.make_contour" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes contour plot (called by simple_plot)</p>
+<dl class="simple">
+<dt>contour_type: str</dt><dd><p>Method used to create contour map (see simple_plot)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.map_line">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">map_line</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.map_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes moment0 map of line using datacubes.</p>
+<dl class="simple">
+<dt>gal_index: int</dt><dd><p>Galaxy index, default: 0</p>
+</dd>
+<dt>line<span class="classifier">str</span></dt><dd><p>Line to use for map, default: ‘CII’</p>
+</dd>
+<dt>R_max<span class="classifier">float</span></dt><dd><p>Maximum radius for moment0 map in kpc, default: 15</p>
+</dd>
+<dt>ISM_dc_phase<span class="classifier">str</span></dt><dd><p>ISM phase(s) to map, default: ‘tot’ (sum of all)</p>
+</dd>
+<dt>units<span class="classifier">str</span></dt><dd><p>Units; ‘Wm2’ for W/m^2, ‘Jykms’ for Jy*km/s, default: ‘Jykms’</p>
+</dd>
+<dt>convolve<span class="classifier">bool</span></dt><dd><p>Whether moment0 map should be convolved by corresponding Herschel beam, default: True</p>
+</dd>
+<dt>min_fraction<span class="classifier">float</span></dt><dd><p>Fraction of maximum in image used as lower limit for colorbar, default: 1/1e6</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.set_mpl_params">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">set_mpl_params</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.set_mpl_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.simple_plot">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">simple_plot</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.simple_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function to standardize all plots</p>
+<dl class="simple">
+<dt>Plots that can be created this way:</dt><dd><ul class="simple">
+<li><ol class="arabic simple">
+<li><p>errorbar plot (with x and/or y errorbars)</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="2">
+<li><p>line</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="3">
+<li><p>histogram</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="4">
+<li><p>markers</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="5">
+<li><p>bar</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="6">
+<li><p>hexbin</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="7">
+<li><p>contour plot</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="8">
+<li><p>scatter plot</p></li>
+</ol>
+</li>
+<li><ol class="arabic simple" start="9">
+<li><p>hatched/filled region</p></li>
+</ol>
+</li>
+</ul>
+</dd>
+</dl>
+<p>The ‘1’ below can be replaced by ‘2’, ‘3’, ‘4’ etc for several plotting options in the same figure.</p>
+<dl class="simple">
+<dt>add<span class="classifier">bool</span></dt><dd><p>If True add to existing axis object, otherwise new figure+axes will be created, default: False</p>
+</dd>
+<dt>fig<span class="classifier">int</span></dt><dd><p>Figure number, default: 0</p>
+</dd>
+<dt>figsize<span class="classifier">tuple</span></dt><dd><p>Figure size, default: (8,6)</p>
+</dd>
+<dt>figname<span class="classifier">str</span></dt><dd><p>If defined, a figure will be saved with this path+name, default = not defined (no figure saved)</p>
+</dd>
+<dt>figtype<span class="classifier">str</span></dt><dd><p>Format of figure, default: ‘png’</p>
+</dd>
+<dt>figres<span class="classifier">float</span></dt><dd><p>The dpi of the saved figure, default: 1000</p>
+</dd>
+<dt>fontsize<span class="classifier">float</span></dt><dd><p>Fontsize of tick labels, default: 15</p>
+</dd>
+<dt>x1<span class="classifier">list or numpy array</span></dt><dd><p>x values</p>
+</dd>
+<dt>y1<span class="classifier">list or numpy array</span></dt><dd><p>y values</p>
+</dd>
+<dt>xr<span class="classifier">list</span></dt><dd><p>x range</p>
+</dd>
+<dt>yr<span class="classifier">list</span></dt><dd><p>y range</p>
+</dd>
+<dt>xlog<span class="classifier">bool</span></dt><dd><p>If True: x-axis will be in log units</p>
+</dd>
+<dt>ylog<span class="classifier">bool</span></dt><dd><p>If True: y-axis will be in log units</p>
+</dd>
+<dt>fill1<span class="classifier">str</span></dt><dd><p>If defined, markers will be used (‘y’ for filled markers, ‘n’ for open markers), default: ‘y’</p>
+</dd>
+<dt>ls1<span class="classifier">str</span></dt><dd><p>Linestyle, default: ‘None’ (markers by default)</p>
+</dd>
+<dt>ds1<span class="classifier">str</span></dt><dd><p>Drawstyle, default: ‘None’ (solid line by default)</p>
+</dd>
+<dt>ma1<span class="classifier">str</span></dt><dd><p>Marker type, default: ‘x’</p>
+</dd>
+<dt>ms1<span class="classifier">int/float</span></dt><dd><p>Marker size, default: 5</p>
+</dd>
+<dt>mew1<span class="classifier">int/float</span></dt><dd><p>Marker edge width, default: 2</p>
+</dd>
+<dt>col1<span class="classifier">str</span></dt><dd><p>Color of markers/lines, default: ‘k’</p>
+</dd>
+<dt>ecol1<span class="classifier">str</span></dt><dd><p>Edgecolor, default: ‘k’</p>
+</dd>
+<dt>lab1<span class="classifier">str</span></dt><dd><p>Label for x1,y1 points, default: ‘’</p>
+</dd>
+<dt>alpha1<span class="classifier">float</span></dt><dd><p>Transparency fraction, default: 1.1</p>
+</dd>
+<dt>dashes1<span class="classifier">str</span></dt><dd><p>Custom-made dashes/dots, default = ‘’</p>
+</dd>
+<dt>legend<span class="classifier">bool</span></dt><dd><p>Whether to plot legend or not, default: False</p>
+</dd>
+<dt>leg_fs<span class="classifier">float</span></dt><dd><p>Legend fontsize, default: not defined (same as fontsize for labels/tick marks)</p>
+</dd>
+<dt>legloc<span class="classifier">str or list of coordinates</span></dt><dd><p>Legend location, default: ‘best’</p>
+</dd>
+<dt>cmap1<span class="classifier">str</span></dt><dd><p>Colormap for contour plots, default: ‘viridis’</p>
+</dd>
+<dt>xlab<span class="classifier">str</span></dt><dd><p>x axis label, default: no label</p>
+</dd>
+<dt>ylab<span class="classifier">str</span></dt><dd><p>y axis label, default: no label</p>
+</dd>
+<dt>title<span class="classifier">str</span></dt><dd><p>Plot title, default: no title</p>
+</dd>
+<dt>xticks: bool</dt><dd><p>Whether to put x ticks or not, default: True</p>
+</dd>
+<dt>yticks: bool</dt><dd><p>Whether to put y ticks or not, default: True</p>
+</dd>
+<dt>lab_to_tick<span class="classifier">int/float</span></dt><dd><p>If axis labels should be larger than tick marks, say how much here, default: 1.0</p>
+</dd>
+<dt>lex1,uex1: list or numpy array</dt><dd><p>Lower and upper errorbars on x1, default: None, <strong>options</strong>:
+If an element in uex1 is 0 that element will be plotted as upper limit in x</p>
+</dd>
+<dt>ley1,uey1: list or numpy array</dt><dd><p>lower and upper errorbars on y1, default: None, <strong>options</strong>:
+If an element in uey1 is 0 that element will be plotted as upper limit in y</p>
+</dd>
+<dt>histo1<span class="classifier">bool</span></dt><dd><p>Whether to make a histogram of x1 values, default: False</p>
+</dd>
+<dt>histo_real1<span class="classifier">bool</span></dt><dd><p>Whether to use real values for histogram or percentages on y axis, default: False</p>
+</dd>
+<dt>bins1<span class="classifier">int</span></dt><dd><p>Number of bins in histogram, default: 100</p>
+</dd>
+<dt>weights1<span class="classifier">list or numpy array</span></dt><dd><p>weights to histogram, default: np.ones(len(x1))</p>
+</dd>
+<dt>hexbin1<span class="classifier">bool</span></dt><dd><p>If True, will make hexbin contour plot, default: False</p>
+</dd>
+<dt>contour_type1<span class="classifier">str</span></dt><dd><p>If defined, will make contour plot, default: not defined, <strong>options</strong>:
+plain: use contourf on colors alone, optionally with contour levels only (no filling),
+hexbin: use hexbin on colors alone,
+median: use contourf on median of colors,
+mean: use contourf on mean of colors,
+sum: use contourf on sum of colors</p>
+</dd>
+<dt>barwidth1<span class="classifier">float</span></dt><dd><p>If defined, will make bar plot with this barwidth</p>
+</dd>
+<dt>scatter_color1<span class="classifier">list or numpy array</span></dt><dd><p>If defined, will make scatter plot with this color, default: not defined (will not do scatter plot)</p>
+</dd>
+<dt>colormin1<span class="classifier">float</span></dt><dd><p>Minimum value for colorbar in scatter plot, default: not defined (will use all values in scatter_color1)</p>
+</dd>
+<dt>lab_colorbar<span class="classifier">str</span></dt><dd><p>Label for colorbar un scatter plot, default: not defined (will not make colorbar)</p>
+</dd>
+<dt>hatchstyle1<span class="classifier">str</span></dt><dd><p>If defined, make hatched filled region, default: not defined (will not make hatched region), <strong>options</strong>:
+if set to ‘’, fill with one color,
+otherwise, use ‘/’ ‘//’ ‘///’’ etc.</p>
+</dd>
+<dt>text<span class="classifier">str</span></dt><dd><p>If defined, add text to figure with this string, default: not defined (no text added)</p>
+</dd>
+<dt>textloc<span class="classifier">list</span></dt><dd><p>Must be specified in normalized axis units, default: [0.1,0.9]</p>
+</dd>
+<dt>textbox<span class="classifier">bool</span></dt><dd><p>If True, put a box around text, default: False</p>
+</dd>
+<dt>fontsize_text<span class="classifier">int/float</span></dt><dd><p>Fontsize of text on plot, default: 0/7 * fontsize</p>
+</dd>
+<dt>grid<span class="classifier">bool</span></dt><dd><p>Turn on grid lines, default: False</p>
+</dd>
+<dt>SC_return<span class="classifier">bool</span></dt><dd><p>Return scatter plot object or not, default = False</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.plot.trim_df">
+<code class="sig-prename descclassname">sigame.plot.</code><code class="sig-name descname">trim_df</code><span class="sig-paren">(</span><em class="sig-param">file</em>, <em class="sig-param">skip</em>, <em class="sig-param">maxcol</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.plot.trim_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Comment columns to trim a dataframe</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sigame.param">
+<span id="sigame-param-submodule"></span><h2>sigame.param submodule<a class="headerlink" href="#module-sigame.param" title="Permalink to this headline">¶</a></h2>
+<p>Submodule: param</p>
+<dl class="function">
+<dt id="sigame.param.add_default_args">
+<code class="sig-prename descclassname">sigame.param.</code><code class="sig-name descname">add_default_args</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sigame.param.add_default_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make custom namespace for specific method</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.param.read_params">
+<code class="sig-prename descclassname">sigame.param.</code><code class="sig-name descname">read_params</code><span class="sig-paren">(</span><em class="sig-param">params_file</em>, <em class="sig-param">params</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.param.read_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts parameters from parameter file set in sigame/__init__.py</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sigame.param.update_params_file">
+<code class="sig-prename descclassname">sigame.param.</code><code class="sig-name descname">update_params_file</code><span class="sig-paren">(</span><em class="sig-param">new_params</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#sigame.param.update_params_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="release.html" class="btn btn-neutral float-right" title="Getting the code" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="What the code does" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Karen Pardos Olsen
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
