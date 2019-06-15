@@ -665,7 +665,7 @@ def histos(**kwargs):
     '''Makes histograms of all (particles in all) galaxies in the sample on the same plot.
 
     Parameters
-    ---------
+    ----------
     bins : int/float
         Number of bins, default: 100
 
@@ -1288,6 +1288,7 @@ def comp_ISM_phases(**kwargs):
 
 def map_line(**kwargs):
     """Makes moment0 map of line using datacubes.
+
     Parameters
     ----------
     gal_index: int
@@ -1961,18 +1962,18 @@ def add_CII_observations_to_plot1(slope_models,intercept_models,mark_reasons=Fal
 def add_line_ratio_obs(ratio='CII_NII',zred_sample='lowz'):
     '''
     Purpose
-    ---------
+    -------
     Plots observations of the relevant line ratio against redshift
 
     Arguments
     ---------
     ratio - str
-    Options:
+        Options:
         - 'CII_NII': plots the [CII]/[NII]205 line ratio
         - 'OIII_NII': plots the [OIII]88/[NII]122 line ratio
 
     zred_sample - str
-    Options:
+        Options:
         - 'highz': adds observations at high redshift
         - 'lowz': adds observations at low redshift
     '''

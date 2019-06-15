@@ -3,8 +3,8 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = SIGAME
+SPHINXBUILD   = /home/karen/code/anaconda3/bin/sphinx-build
+SPHINXPROJ    = sigame_docs
 SOURCEDIR     = .
 BUILDDIR      = /home/karen/code/astro/sigame_website/html/code_doc
 
