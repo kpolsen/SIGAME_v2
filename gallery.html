@@ -11,6 +11,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+		<link href="path/to/lightbox.css" rel="stylesheet">
 	</head>
 	<body class="no-sidebar is-preload">
 		<div id="page-wrapper">
@@ -76,13 +77,24 @@
 								<div class="col-4 col-12-narrower">
 
 									<section>
-										<img src="images/cii.png" alt="" width="400"/>
+								      	<a class="example-image-link" href="images/cii.png" data-lightbox="example-1"><img class="example-image" src="images/cii.png" alt="[CII] moment0 map at z~0" /></a>
+										<!-- <img src="images/cii.png" alt="" width="400"/> -->
 										<header>
 											<h3>Line moment0 maps</h3>
 										</header>
-										<p>...
+										<p>SIGAME can present the line emission from a galaxy in a space-velocity datacube format, which can be integrated in velocity to generate moment 0 maps such as the one in above for a z~0 merger in [CII].
 										</p>
 									</section>
+
+									<section>
+										<img src="images/cii_map_resolved.png" alt="" width="400"/>
+										<header>
+											<h3>Synthetic resolved observations</h3>
+										</header>
+										<p>By convolving a line emission map by the know beam size and shape of an instrument, a synthetic map can be generated and areas within a galaxy can be compared. In the figure above, this is done for a z~0 galaxy in [CII] emission, where the small yellow circles correspond to areas that Herschel would have been able to distinguish.
+										</p>
+									</section>
+
 
 								</div>
 								<div class="col-4 col-12-narrower">
@@ -92,7 +104,7 @@
 										<header>
 											<h3>Line profiles</h3>
 										</header>
-										<p>...
+										<p>
 										</p>
 									</section>
 
@@ -100,11 +112,11 @@
 								<div class="col-4 col-12-narrower">
 
 									<section>
-										<a href="#" class="image featured"><img src="images/pic04.jpg" alt="" /></a>
+										<a href="#" class="image featured"><img src="images/diagnostic.png" alt="" /></a>
 										<header>
 											<h3>Line ratio diagnostic plots</h3>
 										</header>
-										<p>...
+										<p>In order to compare with resolved observations of multiple lines, we are working on producing diagnostic contour maps, that can be used to convert line ratios into e.g. density and Far-UV flux (G0), as shown in the above figure.
 										</p>
 									</section>
 
@@ -155,6 +167,6 @@
 			<script src="assets/js/breakpoints.min.js"></script>
 			<script src="assets/js/util.js"></script>
 			<script src="assets/js/main.js"></script>
-
+	<script src="path/to/lightbox.js"></script>
 	</body>
 </html>
