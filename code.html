@@ -85,6 +85,31 @@
 												</header>
 												<p>SIGAME is written with an emphasis on object-oriented programming and an interactive interface for processing galaxy models and visualizing the results. When getting started with SIGAME, you will be greeted by something like this:</p>
 												<img src="images/notebook.png" alt="" width="90%"/>
+												<br>
+												<header>
+													<h3>Simulation input: Using your own sims</h3>
+												</header>
+												<p>At the moment, SIGAME is tailored towards snapshots from cosmological simulations using Smoothed Particle Hydrodynamics (SPH) or some variant thereof. The release version comes with a test galaxy from z~6, pertaining to the MUFASA zoom simulation suite [<a href="https://ui.adsabs.harvard.edu/abs/2016MNRAS.462.3265D/abstract">Davé et al. 2016</a>]. This galaxy has already been extracted and converted into a Python DataFrame with the necessary information per gas and star particle saved in different columns. If you are interested in supplying your own galaxy to SIGAME, you are more than welcome to contact us. You can also start by looking at the following complete list of particle info necessary for SIGAME to function:<br>
+												<h2>Gas particle info</h2>
+												x, y, z - positions [kpc]<br>
+												vx, vy, vz - velocities [km/s]<br>
+												m - mass [Msun]<br>
+												nH - Hydrogen density [cm^-3]<br>
+												f_H2 - H2 gas mass fraction or similar<br>
+												h - smoothing length or similar [kpc]<br>
+												Z - metallicity in Solar units<br>
+												Tk - temperature [K]<br>
+												a_He, a_C, a_N etc... - abundance relative to H of any element tracked in the simulation, not strictly necessary<br>
+												<h2>Star particle info</h2>
+												x, y, z - positions [kpc]<br>
+												vx, vy, vz - velocities [km/s]<br>
+												m - mass [Msun]<br>
+												age - age of star [Myr]<br>
+												Z - metallicity in Solar units
+												<br>
+												It would take some re-writing of the code to adapt SIGAME for adaptive mesh refinement (AMR) codes, but this is something we are very interested in doing down the road. 
+												</p>
+												<img src="images/notebook.png" alt="" width="90%"/>
 											</section>
 										</div>
 
