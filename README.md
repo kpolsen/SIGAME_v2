@@ -1,4 +1,4 @@
-## SÍGAME: SImulator of GAlaxy Millimeter/submillimeter Emission
+## SÍGAME: SImulator of GAlaxy Millimeter/submillimeter Emission (v2)
 
 ###
 Jump straigt to the auto-generated code documentation:
@@ -10,7 +10,7 @@ This is a code to simulate the emission lines of the ISM in galaxies from hydrod
 ### Obtaining the SÍGAME code
 Clone this repository to an empty folder on your computer by giving the following command in the terminal:
 ``` 
-git clone https://github.com/kpolsen/SIGAME.git
+git clone https://github.com/kpolsen/SIGAME_v2.git
 ```
 
 OBS: For Linux users! If you're using the terminal, here the commands we found useful so far:
